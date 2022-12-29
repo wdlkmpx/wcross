@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/bzip2/APKBUILD
+
+pkgname=bzip2
+pkgver=1.0.8
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libbz2.a'
+ALPINE_PKGS='bzip2-dev bzip2-static'
+
+SRC_URL=https://sourceware.org/pub/bzip2/bzip2-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	sed -i \
+		-e "s%CFLAGS=%CFLAGS+=%" \
+		-e "s%LDFLAGS=%LDFLAGS+=%" \
+		-e 's%bzip2 bzip2recover test%%' \
+		Makefile
+	_make
+
+	abort_if_file_not_found libbz2.a
+
+	cp -v libbz2.a ${TOOLCHAIN_ROOT}/lib
+	cp -v bzlib.h  ${TOOLCHAIN_ROOT}/include
+}
+

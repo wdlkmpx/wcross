@@ -1,0 +1,98 @@
+#!/bin/sh
+# https://ffmpeg.org/releases
+
+pkgname=ffmpeg
+pkgver=5.1
+pkgdesc=""
+pkgdeps='zlib libbz2 xz lame libvorbis libopus xvidcore libx264 libvpx mbedtls'
+EXE=${pkgname}
+INSTALLED_FILE=usr/bin/${EXE}
+SRC_URL=https://ffmpeg.org/releases/ffmpeg-${pkgver}.tar.xz
+
+#=================================================================
+
+build()
+{
+exit
+
+	case $CPU_ARCH in
+		x86|i?86) ffarch=i686    ;;
+		arm)      ffarch=armv6   ;; # armv8
+		*)    ffarch=${CPU_ARCH} ;;
+	esac
+
+	DONT_OVERRIDE_FLAGS=1 #--#
+
+	# libavfilter/libavfilter.a(yadif-10.o): warning: relocation in read-only section `.text'
+
+	# rv     = real video
+	# ra_144 = real audio
+
+	opts="--prefix=/usr
+--enable-static
+--disable-shared
+--enable-gpl
+--enable-version3
+--enable-nonfree
+--extra-ldflags=${GCC_STATIC}
+--enable-pic
+
+--disable-doc
+--disable-manpages
+
+--enable-cross-compile
+--target-os=linux
+--arch=${ffarch}
+--cross-prefix=${XCOMPILER}-
+--sysroot=${TOOLCHAIN_ROOT}
+--sysinclude=${TOOLCHAIN_ROOT}/include
+--pkg-config=pkg-config
+--pkg-config-flags=--static
+--host-ldflags=-Wl,-z,notext
+
+--disable-encoder=a64*
+--disable-encoder=amv
+--disable-encoder=asv*
+--disable-encoder=h263*
+--disable-encoder=msmpeg4*
+--disable-encoder=msvideo*
+--disable-encoder=prores*
+--disable-encoder=rv*
+--disable-encoder=wmv*
+
+--disable-encoder=mp2*
+--disable-encoder=nellymoser
+--disable-encoder=vorbis
+--disable-encoder=wma*
+
+--enable-libmp3lame
+--enable-libvorbis
+--enable-libopus
+--enable-libxvid
+--enable-libx264
+--enable-mbedtls
+--enable-libvpx
+--disable-alsa
+
+--disable-filter=yadif
+--disable-filters
+--enable-filter=
+"
+	_configure
+
+	# musl-ld doesn't recognize '-pthread'
+	sed -i -e 's%-pthread%%' $(find -name '*.mak' -o -name Makefile -o -name '*.pc')
+
+	# must not alter LDFLAGS (includes lib dirs) and other variables
+	_make
+
+	check_static_exe ${EXE}
+	_strip ${EXE}
+	_dist_binary ${EXE}
+
+	standard_make_install
+
+	move_from_pkg_to_toolchain usr/lib
+	move_from_pkg_to_toolchain usr/include
+}
+

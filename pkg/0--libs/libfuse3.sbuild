@@ -1,0 +1,28 @@
+#!/bin/sh
+
+pkgname=fuse
+#pkgver=3.12.0 to be TESTED
+pkgver=3.10.5
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libfuse3.a'
+ALPINE_PKGS='fuse3 fuse3-dev fuse3-static' # eudev-dev
+MESON_BUILD=1
+
+SRC_URL=https://github.com/libfuse/libfuse/releases/download/fuse-${pkgver}/fuse-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+    opts="-Dprefix=${TOOLCHAIN_INSTALL_PREFIX}
+-Dexamples=false
+-Dtests=false
+-Ddefault_library=static"
+    #if [ "$W_SYSROOT" ] ; then
+        mkdir -p ${TOOLCHAIN_ROOT}/etc/udev/rules.d
+        opts="$opts -Dudevrulesdir=${TOOLCHAIN_ROOT}/etc/udev/rules.d"
+    #fi
+    _meson_build
+    _meson_install
+}
+

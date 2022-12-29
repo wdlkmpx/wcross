@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# http://security.stackexchange.com/questions/5158/for-luks-the-most-preferable-and-safest-cipher
+#
+
+pkgver=1.7.5 # 2017-04-27
+pkgname=cryptsetup
+pkgdesc="disk encryption support"
+pkgdeps='popt util-linux libgcrypt' #lvm2 libuuid
+INSTALLED_FILE='sbin/cryptsetup'
+LINUX_ONLY=1
+SRC_URL=https://mirrors.edge.kernel.org/pub/linux/utils/cryptsetup/v1.7/cryptsetup-1.7.5.tar.xz
+
+lvm2_ver=2.02.177  #Nov 30 2016
+
+pkgsource="
+https://ftp.osuosl.org/pub/blfs/conglomeration/lvm2/LVM2.${lvm2_ver}.tgz
+${SRC_URL}
+"
+#-----------------------
+
+lvm2_build()
+{
+	extract LVM2.${lvm2_ver}.tgz
+	cd LVM2.${lvm2_ver}
+	opts="--prefix=${deps_dir}
+--enable-static_link
+--disable-selinux
+--disable-udev-systemd-background-jobs
+--with-user=
+--with-group=
+--disable-nls
+--disable-readline
+--disable-blkid_wiping
+--enable-pkgconfig
+--disable-thin_check_needs_check
+--disable-cache_check_needs_check"
+	# http://changetheworldwithyourpassion.blogspot.com/2009/09/fix-undefined-rplmalloc-on-autoconf.html
+	export ac_cv_func_malloc_0_nonnull=yes
+	_configure
+	sed -i 's/SUBDIRS = .*/SUBDIRS = conf daemons include lib libdaemon libdm man/' Makefile
+
+	# rpl_malloc rpl_realloc
+	sed -i '/rpl_/d' include/configure.h
+	_make LDFLAGS=${GCC_ALL_STATIC} install_device-mapper #device-mapper
+	cp libdm/ioctl/libdevmapper.a ${deps_dir}/lib/libdevmapper.a
+	rv=$?
+	cp libdm/libdevmapper.pc ${deps_dir}/lib/pkgconfig
+	cp libdm/libdevmapper.h ${deps_dir}/include
+	cd ..
+	rm -f deps/lib/libdevmapper.so*
+	return $rv
+}
+
+#-----------------------
+
+build()
+{
+	deps_dir=${PWD}/deps
+	mkdir -p ${deps_dir}/lib/pkgconfig
+	export PATH="${deps_dir}/bin:$PATH"
+	export C_INCLUDE_PATH="${deps_dir}/include:${C_INCLUDE_PATH}"
+	export LD_LIBRARY_PATH="${deps_dir}/lib:$LD_LIBRARY_PATH"
+	lvm2_build || exit 1
+	#--
+
+
+	make clean
+	opts="--disable-nls
+--disable-shared
+--enable-static
+--enable-static-cryptsetup
+--disable-udev
+--disable-selinux
+--disable-veritysetup
+--disable-python"
+	export ac_cv_lib_devmapper_dm_task_set_uuid=yes
+	export DEVMAPPER_LIBS="-L${deps_dir}/lib/ -ldevmapper -lrt"
+	export DEVMAPPER_CFLAGS="-I${deps_dir}/include"
+	_configure
+	sed -i 's|-ludev||' src/Makefile
+	_make LDFLAGS='--static'
+
+	check_static_exe src/cryptsetup.static
+	cp src/cryptsetup.static cryptsetup
+	install_exe cryptsetup ${INSTALL_DIR}/sbin
+
+	cd ${CWD}
+	rm -rf deps LVM2*
+}
+

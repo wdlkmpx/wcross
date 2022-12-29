@@ -1,0 +1,17 @@
+#!/bin/sh
+
+SITE=${SITE_MUSL}
+CC_TARBALL=aarch64-linux-musl-cross.tgz
+TARGET_TRIPLET=${CC_TARBALL%-cross*}
+
+TARBALL_SPECS="
+musl:     git-b76f37f (2021-09-23)
+GCC:      11.2.1 (Snapshot 11-20211120)
+binutils: 2.37
+GMP:      6.2.1
+MPFR:     4.1.0
+MPC:      1.2.1
+Linux:    5.15.2
+MinGW-w64: git-6cc9777 (2021-11-19)"
+
+export MUSL_CC_VERSION=1.2.2

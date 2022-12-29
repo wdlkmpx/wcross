@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/wdvdtools/tags
+
+pkgver=1.0
+pkgname=wdvdtools
+pkgdesc=""
+pkgdeps='libdvdread'
+INSTALLED_FILE='usr/bin/dvdbackup'
+
+SRC_URL=https://github.com/wdlkmpx/wdvdtools/archive/refs/tags/${pkgver}.tar.xz
+SRC_FILE=${pkgname}-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+    opts="--prefix=/usr"
+    _configure
+
+    # avoid compiling .exe files many times...
+    _make DESTDIR=${INSTALL_DIR} install-strip
+
+    check_static_exe ${INSTALL_DIR}/${INSTALLED_FILE}
+}
+

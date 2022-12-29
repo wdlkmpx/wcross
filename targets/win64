@@ -1,0 +1,5 @@
+SITE=${SITE_MINGW}
+CC_TARBALL=x86_64-w64-mingw32-cross.tgz
+TARGET_TRIPLET=${CC_TARBALL%-cross*}
+# always enforce static link so that exe files don't depend on mingw libs
+STATIC_LINK=yes

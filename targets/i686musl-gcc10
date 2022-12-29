@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# stable-2021.11-1
+
+TARBALL_SPECS="
+binutils : 2.36.1
+gcc      : 10.3.0
+gdb      : 10.2
+lheaders : 4.9.291"
+
+TARBALL_URL=https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--musl--stable-2021.11-1.tar.bz2
+
+export MUSL_CC_VERSION=1.2.2
+
+MUSL_NEED_NEWER_HEADERS=1
+DONT_FOLLOW_TARGET_SYMLINK=1
+
+TARBALL_ARCH=x86_64
+TARGET_TRIPLET=i686-buildroot-linux-musl
+
+xCC_TARBALL=${TARBALL_URL##*/} # basename
+xCC_DIR=${xCC_TARBALL%.tar.*}
+
+### `./i686-buildroot-linux-musl-gcc -print-prog-name=cc1` -v
+COMPILER_SYMLINK=/builds/bootlin/toolchains-builder/build/${xCC_DIR}

@@ -1,0 +1,19 @@
+#!/bin/sh
+# http://prdownloads.sourceforge.net/ms-sys/ms-sys
+
+pkgname=ms-sys
+pkgver==2.7.0  #2020-06-28
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/bin/ms-sys'
+
+SRC_URL=http://prdownloads.sourceforge.net/ms-sys/ms-sys/ms-sys-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	_make PREFIX=/usr
+	install_exe build/bin/ms-sys ${INSTALL_DIR}/usr/bin
+}
+

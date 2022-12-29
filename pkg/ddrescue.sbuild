@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/ddrescue/APKBUILD
+
+pkgname=ddrescue
+pkgver=1.26
+pkgrel=0
+pkgdesc="Data recovery tool for block devices with errors"
+source="https://ftp.gnu.org/gnu/ddrescue/ddrescue-$pkgver.tar.lz"
+INSTALLED_FILE='usr/bin/ddrescue'
+PROJECT_TYPE='C++'
+
+
+build()
+{
+	#configure [not autotools] doesn't recognize *FLAGS env variables, must use CROSS_MK_PARAMS"
+	opts="--prefix=/usr ${CROSS_MK_PARAMS}"
+	_configure
+
+    # not using _make, doesn't work with FLAGS="more than one word"
+    make LDFLAGS="$WMK_LDFLAGS" CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CXXFLAGS" ${CROSS_MK_PARAMS}
+
+	check_static_exe ddrescue
+	_strip ddrescue
+	_strip ddrescuelog
+
+	standard_make_install
+}
+

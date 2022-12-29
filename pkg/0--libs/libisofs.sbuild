@@ -1,0 +1,21 @@
+#!/bin/sh
+# http://files.libburnia-project.org/releases
+
+pkgname=libisofs
+pkgver=1.5.4
+pkgdeps='libjte libacl'
+TOOLCHAIN_FILE='usr/lib/libisofs.a'
+#ALPINE_PKGS='libisofs-dev'  # doesn't include .a file
+
+SRC_URL=http://files.libburnia-project.org/releases/libisofs-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+	_make install
+}
+

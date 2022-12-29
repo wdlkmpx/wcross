@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://github.com/htop-dev/htop/releases
+
+pkgver=3.1.2
+#pkgver=3.2.1 # 2022-06-03 # TO BE TESTED # TODO
+pkgname=htop
+pkgdesc=""
+pkgdeps='ncursesw'
+INSTALLED_FILE='usr/bin/htop'
+
+SRC_URL=https://github.com/htop-dev/htop/archive/refs/tags/htop-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --sysconfdir=/etc --enable-static"
+	_configure
+	_make
+
+	check_static_exe ${pkgname}
+	_strip ${pkgname}
+
+	standard_make_install
+}
+

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+libvpx_ver=1.11.0    #2021 https://github.com/webmproject/libvpx/tags
+libvpx_url=https://github.com/webmproject/libvpx/archive/v${libvpx_ver}.tar.gz
+
+pkgname=libvpx
+pkgver=${libvpx_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libvpx.a'
+#ALPINE_PKGS='libvpx-dev'  # doesn't include .a file
+
+SRC_URL=${libvpx_url}
+SRC_FILE=libvpx-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-examples
+--disable-unit-tests
+--disable-docs
+--disable-tools
+--enable-pic
+--enable-vp9-highbitdepth"
+
+	CC_OPT=
+	if [ -n "${XCOMPILER}" ] ; then
+		CC_OPT="CROSS=${XCOMPILER}-"
+	fi
+	${CC_OPT} _configure
+	_make install
+}
+

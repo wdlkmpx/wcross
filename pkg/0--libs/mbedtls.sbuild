@@ -1,0 +1,26 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=mbedtls
+pkgver=${mbedtls_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='lib/libmbedtls.a'
+ALPINE_PKGS='mbedtls-static mbedtls-dev' # mbedtls-utils
+
+SRC_URL=${mbedtls_url}/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_ROOT}
+-DENABLE_PROGRAMS=OFF
+-DMBEDTLS_FATAL_WARNINGS=OFF
+-DENABLE_TESTING=OFF"
+	_cmake
+	make
+	make install
+}
+

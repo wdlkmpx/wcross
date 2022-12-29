@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://sourceforge.net/projects/cdw/files/cdw/
+
+pkgname=cdw
+pkgver=0.8.1
+pkgdesc="cd burning application"
+INSTALLED_FILE='usr/bin/cdw'
+pkgdeps='ncursesw libburn'
+SRC_URL=https://sourceforge.net/projects/cdw/files/cdw/cdw%20${pkgver}/cdw-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --sysconfdir=/etc"
+	_configure
+
+    ## undefined reference to `rpl_malloc'
+	#sed -i '/AC_FUNC_MALLOC/d' configure.ac
+	# fix config.h instead of configure.ac
+	# #define malloc rpl_malloc
+	sed -i -e '/rpl_malloc/d' -e '/rpl_realloc/d' config_cdw.h
+
+	standard_make_install
+	check_static_exe
+}
+

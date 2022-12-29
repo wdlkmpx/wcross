@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# this is about dynamically loading opencl implementations
+# discarding for now
+#
+# https://git.alpinelinux.org/aports/tree/community/opencl/APKBUILD
+
+pkgname=opencl
+pkgver=2022.09.30
+SRC_URL="https://github.com/KhronosGroup/OpenCL-SDK/releases/download/v$pkgver/OpenCL-SDK-v$pkgver-Source.tar.gz"
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libOpenCLUtils.a'
+#ALPINE_PKGS='opencl-dev'
+
+# ====================================================
+
+build()
+{
+	opts="-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DCMAKE_BUILD_TYPE=None
+-DOPENCL_SDK_BUILD_SAMPLES=OFF
+-DBUILD_DOCS=OFF
+-DBUILD_EXAMPLES=OFF
+"
+	_cmake
+	make
+	make install
+}
+

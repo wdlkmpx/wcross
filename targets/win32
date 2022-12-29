@@ -1,0 +1,4 @@
+SITE=${SITE_MINGW}
+CC_TARBALL=i686-w64-mingw32-cross.tgz
+TARGET_TRIPLET=${CC_TARBALL%-cross*}
+STATIC_LINK=yes

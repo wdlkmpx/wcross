@@ -1,0 +1,30 @@
+#!/bin/sh
+# https://github.com/dosfstools/dosfstools/releases
+
+pkgver=4.2  #2021-01-31
+pkgname=dosfstools
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='sbin/fsck.fat'
+SRC_URL=https://github.com/dosfstools/dosfstools/releases/download/v${pkgver}/dosfstools-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --sbindir=/sbin"
+	_configure
+	_make LDFLAGS=${GCC_STATIC}
+
+	check_static_exe src/fsck.fat
+
+	_make DESTDIR=${INSTALL_DIR} install-strip
+	# create symlinks
+	ln -sv mkfs.fat ${INSTALL_DIR}/sbin/mkfs.msdos
+	ln -sv mkfs.fat ${INSTALL_DIR}/sbin/mkfs.vfat
+	ln -sv mkfs.fat ${INSTALL_DIR}/sbin/mkdosfs
+	ln -sv fsck.fat ${INSTALL_DIR}/sbin/fsck.msdos
+	ln -sv fsck.fat ${INSTALL_DIR}/sbin/fsck.vfat
+	ln -sv fatlabel ${INSTALL_DIR}/sbin/dosfslabel
+}
+

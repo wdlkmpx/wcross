@@ -1,0 +1,19 @@
+#!/bin/sh
+# https://github.com/michaelforney/samurai/releases
+
+pkgname=samurai
+pkgver=1.2
+pkgdeps=''
+INSTALLED_FILE='usr/bin/samu'
+
+SRC_URL=https://github.com/michaelforney/samurai/releases/download/${pkgver}/samurai-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    _make
+    install_exe samu ${INSTALL_DIR}/usr/bin
+    install_system_app_if_missing samu
+}
+

@@ -1,0 +1,125 @@
+#!/bin/sh
+#  Public Domain
+#
+
+symlink='/opt/wbuilds' # assuming we're root
+
+help()
+{
+    echo '
+ - This is part of the w static builds, compiles C & C++ code
+   using gcc/llvm cross compilers.
+
+ - It should be placed in /usr/bin so that it can be used to
+   manually compile cli apps that use autotools and compatible build scripts
+
+ - The path to the w static builds root dir must be specified once
+   so that script can be a system script while using the
+   cross compilers and libs that are stored in a certain partition
+'
+}
+
+
+check_dir()
+{
+	if [ -z "$1" ] ; then
+		echo ": no directory specified"
+		exit 1
+	fi
+	if [ ! -d "$1" ] ; then
+		echo "$1: is not a valid directory (wbuilds)"
+		exit 1
+	fi
+	if [ -d "$1/pkg" ] && [ -f "$1/build.sh" ] && [ -f "$1/func" ] ; then
+		return 0 # ok
+	else
+		echo "-- $1 doesn't look like the wbuilds dir"
+		exit 1 # error
+	fi
+}
+
+if [ "$1" = "set" ] ; then
+	check_dir $2
+	echo "OK"
+	ln -snfv "$2" ${symlink}
+fi
+
+if [ ! -e ${symlink} ] ; then
+	# create symlink if already in the wstatic buildsys
+	if [ -e pkg/7zip.sbuild ] ; then
+		ln -snfv "$(pwd)" ${symlink}
+	else
+		echo
+		echo "* File not found: $symlink"
+        [ -L ${symlink} ] && file ${symlink}
+		echo
+		echo "Type:"
+		echo "  $0 set <dir>"
+		echo "      where <dir> is the w(static) build system root dir"
+		exit 1
+	fi
+fi
+
+check_dir ${symlink}
+WDIR="${symlink}"
+
+#echo $WDIR ; exit #debug
+
+#===========================================================
+
+#WARCH=
+
+export MAKE_SCRIPT=yes
+
+unset WTRIPLET
+unset CC_DIR
+
+if [ -z "$WARCH" ] ; then
+    WARCH=$1
+fi
+
+#-----------------
+shift
+export W_OPTS="$@"
+#-----------------
+
+if [ "$WARCH" = "install" ] ; then
+    appname=$(basename $0)
+    cp -fv $0 /usr/sbin
+    ln -sv ${appname} /usr/sbin/${appname}_shared
+    exit 0
+fi
+
+if [ -n "${WARCH}" ] && [ -e "${WDIR}/targets/${WARCH}" ] ; then
+    . ${WDIR}/targets/${WARCH}
+    if [ -L "${WDIR}/targets/${WARCH}" ] ; then
+        WARCH=`readlink ${WDIR}/targets/${WARCH}`
+    fi
+elif [ "$WARCH" = "chroot" ] || [ "$WARCH" = "alpine" ] || [ "$WARCH" = "system" ] ; then
+    # chroot or system don't need targets
+    ok=1
+else
+    help
+    echo "Syntax:"
+    echo "  $0 <arch> [conf_opts...]"
+    echo
+    echo "If conf_opts = help, print configure help [autoconf, cmake, meson, etc]"
+    echo
+    echo "Supported targets:"
+    ls ${WDIR}/targets/
+    echo
+    exit 1
+fi
+
+#===========================================================
+
+export ORIG_DIR="$(pwd)"
+
+cd $WDIR
+
+case $0 in
+    *_shared) wmopt='-shared' ;;
+    #*)  wmopt='-static'       ;;
+esac
+
+exec ./build.sh ${wmopt} -arch ${WARCH} -pkg local

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+source_lib_versions
+
+URL=
+pkgname=libcpuid
+pkgver=${libcpuid_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libcpuid.a'
+#ALPINE_PKGS='libcpuid-dev'
+
+SRC_URL=${libcpuid_url}/${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --disable-shared --enable-static"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+	_make install
+}
+

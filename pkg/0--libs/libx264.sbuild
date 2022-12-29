@@ -1,0 +1,48 @@
+#!/bin/sh
+
+libx264_url=https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.bz2
+
+pkgname=x264
+pkgver=master
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libx264.a'
+ALPINE_PKGS='x264-dev'
+
+SRC_URL=${libx264_url}
+
+# ====================================================
+
+build()
+{
+	dasm=''
+	SR_OPT=
+	if [ -n "${W_SYSROOT}" ] ; then
+		SR_OPT="--sysroot=${TOOLCHAIN_ROOT}"
+		# (assuming the system libc is glibc and the pkg builds ok with BUILD_TYPE=system)
+		# if not using system gcc and libs, then disable-asm
+		#ld: i686-linux-musl-cross/lib/libx264.a(dct-a-8.o): warning: relocation in read-only section `.text'
+		#ld: read-only segment has dynamic relocations
+		case $CPU_ARCH in
+			x86|i?86) dasm='--disable-asm' ;;
+		esac
+	fi
+
+	CC_OPT=
+	if [ -n "${XCOMPILER}" ] ; then
+		CC_OPT="--cross-prefix=${XCOMPILER}-"
+	fi
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--enable-static
+--disable-cli
+--bit-depth=all
+--chroma-format=all
+${SR_OPT}
+${CC_OPT}
+--extra-ldflags=${GCC_STATIC}
+--enable-pic
+${dasm}"
+	_configure
+	_make install
+}
+

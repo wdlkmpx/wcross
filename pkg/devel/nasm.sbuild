@@ -1,0 +1,28 @@
+#!/bin/sh
+# http://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D
+
+pkgname=nasm
+pkgver=2.15.05  #2020-08-28
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/bin/nasm'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+SRC_URL=http://www.nasm.us/pub/nasm/releasebuilds/${nasm_ver}/nasm-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+    opts='--prefix=/usr'
+    _configure
+    _make LDFLAGS=${GCC_STATIC}
+
+    check_static_exe nasm
+    _strip nasm
+    _strip ndisasm
+
+    install_system_app_if_missing nasm -h
+    standard_make_install
+}
+

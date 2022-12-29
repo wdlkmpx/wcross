@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/zlib/APKBUILD
+# https://zlib.net/
+
+pkgname=zlib
+pkgver=1.2.13
+pkgrel=0
+pkgdesc="A compression/decompression Library"
+source="https://zlib.net/zlib-$pkgver.tar.gz"
+sha512sums="
+99f0e843f52290e6950cc328820c0f322a4d934a504f66c7caa76bd0cc17ece4bf0546424fc95135de85a2656fed5115abb835fd8d8a390d60ffaf946c8887ad  zlib-1.2.13.tar.gz
+"
+TOOLCHAIN_FILE='lib/libz.a'
+ALPINE_PKGS='zlib-static zlib-dev'
+
+
+build()
+{
+	if [ -n "${XCOMPILER}" ] ; then
+		export CROSS_PREFIX=${XCOMPILER}-
+	fi
+	opts="--prefix=${TOOLCHAIN_ROOT} --static"
+	_configure
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	_make install
+}
+

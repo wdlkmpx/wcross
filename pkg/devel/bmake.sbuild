@@ -1,0 +1,76 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/mk-configure/APKBUILD
+
+MK_CONF_VER=0.37.0
+MK_CONF_URL=https://github.com/cheusov/mk-configure/archive/refs/tags/${MK_CONF_VER}.tar.gz
+
+BMKDEP_VER=20140112
+BMKDEP_URL=https://github.com/trociny/bmkdep/archive/refs/tags/${BMKDEP_VER}.tar.gz
+
+pkgname=bmake
+pkgver=20220928
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/bin/bmake'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+SRC_URL=https://www.crufty.net/ftp/pub/sjg/bmake-${pkgver}.tar.gz
+
+pkgsource="
+${BMKDEP_URL}|bmkdep-${BMKDEP_VER}.tar.gz
+${MK_CONF_URL}|mk-configure-${MK_CONF_VER}.tar.gz
+${SRC_URL}
+"
+
+# ====================================================
+
+build()
+{
+    # https://git.alpinelinux.org/aports/tree/community/bmake?h=master
+    # disable tests
+    sed -i 's%Bmake test%echo%g' boot-strap
+
+    #make fails: opts='--prefix=/usr --disable-nls --disable-python'
+    opts='--prefix=/usr'
+    _configure
+    _make #LDFLAGS=${GCC_STATIC}
+
+    check_static_exe bmake
+    _strip bmake
+
+    standard_make_install
+    #install_system_app_if_missing bmake
+
+    standard_cleanup
+
+
+    # ----------- bmkdep --------------
+    SRC_FILE=bmkdep-20140112.tar.gz
+    SRC_DIR=bmkdep-20140112
+    SRC_URL=${BMKDEP_URL}
+
+    unset INSTALLED_FILE
+    extract_pkg_and_cd
+    sed -i -e '/MAN=/d' -e '/MANDIR=/d' Makefile 
+    touch bmkdep.cat1
+
+    WMAKE='bmake' _make PREFIX=/usr SYSCONFDIR=/etc
+    install_exe bmkdep ${INSTALL_DIR}/usr/bin
+    ln -sv bmkdep ${INSTALL_DIR}/usr/bin/mkdep
+    standard_cleanup
+
+    # ----------- mk-configure --------------
+    SRC_FILE=mk-configure-${MK_CONF_VER}.tar.gz
+    SRC_DIR=mk-configure-${MK_CONF_VER}
+    SRC_URL=${MK_CONF_URL}
+
+    unset INSTALLED_FILE
+    extract_pkg_and_cd
+
+    WMAKE='bmake' _make PREFIX=/usr SYSCONFDIR=/etc
+    WMAKE='bmake' _make install DESTDIR="${INSTALL_DIR}" PREFIX=/usr MANDIR=/usr/share/man SYSCONFDIR=/etc
+
+    rm -fv ${INSTALL_DIR}/usr/share/mk-configure/mk/mkc_imp.cc_*
+    rm -fv ${INSTALL_DIR}/usr/share/mk-configure/mk/mkc_imp.cxx_*
+
+    standard_cleanup
+}

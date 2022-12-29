@@ -1,0 +1,39 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=util-linux
+pkgver=${util_linux_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='lib/libblkid.a'
+ALPINE_PKGS='util-linux-dev'
+
+SRC_URL=${util_linux_url}/${pkgname}-${pkgver}.tar.xz
+
+# ====================================================
+
+
+build()
+{
+	 # cross compiler path
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--disable-all-programs
+--disable-symvers
+--disable-nls
+--enable-libblkid
+--enable-libuuid
+--enable-libmount
+--enable-libsmartcols
+--enable-libfdisk
+--without-python
+--without-systemd
+--without-btrfs
+--without-user
+--without-udev
+--without-ncursesw
+"
+	_configure
+	_make
+	_make install
+}
+

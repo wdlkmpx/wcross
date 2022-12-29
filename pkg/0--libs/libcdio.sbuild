@@ -1,0 +1,31 @@
+#!/bin/sh
+
+pkgname=libcdio
+pkgver=2.1.0
+pkgdeps='libcddb'
+TOOLCHAIN_FILE='usr/lib/libcdio.a'
+#ALPINE_PKGS='libcdio-dev'  # doesn't include .a files
+
+SRC_URL=https://ftp.gnu.org/gnu/libcdio/libcdio-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-cxx
+--disable-cpp-progs
+--disable-example-progs
+--disable-dependency-tracking
+--without-cd-drive
+--without-cd-info
+--without-cd-read
+--without-iso-info
+--without-iso-read
+--without-cdda-player"
+	_configure
+
+	sed -i 's%src test example%%' Makefile
+	_make install
+}
+

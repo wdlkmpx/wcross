@@ -1,0 +1,26 @@
+#!/bin/sh
+
+pkgname=unshield
+pkgver=3c8147f
+pkgdesc=""
+pkgdeps='' # libiconv
+INSTALLED_FILE='usr/bin/unshield'
+SRC_FILE=https://sourceforge.net/projects/wdl/files/apps/unshield/unshield-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	EXE=src/${pkgname}
+
+	opts='--prefix=/usr --enable-static --disable-shared'
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	check_static_exe ${EXE}
+	_strip ${EXE}
+	_dist_binary ${EXE}
+
+	standard_make_install
+}
+

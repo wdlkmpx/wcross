@@ -1,0 +1,38 @@
+#!/bin/sh
+
+source_lib_versions
+
+URL=
+pkgname=libiconv
+pkgver=${libiconv_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libiconv.a'
+
+SRC_URL=${libiconv_url}/${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make
+	_make install
+
+	# .pc file 
+	mkdir -p ${TOOLCHAIN_ROOT}/lib/pkgconfig
+	cat > ${TOOLCHAIN_ROOT}/lib/pkgconfig/libiconv.pc <<EOF
+prefix=${TOOLCHAIN_INSTALL_PREFIX}
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: libiconv
+Description: libiconv
+URL: https://www.gnu.org/software/libiconv/
+Version: ${libiconv_ver}
+Libs: -L\${libdir} -liconv
+Cflags: -I\${includedir}
+EOF
+}
+

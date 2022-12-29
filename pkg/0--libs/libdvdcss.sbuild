@@ -1,0 +1,30 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libdvdcss/APKBUILD
+# http://download.videolan.org/pub/videolan/libdvdcss
+
+pkgname=libdvdcss
+pkgver=1.4.3
+pkgrel=0
+pkgdesc="Library for accessing DVDs like a block device without having to bother about the decryption"
+#makedepends="file linux-headers"
+source="https://download.videolan.org/pub/libdvdcss/$pkgver/libdvdcss-$pkgver.tar.bz2"
+sha512sums="0f9c0244feff5ca62459823810a39ede745b63fedb682707fcbaf0dff11fff42998cef31a281bb6380930123d079780d37a79871f6e628cdca9cfa06c64befb6  libdvdcss-1.4.3.tar.bz2"
+TOOLCHAIN_FILE='usr/lib/libdvdcss.a'
+ALPINE_PKGS='libdvdcss-dev'
+
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared --sysconfdir=/etc
+--disable-doc"
+	_configure
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	_make install
+}

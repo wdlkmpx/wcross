@@ -1,0 +1,47 @@
+#!/bin/sh
+# https://github.com/lz4/lz4/releases
+
+pkgname=lz4
+pkgver=1.9.4 # 2022-08-16
+pkgdeps=''
+
+if [ "$BUILD_PACKAGE" = "lz4" ] ; then
+    INSTALLED_FILE='usr/bin/lz4'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/liblz4.a'
+fi
+ALPINE_PKGS='lz4-dev lz4-static'
+
+SRC_URL=https://github.com/lz4/lz4/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    cd build/cmake
+    if [ "$STATIC_LINK" = "yes" ] ; then
+        sed -i 's/LZ4_LINK_LIBRARY lz4_static/LZ4_LINK_LIBRARY lz4_static -static/' CMakeLists.txt
+    fi
+
+    opts="-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DLZ4_BUILD_CLI=ON
+-DLZ4_BUILD_LEGACY_LZ4C=ON
+-DLZ4_POSITION_INDEPENDENT_LIB=ON"
+    _cmake
+    _make
+
+    install_exe lz4 ${INSTALL_DIR}/usr/bin
+    install_exe lz4c ${INSTALL_DIR}/usr/bin
+    ln -sv lz4 ${INSTALL_DIR}/usr/bin/lz4cat
+    ln -sv lz4 ${INSTALL_DIR}/usr/bin/unlz4
+    _dist_binary lz4
+
+    # install libs and remove apps from toolchain install prefix
+    _make install
+    rm -f ${TOOLCHAIN_INSTALL_PREFIX}/bin/*lz4*
+}
+

@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://github.com/libfuse/libfuse/releases
+
+source_lib_versions
+
+pkgname=fuse
+pkgver=2.9.9 #2019-jan-04 
+pkgdeps=''
+ALPINE_PKGS='fuse-dev fuse-static'
+TOOLCHAIN_FILE='usr/lib/libfuse.a'
+
+SRC_URL=https://github.com/libfuse/libfuse/releases/download/fuse-${pkgver}/fuse-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --disable-example --disable-util --disable-shared --enable-static"
+	_configure
+	_make
+	_make install
+}
+

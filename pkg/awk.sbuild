@@ -1,0 +1,33 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/gawk
+
+pkgname=gawk
+pkgver=5.2.1 # 2022-11-22
+pkgdesc=""
+pkgdeps=''
+INSTALLED_FILE='bin/awk'
+SRC_URL=http://ftp.gnu.org/gnu/gawk/gawk-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --bindir=/bin --sysconfdir=/etc
+--disable-nls
+--disable-extensions
+--disable-lint
+--without-readline
+--without-libsigsegv-prefix
+--without-mpfr" #--with-whiny-user-strftime
+	_configure
+	_make
+
+	check_static_exe gawk
+	standard_make_install strip
+
+	# remove some fat
+	rm -rf ${INSTALL_DIR}/bin/gawk-* \
+            ${INSTALL_DIR}/usr/share/info \
+            ${INSTALL_DIR}/etc/profile.d/gawk.csh
+}
+

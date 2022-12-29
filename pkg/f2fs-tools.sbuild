@@ -1,0 +1,38 @@
+#!/bin/sh
+
+pkgver=1.15.0
+URL=
+pkgname=f2fs-tools
+pkgdesc=""
+# requires sys/queue.h from musl-compat-headers
+pkgdeps='util-linux' #libuuid
+
+if [ "$BUILD_PACKAGE" = "f2fs-tools" ] ; then
+    INSTALLED_FILE='sbin/fsck.f2fs'
+else
+    # .a file may exist in a chroot and need it quickly to build another app
+    TOOLCHAIN_FILE='usr/lib/libf2fs.a'
+fi
+ALPINE_PKGS='f2fs-tools-dev f2fs-tools-static' # the apps are not static
+
+SRC_URL=https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git/snapshot/${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="--prefix=${TOOLCHAIN_ROOT}/usr --enable-static --disable-shared
+--sbindir=${TOOLCHAIN_ROOT}/sbin
+--without-selinux "
+    _configure
+
+    _make LDFLAGS="${GCC_ALL_STATIC}"
+    check_static_exe fsck/fsck.f2fs
+    _make LDFLAGS="${GCC_ALL_STATIC}" install-strip
+
+    # need the apps
+    mkdir -p ${INSTALL_DIR}/sbin
+    cp -a ${TOOLCHAIN_ROOT}/sbin/*f2fs* ${INSTALL_DIR}/sbin
+    cp -a ${TOOLCHAIN_ROOT}/sbin/sg_write_buffer ${INSTALL_DIR}/sbin # also in sg3_utils
+}
+

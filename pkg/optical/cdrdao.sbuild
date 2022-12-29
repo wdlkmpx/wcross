@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://github.com/cdrdao/cdrdao/releases
+
+pkgname=cdrdao
+pkgver=1.2.4
+#pkgdeps='lame libvorbis'
+INSTALLED_FILE='usr/bin/cdrdao'
+SRC_URL=https://github.com/cdrdao/cdrdao/releases/download/rel_1_2_4/cdrdao-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr
+--mandir=/usr/share/man
+--sysconfdir=/etc
+--without-xdao
+--without-gcdmaster
+--without-lame
+--without-ogg-support
+--without-mp3-support
+"
+#   These require libao!
+#--with-lame
+#--with-ogg-support
+#--with-mp3-support
+
+	_configure
+	_make
+
+	standard_make_install strip
+	check_static_exe
+}
+

@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/wbbox/tags
+
+pkgver=0.1
+pkgname=wbbox
+pkgdesc=""
+pkgdeps=''
+INSTALLED_FILE='usr/bin/vercmp'
+LINUX_ONLY=1
+SRC_URL=https://github.com/wdlkmpx/wbbox/archive/refs/tags/${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="--prefix=/usr"
+    _configure
+    standard_make_install strip
+    check_static_exe
+}
+

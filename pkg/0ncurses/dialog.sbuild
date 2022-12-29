@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://invisible-island.net/archives/dialog/
+
+pkgname=dialog
+pkgver=1.3-20220728
+pkgdesc="Displays user-friendly dialog boxes from shell scripts"
+pkgdeps='ncursesw'
+INSTALLED_FILE='usr/bin/dialog'
+SRC_URL=https://invisible-island.net/archives/dialog/dialog-${pkgver}.tgz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --sysconfdir=/etc
+--with-ncursesw
+--enable-widec"
+	_configure
+	_make
+	check_static_exe dialog
+	install_exe dialog ${INSTALL_DIR}/usr/bin
+}
+

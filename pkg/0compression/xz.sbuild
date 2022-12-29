@@ -1,0 +1,41 @@
+#!/bin/sh
+# https://tukaani.org/xz
+
+pkgname=xz
+pkgver=5.4.0
+pkgdeps=''
+
+if [ "$BUILD_PACKAGE" = "xz" ] ; then
+    INSTALLED_FILE='usr/bin/xz'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/liblzma.a'
+fi
+ALPINE_PKGS='xz-dev xz-static'
+
+SRC_URL=https://tukaani.org/xz/xz-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-shared --disable-static
+--disable-nls
+--disable-doc
+--disable-scripts
+--disable-lzma-links
+--disable-lzmainfo
+--disable-lzmadec
+--disable-symbol-versions" # --disable-assembler
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+
+	check_static_exe ${TOOLCHAIN_INSTALL_PREFIX}/bin/xz
+	_strip ${TOOLCHAIN_INSTALL_PREFIX}/bin/xz
+	_strip ${TOOLCHAIN_INSTALL_PREFIX}/bin/xzdec
+
+	mkdir -p ${INSTALL_DIR}/usr/bin
+	mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/xz* ${TOOLCHAIN_INSTALL_PREFIX}/usr/bin
+	mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/*xz ${TOOLCHAIN_INSTALL_PREFIX}/usr/bin
+}
+

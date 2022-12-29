@@ -1,0 +1,18 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/dash/APKBUILD
+
+pkgname=dash
+pkgver=0.5.12
+pkgrel=0
+pkgdesc="Small and fast POSIX-compliant shell"
+source="http://gondor.apana.org.au/~herbert/dash/files/dash-$pkgver.tar.gz"
+INSTALLED_FILE='bin/dash'
+
+
+build()
+{
+	_configure
+	_make LDFLAGS=${GCC_STATIC}
+	install_exe src/dash ${INSTALL_DIR}/bin
+}
+

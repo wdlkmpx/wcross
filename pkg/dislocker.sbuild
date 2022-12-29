@@ -1,0 +1,26 @@
+#!/bin/sh
+
+pkgname=dislocker
+pkgver=0.7.3
+pkgdeps='libfuse mbedtls'
+INSTALLED_FILE='usr/bin/dislocker'
+SRC_URL=https://github.com/Aorimn/dislocker/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	patch -p1 < ${PKG_SCRIPT_DIR}/dislocker.patch
+	opts="-DCMAKE_INSTALL_PREFIX=/usr
+-DWITH_RUBY=OFF
+"
+	_cmake
+	make
+
+	check_static_exe src/dislocker-fuse
+	_strip src/dislocker-bek src/dislocker-file src/dislocker-fuse src/dislocker-metadata
+
+	standard_make_install
+}
+

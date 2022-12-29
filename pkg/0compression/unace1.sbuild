@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/unace1/tags
+
+pkgname=unace1
+pkgver=1.6w
+pkgrel=0
+pkgdesc="Tool for extracting archives created with the ACEv1 archiver"
+source="unace1-${pkgver}.tar.gz::https://github.com/wdlkmpx/unace1/archive/refs/tags/${pkgver}.tar.gz"
+sha512sums="36827e86a45c65c5130f6d5f991be80c9adb52a2fd5c8470a967f34c8b5013ed8fa36ee15806220e96f79339501a3466a02e1fdd2595e388ebd9b8c77137725b  unace1-1.6w.tar.gz"
+INSTALLED_FILE='usr/bin/unace1'
+
+
+build()
+{
+	opts='--prefix=/usr'
+	_configure
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	_make DESTDIR=${INSTALL_DIR} install
+	_dist_binary src/unace1
+}
+

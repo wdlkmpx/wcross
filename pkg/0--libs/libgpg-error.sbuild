@@ -1,0 +1,38 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libgpg-error
+pkgver=${libgpgerror_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libgpg-error.a'
+ALPINE_PKGS='libgpg-error-dev libgpg-error-static'
+
+SRC_URL=${libgpgerror_url}
+
+# ====================================================
+
+build()
+{
+	case $CPU_ARCH in
+		i?86)    SF='lock-obj-pub.i686-unknown-linux-gnu.h' ;;
+		x86_64)  SF='lock-obj-pub.x86_64-unknown-linux-gnu.h' ;;
+		arm*)    SF='lock-obj-pub.arm-unknown-linux-gnueabi.h' ;;
+		aarch64) SF='lock-obj-pub.aarch64-unknown-linux-gnu.h' ;;
+	esac
+	if [ -f src/syscfg/$SF ] ; then
+		ln -sfnv $SF src/syscfg/lock-obj-pub.linux.h
+		ln -sfnv $SF src/syscfg/lock-obj-pub.linux-musl.h
+	fi
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --disable-shared --enable-static
+--disable-nls
+--disable-languages
+--disable-doc
+--disable-tests"
+
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+	_make install
+}
+

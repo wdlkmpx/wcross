@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://www.kernel.org/pub/linux/utils/kernel/kmod
+
+pkgname=kmod
+pkgver=29
+pkgdesc=""
+pkgdeps='zlib'
+INSTALLED_FILE='bin/kmod'
+
+SRC_URL=https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/
+--bindir=/bin
+--sysconfdir=/etc
+--with-rootlibdir=/lib
+--disable-dependency-tracking
+--with-zlib"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	install_exe tools/kmod ${INSTALL_DIR}/bin
+}

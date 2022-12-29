@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libbsd/APKBUILD
+# https://libbsd.freedesktop.org/releases
+
+pkgname=libbsd
+pkgver=0.11.7
+pkgrel=0
+pkgdesc="commonly-used BSD functions not implemented by all libcs"
+depends_dev="libmd-dev"
+source="https://libbsd.freedesktop.org/releases/libbsd-$pkgver.tar.xz"
+TOOLCHAIN_FILE='usr/lib/libbsd.a'
+ALPINE_PKGS='libbsd-dev libbsd-static'
+
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+}
+
+check() {
+	_make LDFLAGS=${GCC_ALL_STATIC} check
+}
+
+package() {
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+}
+

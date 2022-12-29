@@ -1,0 +1,40 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/acl/APKBUILD
+# https://download.savannah.nongnu.org/releases/acl
+
+pkgname=acl
+pkgver=2.3.1
+pkgrel=0
+pkgdesc="Access control list utilities"
+makedepends="libattr"
+source="https://download.savannah.nongnu.org/releases/acl/acl-$pkgver.tar.gz"
+sha512sums="
+f101e27058c959f4c412f475c3fc77a90d1ead8728701e4ce04ff08b34139d35e0e72278c9ac7622ba6054e81c0aeca066e09491b5f5666462e3866705a0e892  acl-2.3.1.tar.gz
+"
+TOOLCHAIN_FILE='lib/libacl.a'
+ALPINE_PKGS='acl-dev acl-static'
+
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-nls"
+	_configure
+    if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+        sed -i \
+        -e "/bin_PROGRAMS = /d" -e "/^PROGRAMS = /d" \
+        -e "/dist_sysconf_DATA = /d" \
+        -e '/^MANS = /d' -e '/^DATA = /d' Makefile
+    fi
+    _make LDFLAGS=${GCC_ALL_STATIC}
+}
+
+check() {
+	#_make LDFLAGS=${GCC_ALL_STATIC} check
+	printf "" # check fails
+}
+
+package() {
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+}
+

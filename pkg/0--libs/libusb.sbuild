@@ -1,0 +1,23 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libusb
+pkgver=${libusb_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='lib/libusb-1.0.a'
+ALPINE_PKGS='libusb-dev'
+
+SRC_URL=${libusb_url}/${pkgname}-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --disable-shared --enable-static
+--disable-udev"
+	_configure
+	_make
+	_make install
+}
+

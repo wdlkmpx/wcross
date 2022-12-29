@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://github.com/ninja-build/ninja/releases
+# https://github.com/archlinux/svntogit-community/blob/packages/ninja/trunk/PKGBUILD
+# C++
+
+pkgname=ninja
+pkgver=1.11.1
+pkgdeps=''
+INSTALLED_FILE='usr/bin/ninja'
+
+SRC_URL=https://github.com/ninja-build/ninja/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="-DCMAKE_INSTALL_PREFIX=/usr
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+"
+    _cmake
+    make
+
+    install_exe ninja ${INSTALL_DIR}/usr/bin
+}
+

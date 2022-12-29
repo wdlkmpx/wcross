@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://dev.yorhel.nl/download
+
+pkgname=ncdu # 2022-12-06
+pkgver=1.18
+pkgdesc="ncdu text editor"
+INSTALLED_FILE='usr/bin/ncdu'
+pkgdeps='ncursesw'
+
+SRC_URL=https://dev.yorhel.nl/download/ncdu-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --sysconfdir=/etc --with-ncursesw"
+	_configure
+
+	_make
+	install_exe ncdu ${INSTALL_DIR}/usr/bin
+}
+

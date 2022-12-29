@@ -1,0 +1,55 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/lame/APKBUILD
+# https://sourceforge.net/projects/lame/files/lame
+
+pkgname=lame
+pkgver=3.100
+pkgrel=0
+pkgdesc="An MP3 encoder and graphical frame analyzer"
+#makedepends="nasm ncurses-dev autoconf automake libtool"
+source="https://downloads.sourceforge.net/project/lame/lame/$pkgver/lame-$pkgver.tar.gz"
+sha512sums="0844b9eadb4aacf8000444621451277de365041cc1d97b7f7a589da0b7a23899310afd4e4d81114b9912aa97832621d20588034715573d417b2923948c08634b  lame-3.100.tar.gz"
+if [ "$BUILD_PACKAGE" = "lame" ] ; then
+    INSTALLED_FILE='usr/bin/lame'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libmp3lame.a'
+fi
+ALPINE_PKGS='lame-dev' # includes static lib
+
+
+prepare() {
+	# fix for parallel builds
+	mkdir -p libmp3lame/i386/.libs
+	# fix for pic build with new nasm
+	sed -i -e '/define sp/s/+/ + /g' libmp3lame/i386/nasm.h
+}
+
+build()
+{
+	sed -i -e 's%Dll doc%%' -e 's%mac macosx vc_solution%%' Makefile.in
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --sysconfdir=/etc --localstatedir=/var
+--enable-static --disable-shared
+--enable-nasm
+--disable-mp3x
+--with-pic
+--disable-gtktest
+--without-libiconv-prefix
+--disable-cpml
+--with-fileio=lame
+"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+}
+
+check() {
+	_make LDFLAGS=${GCC_ALL_STATIC} test
+}
+
+package() {
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+	rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/usr/bin/lame
+	install_exe frontend/lame ${INSTALL_DIR}/usr/bin
+	_dist_binary frontend/lame
+}
+

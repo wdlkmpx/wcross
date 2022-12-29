@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://github.com/archlinux/svntogit-community/blob/packages/uasm/trunk/PKGBUILD
+# https://git.alpinelinux.org/aports/tree/testing/uasm/APKBUILD
+# https://github.com/Terraspace/UASM/releases
+
+pkgname="uasm"
+pkgver="2.56.2"
+pkgrel=0
+pkgdesc="A free MASM-compatible assembler based on JWasm. [MASM = MS Macro Assembler]"
+source="UASM-${pkgver}.tar.gz::https://github.com/Terraspace/UASM/archive/refs/tags/UASM-${pkgver}.tar.gz"
+sha512sums="
+1f6c1037909d012f3293985c4e0516f4b61497de23cac6bbb58db735efb512599c0bba5d60d8ce999e6afc57e44484a094bf10f0ee185a51afd826f5541c9337  UASM-2.56.2.tar.gz
+"
+INSTALLED_FILE='usr/bin/uasm'
+#CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+# ====================================================
+
+build()
+{
+    MAKE_NO_STDERR=1 # silence stderr, it gets incredibly long
+    if [ "$WCROSS_TARGET_OS" = "windows" ] ; then
+        # GccWin*.mak need fixing, just use a patched gccLinux64.mak
+        sed -i 's%__UNIX__%__NT__%' gccLinux64.mak
+    fi
+    #_make CC="$CC -fcommon" -f gccLinux64.mak
+    _make -f gccLinux64.mak
+    install_exe GccUnixR/uasm ${INSTALL_DIR}/usr/bin
+    _dist_binary GccUnixR/uasm
+    install_system_app_if_missing GccUnixR/uasm -?
+}
+

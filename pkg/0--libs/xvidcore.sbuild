@@ -1,0 +1,35 @@
+#!/bin/sh
+
+xvidcore_ver=1.3.7
+xvidcore_url=https://downloads.xvid.com/downloads/xvidcore-${xvidcore_ver}.tar.gz
+
+pkgname=xvidcore
+pkgver=${xvidcore_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libxvidcore.a'
+ALPINE_PKGS='xvidcore-dev xvidcore-static'
+
+SRC_URL=${xvidcore_url}
+SRC_DIR=xvidcore
+
+# ====================================================
+
+build()
+{
+	cd build/generic || exit_error
+
+	#ld: i686-linux-musl-cross/lib/libxvidcore.a(cbp_mmx.o): warning: relocation in read-only section `.text'
+	#ld: read-only segment has dynamic relocations
+	case $CPU_ARCH in
+		x86|i?86) dasm='--disable-assembly' ;;
+		*)        dasm='' ;;
+	esac
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} ${dasm}"
+	_configure
+	_make
+	_make install
+
+	rm -fv ${TOOLCHAIN_ROOT}/lib/libxvidcore.so*
+}
+

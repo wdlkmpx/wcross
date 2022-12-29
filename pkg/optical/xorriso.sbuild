@@ -1,0 +1,36 @@
+#!/bin/sh
+# http://files.libburnia-project.org/releases
+
+pkgname=libisoburn
+pkgver=1.5.4
+# it doesn't require libcio-paranoia, I want cd-paranoia
+pkgdeps='libburn libisofs libcdio-paranoia'
+
+if [ "$BUILD_PACKAGE" = "xorriso" ] ; then
+    INSTALLED_FILE='usr/bin/xorriso'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libisoburn.a'
+fi
+#ALPINE_PKGS='libisoburn-dev' # no static libs
+
+SRC_URL=http://files.libburnia-project.org/releases/libisoburn-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	check_static_exe xorriso/xorriso
+	_strip xorriso/xorriso
+
+	_make install
+
+	mkdir -p ${INSTALL_DIR}/usr/bin
+	mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/xorr* \
+        ${TOOLCHAIN_INSTALL_PREFIX}/bin/*rrox ${INSTALL_DIR}/usr/bin
+}
+

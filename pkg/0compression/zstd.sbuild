@@ -1,0 +1,55 @@
+#!/bin/sh
+
+pkgname=zstd
+pkgver=1.5.2
+##pkgdeps='zlib lz4 xz' #only the tool has deps, the lib has 0 deps
+
+if [ "$BUILD_PACKAGE" = "zstd" ] ; then
+    INSTALLED_FILE='usr/bin/zstd'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libzstd.a'
+fi
+ALPINE_PKGS='zstd-dev zstd-static' # the apps are not static
+
+SRC_URL=https://github.com/facebook/zstd/releases/download/v${pkgver}/zstd-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    cd build/cmake
+
+    opts="-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DZSTD_LZ4_SUPPORT=OFF
+-DZSTD_LZMA_SUPPORT=OFF
+-DZSTD_ZLIB_SUPPORT=OFF
+-DZSTD_BUILD_SHARED=OFF
+-DZSTD_BUILD_STATIC=ON
+-DZSTD_BUILD_TESTS=OFF
+-DZSTD_LEGACY_SUPPORT=ON
+-DZSTD_PROGRAMS_LINK_SHARED=OFF
+-DBUILD_TESTING=OFF
+-DZSTD_BUILD_SHARED=OFF
+-DZSTD_BUILD_STATIC=ON
+-DZSTD_BUILD_CONTRIB=OFF"
+    _cmake
+    make
+
+    check_static_exe programs/zstd
+    _strip programs/zstd
+    _strip programs/zstd-frugal
+
+    make install
+
+    # need the apps
+    mkdir -p ${INSTALL_DIR}/usr/bin
+    for i in unzstd zstd zstdcat zstdgrep zstdless zstdmt
+    do
+        cp -a ${TOOLCHAIN_INSTALL_PREFIX}/bin/${i} ${INSTALL_DIR}/usr/bin
+        if [ "$TOOLCHAIN_INSTALL_PREFIX" != "/" ] ; then
+            rm -f ${TOOLCHAIN_INSTALL_PREFIX}/bin/${i}
+        fi
+    done
+}
+

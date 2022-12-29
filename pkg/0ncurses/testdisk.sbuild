@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://www.cgsecurity.org/wiki/TestDisk_Download
+
+pkgname=testdisk
+pkgver=7.1 # 2019-07-07
+URL=https://www.cgsecurity.org
+pkgdesc=""
+pkgdeps='util-linux zlib ncursesw ntfs-3g e2fsprogs'
+INSTALLED_FILE=usr/bin/${pkgname}
+
+SRC_URL=https://www.cgsecurity.org/testdisk-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	EXE=${pkgname}
+	opts='--prefix=/usr'
+	_configure
+	_make #LDFLAGS=${GCC_STATIC}
+
+	check_static_exe src/${EXE}
+	_strip src/${EXE}
+	_dist_binary src/${EXE}
+
+	standard_make_install
+}
+

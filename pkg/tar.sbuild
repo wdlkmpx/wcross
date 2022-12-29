@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://ftp.gnu.org/gnu/tar
+
+pkgname=tar
+pkgver=1.34  #2021-02-13
+pkgdesc=""
+pkgdeps='libacl'
+INSTALLED_FILE='bin/tar'
+
+SRC_URL=https://ftp.gnu.org/gnu/tar/tar-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	opts='--prefix=/usr --disable-nls
+--enable-cross-guesses=conservative
+--with-included-regex
+--disable-dependency-tracking'
+	_configure
+	_make LDFLAGS=${GCC_STATIC}
+
+	install_exe src/tar ${INSTALL_DIR}/bin
+}
+

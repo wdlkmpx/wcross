@@ -1,0 +1,41 @@
+#!/bin/sh
+# https://astron.com/pub/file
+#
+# compatibility issues with older libmagic databases
+# so basically file is unusable in old distros
+
+pkgname=file
+pkgver=5.41
+SRC_URL=https://astron.com/pub/file/file-${pkgver}.tar.gz
+pkgdesc=""
+pkgdeps='zlib xz libbz2'
+INSTALLED_FILE='usr/bin/file'
+
+# ====================================================
+
+build()
+{
+	# need to compile file locally first
+	mkdir -p local
+	./configure --prefix=${PWD}/local --enable-static --disable-shared 
+	make install
+	# ---
+
+	export PATH=${PWD}/local/bin:${PATH}
+	make distclean
+
+	opts="--prefix=/usr --sysconfdir=/etc --enable-static --disable-shared
+--disable-silent-rules"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	check_static_exe src/file
+	_strip src/file
+
+	standard_make_install
+
+	fix_pkgconfig_for_toolchain ${INSTALL_DIR}/usr/lib
+	move_from_pkg_to_toolchain usr/include
+	move_from_pkg_to_toolchain usr/lib
+}
+

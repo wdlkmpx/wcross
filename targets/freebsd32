@@ -1,0 +1,6 @@
+TARBALL_URL=${CLANG_URL}
+SANITY_CHECK=${MWD}/scripts/clang-cross_sanity_check.sh
+#TARBALL_ARCH=x86_64
+TARGET_TRIPLET=i686-pc-freebsd11
+
+#exit_error "Sorry this is currently disabled..."

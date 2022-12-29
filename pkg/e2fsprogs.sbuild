@@ -1,0 +1,72 @@
+#!/bin/sh
+# https://sourceforge.net/projects/e2fsprogs/files/e2fsprogs
+
+pkgver=1.46.5 # 
+pkgname=e2fsprogs
+pkgdesc=""
+pkgdeps='util-linux'
+
+if [ "$BUILD_PACKAGE" = "e2fsprogs" ] ; then
+    INSTALLED_FILE='sbin/e2fsck'
+else
+    # .a file may exist in a chroot and need it quickly to build another app
+    TOOLCHAIN_FILE='usr/lib/libext2fs.a'
+fi
+ALPINE_PKGS='e2fsprogs-dev e2fsprogs-static'
+
+SRC_URL=https://sourceforge.net/projects/e2fsprogs/files/e2fsprogs/v${pkgver}/e2fsprogs-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	sed -i 's/64bit,//g' ./misc/mke2fs.conf.in
+
+	opts='--prefix=/usr --sbindir=/sbin --bindir=/bin
+--localstatedir=/var --sysconfdir=/etc
+--with-root-prefix=""
+--enable-symlink-install --enable-relative-symlinks --enable-symlink-build
+--disable-elf-shlibs
+--disable-bsd-shlibs
+--disable-libblkid
+--disable-libuuid
+--disable-uuidd
+--disable-fsck
+--disable-nls
+--disable-testio-debug
+--disable-bmap-stats
+--disable-e2initrd-helper
+--disable-fuse2fs
+--disable-rpath
+'
+	export ac_cv_lib_uuid_uuid_generate=yes
+	export ac_cv_lib_blkid_blkid_get_cache=yes
+	_configure
+	
+	# change all .so to .a
+	# remove -pthread (-musl-ld error)
+	sed -i -e 's|.so$|.a|' -e 's|.so |.a |' -e 's%-pthread%%' $(find . -type f -name Makefile)
+	# profiling: -pg
+	#  https://github.com/esnet/iperf/issues/235
+	#    ../lib/gcc/i686-linux-musl/10.2.1/../../../../i686-linux-musl/bin/ld: cannot find gcrt1.o: No such file or directory
+	#    collect2: error: ld returned 1 exit status
+	sed -i -e 's|-pg||' $(find . -type f -name Makefile)
+	# don't want some stuff
+	sed -i -e 's|tests/progs po||' -e 's|scrub||' \
+		-e '/$(MAKE) docs/d' -e '/ cd doc /d' Makefile
+
+	# problem with util/subst.c .. it's called by the build system
+	# need to compile a working exe
+	#   Error relocating ./util/subst: __gettimeofday_time64: symbol not found
+	gcc -o util/subst util/subst.c
+	# --
+	# problem: make + standard_make_install = 2 compiles + non static e2fsck
+	# need to perform install and check static exe later..
+	_make LDFLAGS=${GCC_STATIC} DESTDIR=${INSTALL_DIR} install-strip install-libs
+	check_static_exe e2fsck/e2fsck
+
+	fix_pkgconfig_for_toolchain ${INSTALL_DIR}/usr/lib
+	move_from_pkg_to_toolchain usr/lib
+	move_from_pkg_to_toolchain usr/include
+}
+

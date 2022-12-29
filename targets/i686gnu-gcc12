@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# bleeding-edge-2022.08-1
+
+ADD_MOLD=1
+
+TARBALL_SPECS="
+binutils : 2.39
+gcc      : 12.2.0
+gdb      : 12.1
+glibc    : 2.35-134-gb6aad...
+lheaders : 5.4.212"
+
+TARBALL_URL=https://toolchains.bootlin.com/downloads/releases/toolchains/x86-i686/tarballs/x86-i686--glibc--bleeding-edge-2022.08-1.tar.bz2
+
+DONT_FOLLOW_TARGET_SYMLINK=1
+
+TARBALL_ARCH=x86_64
+TARGET_TRIPLET=i686-buildroot-linux-gnu
+
+xCC_TARBALL=${TARBALL_URL##*/} # basename
+xCC_DIR=${xCC_TARBALL%.tar.*}
+
+### `./i686-buildroot-linux-gnu-gcc -print-prog-name=cc1` -v
+#COMPILER_SYMLINK=/builds/bootlin/toolchains-builder/build/${xCC_DIR}
+COMPILER_SYMLINK=/builds/buildroot.org/toolchains-builder/build/${xCC_DIR}

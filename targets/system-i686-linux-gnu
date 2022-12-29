@@ -1,0 +1,2 @@
+BUILD_TYPE=system
+export TARGET_TRIPLET=i686-linux-gnu

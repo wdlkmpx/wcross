@@ -1,0 +1,29 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/bash
+
+pkgname=bash
+pkgver=5.2.15 # 2022-12-13
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='bin/bash'
+SRC_URL=http://ftp.gnu.org/gnu/bash/bash-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    patch -p1 < ${PKG_SCRIPT_DIR}/bash-musl.patch
+    # the patch only fixes the build for autoreconf
+    # must fix configure...
+    sed -i 's%bash_cv_func_strtoimax = yes%bash_cv_func_strtoimax = no%' configure
+
+	opts="--prefix=/usr
+--disable-nls
+--enable-static-link
+--without-bash-malloc"
+	_configure
+	_make
+
+	install_exe ${pkgname} ${INSTALL_DIR}/bin
+}
+

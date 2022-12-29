@@ -1,0 +1,31 @@
+diff -Naur 7z-2107/C/Threads.c 7z-2107-patched/C/Threads.c
+--- 7z-2107/C/Threads.c	2021-12-21 21:00:00.000000000 +0800
++++ 7z-2107-patched/C/Threads.c	2022-04-30 21:02:31.000000000 +0800
+@@ -257,7 +257,9 @@
+       */
+ 
+       // ret2 =
++#ifdef __GLIBC_MINOR__
+       pthread_attr_setaffinity_np(&attr, sizeof(*cpuSet), cpuSet);
++#endif
+       // if (ret2) ret = ret2;
+       #endif
+     }
+@@ -267,14 +269,15 @@
+     if (!ret)
+     {
+       p->_created = 1;
+-      /*
+       if (cpuSet)
+       {
+         // ret2 =
++#ifndef __GLIBC_MINOR__
++        // musl
+         pthread_setaffinity_np(p->_tid, sizeof(*cpuSet), cpuSet);
++#endif
+         // if (ret2) ret = ret2;
+       }
+-      */
+     }
+   }
+   // ret2 =

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+## change { <emptyline> to {
+#sed -z -i "s|{\n\n|{\n|" $(find . -type f -name '*.sbuild*' | sort)
+
+## change <emptyline> } to }
+#sed -z -i "s|\n\n}|\n}|" $(find . -type f -name '*.sbuild*' | sort)
+
+#sed -i 's%DEPS%pkgdeps%g' $(find . -type f -name '*.sbuild*' | sort | less)
+#sed -i '/extract_pkg_and_cd/d' $(find . -type f -name '*.sbuild*' | sort)
+
+

@@ -1,0 +1,250 @@
+diff -Naur partclone-0.3.20/src/main.c partclone-0.3.20-patched/src/main.c
+--- partclone-0.3.20/src/main.c	2022-04-27 14:56:42.000000000 +0800
++++ partclone-0.3.20-patched/src/main.c	2022-12-21 22:02:43.000000000 +0800
+@@ -32,8 +32,10 @@
+ #include <dirent.h>
+ #include <limits.h>
+ 
++#if 0
+ // SHA1 for torrent info
+ #include "torrent_helper.h"
++#endif
+ 
+ /**
+  * progress.h - only for progress bar
+@@ -63,10 +65,12 @@
+  * main function - for clone or restore data
+  */
+ int main(int argc, char **argv) {
++#if 0
+ #ifdef MEMTRACE
+ 	setenv("MALLOC_TRACE", "partclone_mtrace.log", 1);
+ 	mtrace();
+ #endif
++#endif
+ 	char*			source;			/// source data
+ 	char*			target;			/// target data
+ 	int			dfr, dfw;		/// file descriptor for source and target
+@@ -434,8 +438,9 @@
+ 
+ 		// SHA1 for torrent info
+ 		int tinfo = -1;
++#if 0
+ 		torrent_generator torrent;
+-
++#endif
+ 		blocks_per_cs = img_opt.blocks_per_checksum;
+ 
+ 		log_mesg(1, 0, 0, debug, "#\nBuffer capacity = %u, Blocks per cs = %u\n#\n", buffer_capacity, blocks_per_cs);
+@@ -465,8 +470,9 @@
+ 			char torrent_name[PATH_MAX + 1] = {'\0'};
+ 			sprintf(torrent_name,"%s/torrent.info", target);
+ 			tinfo = open(torrent_name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+-
++#if 0
+ 			torrent_init(&torrent, tinfo);
++#endif
+ 			dprintf(tinfo, "block_size: %u\n", block_size);
+ 			dprintf(tinfo, "blocks_total: %llu\n", blocks_total);
+ 		}
+@@ -551,11 +557,12 @@
+ 				// because when calling write_block_file
+ 				// we will create a new file to describe a continuous block (or buffer is full)
+ 				// and never write to same file again
++#if 0
+ 				torrent_start_offset(&torrent, block_id * block_size);
+ 				torrent_end_length(&torrent, blocks_read * block_size);
+ 
+ 				torrent_update(&torrent, read_buffer, blocks_read * block_size);
+-
++#endif
+ 				if (opt.torrent_only == 1) {
+ 					w_size = blocks_read * block_size;
+ 				} else {
+@@ -581,7 +588,9 @@
+ 		} while (1);
+ 
+ 		if (opt.blockfile == 1) {
++#if 0
+ 			torrent_final(&torrent);
++#endif
+ 		} else {
+ 			if (blocks_in_cs > 0) {
+ 
+@@ -635,7 +644,9 @@
+ 
+ 		// SHA1 for torrent info
+ 		int tinfo = -1;
++#if 0
+ 		torrent_generator torrent;
++#endif
+ 
+ 		log_mesg(1, 0, 0, debug, "#\nBuffer capacity = %u, Blocks per cs = %u\n#\n", buffer_capacity, blocks_per_cs);
+ 
+@@ -692,8 +703,9 @@
+ 			char torrent_name[PATH_MAX + 1] = {'\0'};
+ 			sprintf(torrent_name,"%s/torrent.info", target);
+ 			tinfo = open(torrent_name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+-
++#if 0
+ 			torrent_init(&torrent, tinfo);
++#endif
+ 			dprintf(tinfo, "block_size: %u\n", block_size);
+ 			dprintf(tinfo, "blocks_total: %llu\n", blocks_total);
+ 		}
+@@ -826,11 +838,12 @@
+ 					    // because when calling write_block_file
+ 					    // we will create a new file to describe a continuous block (or buffer is full)
+ 					    // and never write to same file again
++#if 0
+ 					    torrent_start_offset(&torrent, block_id * block_size);
+ 					    torrent_end_length(&torrent, blocks_write * block_size);
+ 
+ 					    torrent_update(&torrent, write_buffer + blocks_written * block_size, blocks_write * block_size);
+-
++#endif
+ 					    if (opt.torrent_only == 1) {
+ 						w_size = blocks_write * block_size;
+ 					    } else {
+@@ -859,7 +872,9 @@
+ 
+ 		// finish SHA1 for torrent info
+ 		if (opt.blockfile == 1) {
++#if 0
+ 			torrent_final(&torrent);
++#endif
+ 		}
+ 
+ 		free(write_buffer);
+@@ -1047,8 +1062,9 @@
+ 
+ 		// SHA1 for torrent info
+ 		int tinfo = -1;
++#if 0
+ 		torrent_generator torrent;
+-
++#endif
+ 		buffer = (char*)malloc(blocks_in_buffer * block_size);
+ 		if (buffer == NULL) {
+ 			log_mesg(0, 1, 1, debug, "%s, %i, not enough memory\n", __func__, __LINE__);
+@@ -1061,7 +1077,9 @@
+ 			char torrent_name[PATH_MAX + 1] = {'\0'};
+ 			sprintf(torrent_name,"%s/torrent.info", target);
+ 			tinfo = open(torrent_name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
++#if 0
+ 			torrent_init(&torrent, tinfo);
++#endif
+ 			dprintf(tinfo, "block_size: %u\n", block_size);
+ 			dprintf(tinfo, "blocks_total: %llu\n", blocks_total);
+ 		}
+@@ -1103,11 +1121,12 @@
+ 				        // because when calling write_block_file
+ 				        // we will create a new file to describe a continuous block (or buffer is full)
+ 				        // and never write to same file again
++#if 0
+ 					torrent_start_offset(&torrent, copied * block_size);
+ 					torrent_end_length(&torrent, rescue_write_size);
+                                         
+ 					torrent_update(&torrent, buffer, rescue_write_size);
+-
++#endif
+ 					if (opt.torrent_only == 1) {
+ 						w_size = rescue_write_size;
+ 					} else {
+@@ -1130,11 +1149,12 @@
+ 			    // because when calling write_block_file
+ 			    // we will create a new file to describe a continuous block (or buffer is full)
+ 			    // and never write to same file again
++#if 0
+ 			    torrent_start_offset(&torrent, copied * block_size);
+ 			    torrent_end_length(&torrent, blocks_read * block_size);
+ 
+ 			    torrent_update(&torrent, buffer, blocks_read * block_size);
+-
++#endif
+ 			    if (opt.torrent_only == 1) {
+ 				    w_size = blocks_read * block_size;
+ 			    } else {
+@@ -1167,7 +1187,9 @@
+ 
+ 		// finish SHA1 for torrent info
+ 		if (opt.blockfile == 1) {
++#if 0
+ 			torrent_final(&torrent);
++#endif
+ 		}
+ 
+ 		free(buffer);
+diff -Naur partclone-0.3.20/src/torrent_helper.c partclone-0.3.20-patched/src/torrent_helper.c
+--- partclone-0.3.20/src/torrent_helper.c	2022-04-27 14:56:42.000000000 +0800
++++ partclone-0.3.20-patched/src/torrent_helper.c	2022-12-21 22:02:43.000000000 +0800
+@@ -11,6 +11,7 @@
+  * (at your option) any later version.
+  */
+ 
++#if 0
+ #include "torrent_helper.h"
+ 
+ void torrent_init(torrent_generator *torrent, int tinfo)
+@@ -122,3 +123,4 @@
+ {
+ 	dprintf(torrent->tinfo, "length: %032llx\n", length);
+ }
++#endif
+diff -Naur partclone-0.3.20/src/torrent_helper.h partclone-0.3.20-patched/src/torrent_helper.h
+--- partclone-0.3.20/src/torrent_helper.h	2022-04-27 14:56:42.000000000 +0800
++++ partclone-0.3.20-patched/src/torrent_helper.h	2022-12-21 22:02:43.000000000 +0800
+@@ -17,6 +17,7 @@
+  * https://github.com/tjjh89017/ezio utils/partclone_create_torrent.py
+  */
+ 
++#if 0
+ #include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -55,3 +56,4 @@
+ void torrent_start_offset(torrent_generator *torrent, unsigned long long offset);
+ // print length, end a block
+ void torrent_end_length(torrent_generator *torrent, unsigned long long length);
++#endif
+diff -Naur partclone-0.3.20/src/xfs/libxfs/linux.c partclone-0.3.20-patched/src/xfs/libxfs/linux.c
+--- partclone-0.3.20/src/xfs/libxfs/linux.c	2022-04-27 14:56:42.000000000 +0800
++++ partclone-0.3.20-patched/src/xfs/libxfs/linux.c	2022-12-21 22:11:18.000000000 +0800
+@@ -163,7 +163,7 @@
+ platform_findsizes(char *path, int fd, long long *sz, int *bsz)
+ {
+ 	struct stat	st;
+-	__uint64_t	size;
++	uint64_t	size;
+ 	int		error;
+ 
+ 	if (fstat(fd, &st) < 0) {
+diff -Naur partclone-0.3.20/src/xfs/libxfs/radix-tree.c partclone-0.3.20-patched/src/xfs/libxfs/radix-tree.c
+--- partclone-0.3.20/src/xfs/libxfs/radix-tree.c	2022-04-27 14:56:42.000000000 +0800
++++ partclone-0.3.20-patched/src/xfs/libxfs/radix-tree.c	2022-12-21 22:03:46.000000000 +0800
+@@ -66,21 +66,21 @@
+ static inline void tag_set(struct radix_tree_node *node, unsigned int tag,
+ 		int offset)
+ {
+-	*((__uint32_t *)node->tags[tag] + (offset >> 5)) |= (1 << (offset & 31));
++	*((uint32_t *)node->tags[tag] + (offset >> 5)) |= (1 << (offset & 31));
+ }
+ 
+ static inline void tag_clear(struct radix_tree_node *node, unsigned int tag,
+ 		int offset)
+ {
+-	__uint32_t 	*p = (__uint32_t*)node->tags[tag] + (offset >> 5);
+-	__uint32_t 	m = 1 << (offset & 31);
++	uint32_t 	*p = (uint32_t*)node->tags[tag] + (offset >> 5);
++	uint32_t 	m = 1 << (offset & 31);
+ 	*p &= ~m;
+ }
+ 
+ static inline int tag_get(struct radix_tree_node *node, unsigned int tag,
+ 		int offset)
+ {
+-	return 1 & (((const __uint32_t *)node->tags[tag])[offset >> 5] >> (offset & 31));
++	return 1 & (((const uint32_t *)node->tags[tag])[offset >> 5] >> (offset & 31));
+ }
+ 
+ /*

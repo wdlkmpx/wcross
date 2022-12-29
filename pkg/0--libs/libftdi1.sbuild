@@ -1,0 +1,31 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libftdi1
+pkgver=${libftdi1_ver}
+pkgdeps='libusb'
+TOOLCHAIN_FILE='usr/lib/libftdi1.a'
+ALPINE_PKGS='libftdi1-dev libftdi1-static'
+
+SRC_URL=${libftdi1_url}/${pkgname}-${pkgver}.tar.bz2
+
+# ====================================================
+
+
+build()
+{
+	opts="-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DEXAMPLES=OFF
+-DFTDI_EEPROM=OFF"
+	sed -i "/ftdi_eeprom/d" CMakeLists.txt # unneded binary, requires libconfuse
+	_cmake
+	make
+	make install
+
+	# remove installed shared libraries
+	rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/lib/libftdi1.so*
+}
+

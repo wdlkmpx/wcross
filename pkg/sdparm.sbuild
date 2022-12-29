@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/testing/sdparm/APKBUILD
+
+pkgname=sdparm
+pkgver=1.12
+pkgrel=0
+pkgdesc="SCSI device parameter modification tool"
+#makedepends="linux-headers"
+source="http://sg.danny.cz/sg/p/sdparm-$pkgver.tgz"
+INSTALLED_FILE='usr/bin/sdparm'
+
+
+build()
+{
+	opts='--prefix=/usr'
+	_configure
+	_make LDFLAGS=${GCC_STATIC}
+	standard_make_install strip
+    check_static_exe ${INSTALL_DIR}/${INSTALLED_FILE}
+}
+

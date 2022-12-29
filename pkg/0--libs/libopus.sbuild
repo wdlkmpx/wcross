@@ -1,0 +1,31 @@
+#!/bin/sh
+
+libopus_ver=1.3.1    #2019-04-12 http://downloads.xiph.org/releases/opus
+libopus_url=http://downloads.xiph.org/releases/opus/opus-${libopus_ver}.tar.gz	
+
+pkgname=libopus
+pkgver=${libopus_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libopus.a'
+ALPINE_PKGS='opus-dev'
+
+SRC_URL=${libopus_url}
+
+# ====================================================
+
+build()
+{
+	#export X86_SSE_CFLAGS=""
+	#export X86_SSE2_CFLAGS="" # uncomment to support ancient processors
+	export X86_SSE4_1_CFLAGS=""
+	export X86_AVX_CFLAGS=""
+	export ARM_NEON_INTR_CFLAGS=""
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-doc
+--disable-extra-programs
+--disable-dependency-tracking"
+	_configure
+	_make install
+}
+

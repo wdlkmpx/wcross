@@ -1,0 +1,93 @@
+#!/bin/sh
+
+#ALPINE
+# missing .a libs from Alpine pkg:
+# - alsa-lib.sbuild [alsa-lib-dev]
+# - libcpuid.sbuild [libcpuid-dev] (only in i686/x86_64)
+# - libiconv        [not in alpine]
+# - libmaa          [not in alpine]
+# - libpci.sbuild   [pciutils-dev]
+# - libburn.sbuild [libburn-dev] -- this needs compiling because the source code must be patched
+# - libcdio.sbuild [libcdio-dev]
+# - libcdio-paranoia.sbuild [libcdio-paranoia]
+# - libisofs.sbuild [libisofs-dev]
+# - libjte.sbuild [not in alpine]
+# - libvpx.sbuild [libvpx-dev]
+# - procps-ng.sbuild [procps-dev]
+
+# update when alpine 3.18 is released
+# - confuse.sbuild
+# - libdvdread.sbuild
+
+alsalib_ver=1.2.6.1
+# http://www.alsa-project.org/files/pub/lib/
+alsalib_url=http://www.alsa-project.org/files/pub/lib/alsa-lib-${alsalib_ver}.tar.bz2
+
+libcap_ver=1.2.66  # 2022-09-24
+# https://git.kernel.org/pub/scm/libs/libcap/libcap.git
+libcap_url=https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v${libcap_ver}.tar.gz
+
+libcpuid_ver=0.6.2 # 2022-11-12
+libcpuid_url=https://github.com/anrieff/libcpuid/releases/download/v${libcpuid_ver}
+
+libftdi1_ver=1.5
+# https://www.intra2net.com/en/developer/libftdi/download.php
+libftdi1_url=https://www.intra2net.com/en/developer/libftdi/download
+
+#!not up-to-date
+libgcrypt_ver=1.9.4 # 1.10.1
+# https://www.gnupg.org/ftp/gcrypt/libgcrypt
+libgcrypt_url=https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-${libgcrypt_ver}.tar.gz
+
+#!not up-to-date
+libgpgerror_ver=1.43 # 1.45
+# https://www.gnupg.org/ftp/gcrypt/libgpg-error
+libgpgerror_url=https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-${libgpgerror_ver}.tar.gz
+
+libiconv_ver=1.17 # 2022-05-15
+libiconv_url=https://ftp.gnu.org/pub/gnu/libiconv
+
+libpci_ver=3.9.0 #2022-11-20
+libpci_url=https://mj.ucw.cz/download/linux/pci
+
+libusb_ver=1.0.26 #2022-04-11
+libusb_url=https://github.com/libusb/libusb/releases/download/v${libusb_ver}
+
+# https://github.com/Mbed-TLS/mbedtls/releases
+mbedtls_ver=2.25.0
+mbedtls_url=https://github.com/ARMmbed/mbedtls/archive/refs/tags
+
+ncurses_ver=6.3 # 2021-11-08
+ncurses_url=https://ftp.gnu.org/pub/gnu/ncurses
+
+popt_ver=1.19 #2022-09-16
+popt_url=http://ftp.rpm.org/popt/releases/popt-1.x
+
+#!! version 4.0 is also available
+procps_ver=3.3.17 #2021-02-09
+procps_url=https://sourceforge.net/projects/procps-ng/files/Production
+
+# libuuid, libblkid, libfdisk, etc
+util_linux_ver=2.38.1 # 04-Aug-2022
+util_linux_ver2=$(echo $util_linux_ver | cut -f 1,2 -d '.')
+util_linux_url=https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v${util_linux_ver2}
+
+
+#multimedia:
+#
+# lame.sbuild
+# libburn.sbuild
+# libcddb.sbuild
+# libcdio-paranoia.sbuild
+# libcdio.sbuild
+# libdvdcss.sbuild
+# libdvdread.sbuild
+# libisofs.sbuild
+# libjte.sbuild
+# libogg.sbuild
+# libopus.sbuild
+# libvorbis.sbuild
+# libvpx.sbuild
+# libx264.sbuild
+# xvidcore.sbuild
+#

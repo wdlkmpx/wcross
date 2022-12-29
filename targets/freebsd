@@ -1,0 +1,46 @@
+#!/bin/sh
+
+SITE=${SITE_WCROSS}
+export SANITY_CHECK_FUNC=freebsd_ytomino_sanity
+#TARBALL_ARCH=x86_64
+
+#freebsd32=1
+
+if [ -n "$freebsd32" ] ; then
+    CC_TARBALL=i686-pc-freebsd11-gcc-8.4.0-cross.tar.xz
+    TARGET_TRIPLET=i686-pc-freebsd11
+else
+    CC_TARBALL=x86_64-pc-freebsd11-gcc-8.4.0-cross.tar.xz
+    TARGET_TRIPLET=x86_64-pc-freebsd11
+fi
+
+## `./x86_64-pc-freebsd11-gcc -print-prog-name=cc1` -v
+#ignoring nonexistent directory "/opt/ytomino/x86_64-pc-freebsd11/usr/local/include"
+#ignoring nonexistent directory "/opt/ytomino/x86_64-pc-freebsd11/usr/include"
+##include "..." search starts here:
+##include <...> search starts here:
+# /opt/ytomino/gcc-8.4.0/lib/gcc/x86_64-pc-freebsd11/8.4.0/include
+# /opt/ytomino/gcc-8.4.0/lib/gcc/x86_64-pc-freebsd11/8.4.0/include-fixed
+# /opt/ytomino/gcc-8.4.0/lib/gcc/x86_64-pc-freebsd11/8.4.0/../../../../x86_64-pc-freebsd11/include
+#End of search list.
+
+freebsd_ytomino_sanity()
+{
+  # make it find the proper include path
+  # gcc can find the proper program and libs by itself
+  if [ ! -e /opt/ytomino/gcc-8.4.0 ] ; then
+    # http://panathenaia.halfmoon.jp/toolchain/x86_64-linux-gnu
+    mkdir -p /opt/ytomino
+    ln -snfv ${XPATH} /opt/ytomino/gcc-8.4.0
+    # currently the compiler requires ibisl.so.19
+    if [ -e /usr/lib64/libisl.so ] && [ ! -e /usr/lib64/libisl.so.19 ] ; then
+        ln -sv libisl.so /usr/lib64/libisl.so.19 # this is slackware 15.0
+    elif [ -e /usr/lib/x86_64-linux-gnu/libisl.so ] && [ ! -e /usr/lib/x86_64-linux-gnu/libisl.so.19 ] ; then
+        ln -sv libisl.so /usr/lib/x86_64-linux-gnu/libisl.so.19 # .deb
+    elif [ -e /usr/lib/libmpfr.so ] ; then
+        ln -sv libisl.so /usr/lib/libisl.so.19 # unknown distro
+    fi
+  fi
+}
+
+export -f freebsd_ytomino_sanity

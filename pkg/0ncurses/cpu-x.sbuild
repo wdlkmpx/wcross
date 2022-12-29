@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://github.com/X0rg/CPU-X/releases
+
+pkgname=CPU-X
+pkgver=4.5.2
+pkgdesc="cpu-x"
+# requires execinfo.h from musl-compat-headers
+pkgdeps='ncursesw procps-ng libpci libcpuid'
+INSTALLED_FILE='usr/bin/cpu-x'
+SRC_URL=https://github.com/X0rg/CPU-X/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}/usr
+-DWITH_GETTEXT=OFF
+-DWITH_GTK=OFF
+-DWITH_LIBGLFW=OFF
+-DWITH_OPENCL=OFF
+-DWITH_VULKAN=OFF"
+	_cmake
+	make
+	make install
+
+	check_static_exe ${INSTALL_DIR}/${INSTALLED_FILE}
+	_strip ${INSTALL_DIR}/${INSTALLED_FILE}
+
+	rm -rfv ${INSTALL_DIR}/usr/lib \
+            ${INSTALL_DIR}/usr/libexec \
+            ${INSTALL_DIR}/usr/share
+}
+

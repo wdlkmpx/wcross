@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://sourceforge.net/projects/wdl/files/src
+
+pkgname=yasm
+pkgver=1.3_2022.12
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/bin/yasm'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+SRC_URL=https://sourceforge.net/projects/wdl/files/src/yasm-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+    #opts='--prefix=/usr --disable-nls --disable-python'
+    opts='--prefix=/usr'
+    _configure
+    _make #LDFLAGS=${GCC_STATIC}
+
+    check_static_exe yasm
+    _strip yasm ytasm vsyasm
+
+    install_system_app_if_missing yasm -h
+    standard_make_install
+
+    cp -a ${INSTALL_DIR}/usr/include/* ${TOOLCHAIN_ROOT}/include
+    cp -a ${INSTALL_DIR}/usr/lib/* ${TOOLCHAIN_ROOT}/lib
+
+    rm -rf ${INSTALL_DIR}/usr/include
+    rm -rf ${INSTALL_DIR}/usr/lib
+    rm -rf ${INSTALL_DIR}/usr/share
+}
+

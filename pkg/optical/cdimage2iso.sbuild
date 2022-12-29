@@ -1,0 +1,24 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/cdimage2iso/tags
+
+pkgver=0.8
+pkgname=cdimage2iso
+pkgdesc=""
+pkgdeps='zlib'
+INSTALLED_FILE='usr/bin/cdimage2iso'
+SRC_URL=https://github.com/wdlkmpx/cdimage2iso/archive/refs/tags/${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="--prefix=/usr"
+    _configure
+
+    # avoid compiling .exe files many times...
+    _make DESTDIR=${INSTALL_DIR} install-strip
+
+    check_static_exe
+}
+

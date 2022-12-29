@@ -1,0 +1,37 @@
+#!/bin/sh
+# https://gitlab.alpinelinux.org/alpine/aports/-/blob/master/main/popt/APKBUILD
+# https://github.com/rpm-software-management/popt/releases
+
+pkgname=popt
+pkgver=1.19
+pkgrel=0
+pkgdesc="commandline option parser"
+source="http://ftp.rpm.org/popt/releases/popt-${pkgver%.*}.x/popt-$pkgver.tar.gz"
+sha512sums="
+5d1b6a15337e4cd5991817c1957f97fc4ed98659870017c08f26f754e34add31d639d55ee77ca31f29bb631c0b53368c1893bd96cf76422d257f7997a11f6466  popt-1.19.tar.gz
+"
+TOOLCHAIN_FILE='lib/libpopt.a'
+
+# ====================================================
+
+build()
+{
+    if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+        # dont process test and po dirs
+        sed -i 's%po tests%%g' Makefile.in
+    fi
+
+    opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --sysconfdir=/etc
+--disable-shared --enable-static
+--disable-nls"
+    _configure
+    _make
+}
+
+check() {
+    _make check
+}
+
+package() {
+    _make install
+}

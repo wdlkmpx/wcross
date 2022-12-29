@@ -1,0 +1,44 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=procps
+pkgver=${procps_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='lib/libprocps.a'
+
+SRC_URL=${procps_url}/procps-ng-${pkgver}.tar.xz
+SRC_FILE=${pkgname}-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	## https://github.com/maxmind/libmaxminddb/pull/152
+	## undefined reference to `rpl_malloc'
+	#sed -i '/AC_FUNC_MALLOC/d' configure.ac
+	#rm -f configure
+
+	sed -i 's%.*stdio.*%#include "nls.h"%' proc/escape.h
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-kill
+--disable-pidof
+--disable-dependency-tracking
+--without-libintl-prefix
+--without-ncurses
+--disable-nls
+--without-systemd
+--without-elogind
+--disable-examples
+"
+	_configure
+
+	# fix config.h instead of configure.ac
+	# #define malloc rpl_malloc
+	sed -i -e '/rpl_malloc/d' -e '/rpl_realloc/d' config.h
+
+	#_make
+	_make install-libLTLIBRARIES install-data
+}
+

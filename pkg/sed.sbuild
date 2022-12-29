@@ -1,0 +1,26 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/sed
+
+pkgname=sed
+pkgver=4.9 #2022-11-06
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='bin/sed'
+
+SRC_URL=http://ftp.gnu.org/gnu/sed/sed-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+    sed -i 's%po \. gnulib-tests%.%' Makefile.in
+
+	opts="--prefix=/usr --bindir=/bin --disable-nls
+--disable-i18n
+--without-selinux
+--enable-cross-guesses=conservative"
+	_configure
+	_make LDFLAGS=${GCC_STATIC} DESTDIR=${INSTALL_DIR} install-strip
+	check_static_exe
+}
+

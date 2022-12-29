@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://download.flashrom.org/releases
+
+pkgver=v1.2
+pkgname=flashrom
+pkgdesc=""
+INSTALLED_FILE='usr/sbin/flashrom'
+pkgdeps='zlib libpci libusb libftdi1'
+#       libftdi1 deps: libusb ##confuse
+#       libpci   deps: zlib
+SRC_URL=https://download.flashrom.org/releases/flashrom-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	_make WARNERROR=no CONFIG_STATIC=yes LIBS_BASE=${TOOLCHAIN_ROOT} PREFIX=/usr
+
+	check_static_exe ${pkgname}
+	_strip ${pkgname}
+	standard_make_install
+}
+

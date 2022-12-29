@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://download-mirror.savannah.gnu.org/releases/lzip/clzip
+
+pkgname=lzip
+pkgver=1.13  #29-Jan-2022
+pkgrel=0
+pkgdesc="Lzip is a lossless data compressor"
+INSTALLED_FILE='usr/bin/lzip'
+SRC_URL=https://download-mirror.savannah.gnu.org/releases/lzip/clzip/clzip-${pkgver}.tar.gz
+
+
+build()
+{
+	opts="--prefix=/usr LDFLAGS=${GCC_STATIC} $CROSS_MK_PARAMS"
+	_configure
+
+    # clzip's configure doesn't recognize *FLAGS env variables
+    _wmake
+
+	if [ -f clzip.exe ] ; then
+		cp -v clzip.exe lzip.exe
+	else
+		cp -v clzip lzip
+	fi
+}
+
+check() {
+    _wmake check
+}
+
+package() {
+    install_exe lzip ${pkgdir}/usr/bin
+    _dist_binary lzip
+}

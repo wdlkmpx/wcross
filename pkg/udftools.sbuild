@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://github.com/pali/udftools/releases
+
+pkgver=2.3
+pkgname=udftools
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/sbin/mkudffs'
+
+SRC_URL=https://github.com/pali/udftools/releases/download/${pkgver}/udftools-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC} DESTDIR=${INSTALL_DIR} install-strip
+	check_static_exe
+}
+

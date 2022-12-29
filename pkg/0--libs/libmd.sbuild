@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libmd/APKBUILD
+# https://libbsd.freedesktop.org/releases
+
+pkgname=libmd
+pkgver=1.0.4
+pkgrel=0
+pkgdesc="Message Digest functions from BSD systems"
+source="https://archive.hadrons.org/software/libmd/libmd-$pkgver.tar.xz"
+TOOLCHAIN_FILE='usr/lib/libmd.a'
+ALPINE_PKGS='libmd-dev'
+
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+}
+
+check() {
+	_make LDFLAGS=${GCC_ALL_STATIC} check
+}
+
+package() {
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+}
+

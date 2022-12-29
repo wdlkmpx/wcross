@@ -1,0 +1,64 @@
+#!/bin/sh
+
+pkgname=wimlib
+pkgver=1.13.6
+pkgdeps='libattr libfuse libxml2 ntfs-3g'
+
+if [ "$BUILD_PACKAGE" = "wimlib" ] ; then
+    INSTALLED_FILE='usr/bin/wimlib-imagex'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libwim.a'
+fi
+ALPINE_PKGS='libwim-dev' # also includes the .a lib
+
+SRC_URL=https://wimlib.net/downloads/wimlib-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-shared --disable-static
+--without-libcrypto"
+    _configure
+    _make LDFLAGS=${GCC_ALL_STATIC}
+
+    check_static_exe wimlib-imagex
+    _strip wimlib-imagex
+
+    _make install
+
+    # need the apps
+    # the only binary is wimlib-imagex
+    # and mkwinpeimg is a script
+    wsapps='mkwinpeimg
+wimappend
+wimapply
+wimcapture
+wimdelete
+wimdir
+wimexport
+wimextract
+wiminfo
+wimjoin
+wimlib-imagex
+wimmount
+wimmountrw
+wimoptimize
+wimsplit
+wimunmount
+wimupdate
+wimverify'
+
+    mkdir -p ${INSTALL_DIR}/usr/bin
+    mv -f ${TOOLCHAIN_INSTALL_PREFIX}/bin/mkwinpeimg ${INSTALL_DIR}/usr/bin
+    mv -f ${TOOLCHAIN_INSTALL_PREFIX}/bin/wim* ${INSTALL_DIR}/usr/bin
+
+    # install script creates a lot of hard links
+    cd ${INSTALL_DIR}/usr/bin
+    for i in $(ls wim* | grep -v imagex)
+    do
+        ln -snfv wimlib-imagex $i
+    done
+}
+

@@ -1,0 +1,1154 @@
+#!/bin/bash
+#
+# Public Domain
+#
+# functions library
+# this is sourced by pkg/<app>.sbuild
+#
+# build.sh exports some important variables that are used everywhere
+# However all exported variables can be empty except $MWD, $XPATH and $BUILD_TYPE
+#
+# - MWD        (main directory)
+# - OS_ARCH    (running system arch)
+# - BUILD_TYPE (cross / chroot / system)
+# - WCROSS_TARGET_OS    (linux / windows / freebsd / netbsd / windows)
+# - WCROSS_TARGET_POSIX (yes / [empty])
+#
+#   if /WBUILDS exists... then it's a chroot and BUILD_TYPE=chroot
+#
+# - XPATH    (cross compiler root dir)
+#  (scripts should use TOOLCHAIN_ROOT which is set in this script)
+#   - TOOLCHAIN_ROOT (target toolchain rootdir) [exported]
+#   - INSTALL_DIR    (pkg install dir)
+#   - GCC_SYSROOT = --sysroot=<proper_dir>     [exported]
+#   - GCC_INCLUDE = -I=<proper_dir>            [exported]
+#   - GCC_LIB     = -L=<proper_dir>            [exported]
+#   - W_SYSROOT   = $TOOLCHAIN_ROOT            [exported]
+#   - TOOLCHAIN_INSTALL_PREFIX (where to install libs) [not exported]
+#                              (this works for all BUILD_TYPEs)
+#
+# BUILD_TYPE=cross
+# - TARGET_TRIPLET (ie: i686-linux-musl)
+# - XCOMPILER      (ie: i686-linux-musl)
+# - WCROSS_PREFIX  (ie: i686-linux-musl-)
+#
+
+if [ -z "${MWD}" ] ; then
+	echo "Use build.sh"
+	exit 1
+fi
+
+if ! [ "$BUILD_CONF" ] ; then
+	BUILD_CONF=${MWD}/build.conf
+fi
+if ! [ -f ${BUILD_CONF} ] ; then
+	echo "build.conf not found"
+	exit 1
+fi
+. ${BUILD_CONF}
+
+W_FUNC_IS_SOURCED=1
+
+#=====================================================================
+
+if [ "$OVERRIDE_ARCH" ] ; then
+	ARCH=${OVERRIDE_ARCH}
+fi
+
+if [ "$STATIC_LINK" = "yes" ] ; then
+    export GCC_STATIC="-static"
+    export GCC_ALL_STATIC="-all-static"
+fi
+WMK_CFLAGS="$CFLAGS"
+WMK_CXXFLAGS="$CXXFLAGS"
+WMK_LDFLAGS="$(echo $LDFLAGS $GCC_STATIC)"
+
+if [ -d /WBUILDS ] ; then
+    BUILD_TYPE='chroot'
+    TOOLCHAIN_ROOT=/
+    TOOLCHAIN_INSTALL_PREFIX=/usr
+    GCC_SYSROOT=''
+    GCC_INCLUDE=''
+    GCC_LIB=''
+    unset W_SYSROOT
+else
+    PATH=${XPATH}/bin:${PATH}
+    #--
+    if [ -e "${XPATH}/${TARGET_TRIPLET}" ] ; then
+        # /bin /lib are reserved for the cross compiler apps/libs
+        export TOOLCHAIN_ROOT=${XPATH}/${TARGET_TRIPLET}
+        TOOLCHAIN_INSTALL_PREFIX=${TOOLCHAIN_ROOT}
+        # the /lib dir doesn't need fixing...
+        if [ -n "$FORCE_TOOLCHAIN_BIN" ] ; then
+            # make weird stuff works, specially for non-C apps / breaks some packages (busybox)
+            PATH=${TOOLCHAIN_ROOT}/bin:$PATH
+        fi
+    else
+        export TOOLCHAIN_ROOT=${XPATH}
+        TOOLCHAIN_INSTALL_PREFIX=${XPATH}/usr
+    fi
+    #--
+    export GCC_INCLUDE="-I${TOOLCHAIN_ROOT}/include" # CFLAGS
+    export GCC_LIB="-L${TOOLCHAIN_ROOT}/lib"         # LDFLAGS
+    #--
+    if [ "$BUILD_TYPE" != "system" ] && [ -z "$CROSS_USE_SYSTEM_LIBS" ] ; then
+        # cross compilation without using system libs
+        export W_SYSROOT=${TOOLCHAIN_ROOT}
+        export GCC_SYSROOT="--sysroot=${W_SYSROOT}" # CFLAGS
+        WMK_CFLAGS="$CFLAGS $GCC_SYSROOT $GCC_INCLUDE"
+        WMK_CXXFLAGS="$CXXFLAGS $GCC_SYSROOT $GCC_INCLUDE"
+        WMK_LDFLAGS="$LDFLAGS $GCC_STATIC $GCC_LIB"
+    fi
+    #echo $BUILD_TYPE ; exit # debug
+fi
+
+
+if [ "$BUILD_TYPE" = "chroot" ] ; then
+    # only BUILD_TYPE='chroot' installs to the
+    # system directory (inside the chroot of course)
+    export PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
+    export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
+    export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/share/pkgconfig:/lib/pkgconfig
+elif [ "$BUILD_TYPE" = "system" ] ; then
+    export PATH=${TOOLCHAIN_ROOT}/bin:$PATH
+    export LD_LIBRARY_PATH=${TOOLCHAIN_ROOT}/lib:${LD_LIBRARY_PATH}
+    export PKG_CONFIG_PATH=${TOOLCHAIN_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
+else # cross
+    # - PATH: _configure _make _install
+    # - should not include extra $LD_LIBRARY_PATH 's
+    # - ${TOOLCHAIN_ROOT}/usr is a symlink
+    export PATH
+    # ${XPATH}/lib should only contain libs need to to run the
+    # toolchain binaries and to add stuff to the compiler itself
+    export LD_LIBRARY_PATH=${XPATH}/lib:${LD_LIBRARY_PATH}
+    export PKG_CONFIG_PATH=${TOOLCHAIN_ROOT}/lib/pkgconfig
+    export PKG_CONFIG_LIBDIR=${TOOLCHAIN_ROOT}/lib
+    #export PKG_CONFIG_SYSROOT_DIR=${TOOLCHAIN_ROOT}
+    #export PKG_CONFIG_DEBUG_SPEW=1
+#    if [ -n "$FORCE_TOOLCHAIN_BIN" ] ; then
+        #-- these variables make busybox & e2fsprogs fail
+        #     (require system gcc to compile apps)
+        # not really needed, unless something's wrong with the cross compiler (cc1)
+        #     (miscompiled, can't find it's prefix path)
+        #  run `./xxx-xxx-gcc -print-prog-name=cc1` -v
+        #    to determine the include paths, and create a symlink if needed
+#       export CPATH=${TOOLCHAIN_ROOT}/include
+#       export C_INCLUDE_PATH=${TOOLCHAIN_ROOT}/include
+#       export OBJC_INCLUDE_PATH=${TOOLCHAIN_ROOT}/include
+#    fi
+    ## ddrescue:
+    ##   ...i686-buildroot-linux-musl/include/c++/11.2.0/cstdlib:75:15: fatal error: stdlib.h: No such file or directory
+    ##   75 | #include_next <stdlib.h>
+    ## (somehow these exported variable mess things up)
+    #export CPLUS_INCLUDE_PATH=${TOOLCHAIN_ROOT}/include
+fi
+
+WWLD=${WCROSS_PREFIX}ld
+#case "$TARGET_TRIPLET" in *linux*)
+#if [ -z "$WWLD" ] ; then
+#  if [ -e ${XPATH}/bin/${WCROSS_PREFIX}ld.mold ] ; then
+#    WWLD=${WCROSS_PREFIX}ld.mold
+#  elif [ -e ${XPATH}/bin/${WCROSS_PREFIX}ld.gold ] ; then
+#    WWLD=${WCROSS_PREFIX}ld.gold
+#  else
+#    WWLD=${WCROSS_PREFIX}ld
+#  fi
+#  #echo $WWLD ; sleep 10 # debug
+#fi ;;
+#esac
+
+# don't add LDFLAGS / CFLAGS / CXXFLAGS to this list (see _make)
+CROSS_MK_PARAMS="CC=${WCROSS_PREFIX}gcc
+CCX=${WCROSS_PREFIX}g++
+CXX=${WCROSS_PREFIX}g++
+AR=${WCROSS_PREFIX}ar
+AS=${WCROSS_PREFIX}as
+LD=${WWLD}
+RANLIB=${WCROSS_PREFIX}ranlib
+NM=${WCROSS_PREFIX}nm
+STRIP=${WCROSS_PREFIX}strip
+OC=${WCROSS_PREFIX}objcopy
+OBJCOPY=${WCROSS_PREFIX}objcopy
+OBJDUMP=${WCROSS_PREFIX}objdump
+READELF=${WCROSS_PREFIX}readelf"
+
+#----------------------
+eval "$CROSS_MK_PARAMS"
+#----------------------
+
+#=====================================================================
+
+function exit_error()
+{
+	echo -n > $MWD/.fatal
+	if [ "$1" ] ; then
+		echo "$@"
+	fi
+	echo " //// ERROR IN: $0"
+    if [ -n "$PKG_SCRIPT" ] ; then
+        echo " //// PKG_SCRIPT: ${PKG_SCRIPT}"
+    fi
+	exit 1
+}
+
+function exit_ok() {
+    [ "$1" ] && echo "$@"
+    exit 0
+}
+
+
+function retrieve() # <URL> [outfile]
+{
+    if [ -z "$1" ] ; then
+        exit_error "retrieve() called without arguments"
+    fi
+    LAST_RETRIEVED_FILE= # flag var for the calling script to determine if a file was actually downloaded...
+    local URL=${1}         # full url
+    local OUTNAME=${1##*/} # basename
+    if [ -n "$2" ] ; then
+        OUTNAME=${2}
+    fi
+    #--
+    xoutfilex="${MWD}/0sources/${OUTNAME}"
+    ZZDL=1
+    if [ -f "$xoutfilex" ] ; then
+        ZZDL=0
+        if [ ! -s "$xoutfilex" ] ; then
+            ZZDL=1 # empty file , must redownload
+            rm -fv "$xoutfilex"
+        fi
+    fi
+    #--
+    if [ $ZZDL -eq 0 ] ; then
+        if [ "$DLD_ONLY" = "yes" ] ; then
+            echo "Already downloaded ${OUTNAME}"
+        fi
+        return 0
+    fi
+    #--
+    echo "Downloading ${URL}"
+    wget -O ${xoutfilex} -c --no-check-certificate "${URL}"
+    if [ $? -ne 0 ] ; then
+        rm -fv ${xoutfilex}
+        exit_error
+    fi
+    LAST_RETRIEVED_FILE=${OUTNAME}
+}
+
+
+function build_sanity_check()
+{
+    if [ -z "$pkgname" ] ; then
+        exit_error "\$pkgname has not been set, this must be fixed"
+    fi
+    if [ -n "$LINUX_ONLY" ] && [ "$WCROSS_TARGET_OS" != "linux" ] ; then
+        exit_ok "This pkg ($pkgname) only compiles with a Linux compiler"
+    fi
+    if [ -n "$WINDOWS_ONLY" ]  && [ "$WCROSS_TARGET_OS" != "windows" ] ; then
+        exit_ok "This pkg ($pkgname) only compiles with a MinGW cross compiler"
+    fi
+    if [ -n "$POSIX_ONLY" ] && [ "$WCROSS_TARGET_POSIX" != "yes" ] ; then
+        exit_ok "This pkg ($pkgname) only compiles with compilers for POSIX systems"
+    fi
+    if [ "$BUILD_TYPE" = "chroot" ] && [ -n "$CHROOT_ALREADY_INSTALLED" ] ; then
+        # using chroot with the latest apps, no need to compile some apps
+        echo "CHROOT: $pkgname should already be installed, skipping.."
+        exit 0
+    fi
+    if [ -n "$REQUIRED_APPS" ] ; then
+        abort_if_app_is_missing ${REQUIRED_APPS}
+    fi
+    # set $INSTALL_DIR
+    A=$ARCH
+    [ -z "$pkgrel" ] && pkgrel=0
+    if [ "$STATIC_LINK" = "yes" ] ; then
+        case $ARCH in i?86) A=x86 ;; esac
+        INSTALL_DIR=${MWD}/out_static/00_${ARCH}/pkg/${pkgname}-${pkgver}-r${pkgrel}.${A}_wstatic
+    else
+        INSTALL_DIR=${MWD}/out_static/00_${ARCH}/pkg/${pkgname}-${pkgver}-r${pkgrel}.${A}_w
+    fi
+}
+
+
+function extract()
+{
+	if [ "$INSTALLED_FILE" ] || [ "$TOOLCHAIN_FILE" ] ; then
+		check_installed_file
+	fi
+	tfile="$@"
+	if ! [ -f "${MWD}/0sources/$tfile" ] ; then
+		exit_error "No such file: $tfile"
+	fi
+	if ! tar -xf ${MWD}/0sources/${tfile} ; then
+		rm -fv ${MWD}/0sources/${tfile};
+		exit_error
+	fi
+	echo -e "\n+============================================================================="
+	echo -e "\nbuilding $tfile"
+}
+
+
+function abort_if_file_not_found()
+{
+	if ! [ "$1" ] ; then
+		[ -n "${INSTALL_DIR}" ] && rm -rf ${INSTALL_DIR}
+		exit_error "abort_if_file_not_found: no filename has been provided"
+	fi
+	for onefile in "$@" ; do
+		if [ ! -f "$onefile" ] ; then
+			[ -n "${INSTALL_DIR}" ] && rm -rf ${INSTALL_DIR}
+			echo "$onefile: file does no exist!"
+			exit_error
+		fi
+	done
+}
+
+
+function abort_if_app_is_missing()
+{
+	for oneapp in "$@" ; do
+		if ! command -v "$oneapp" >/dev/null ; then
+			exit_error "$oneapp is missing"
+		fi
+	done
+}
+
+#---------------------------------------------------------
+
+function hl_echo()
+{
+	if ! [ "$(echo $1)" ] ; then
+		return
+	fi
+	echo
+	echo '------------------------------'
+	echo "$@"
+	echo '------------------------------'
+	echo
+}
+
+
+#=====================================================================
+#               this is inside the source dir
+#=====================================================================
+
+function _cmake()
+{
+	rm -rf build
+	mkdir build
+	cd build
+
+    CMAKE_OPTS="$opts $W_OPTS"
+    if [ "$STATIC_LINK" = "yes" ] ; then
+        CMAKE_OPTS="${CMAKE_OPTS}
+-DCMAKE_C_FLAGS=${GCC_STATIC}
+-DCMAKE_EXE_LINKER_FLAGS=${GCC_STATIC}
+-DCMAKE_FIND_LIBRARY_SUFFIXES=.a"
+    fi
+
+	if [ -n "$W_SYSROOT" ] ; then
+		#-- https://stackoverflow.com/questions/67936256/how-to-cross-compile-with-cmake
+		CMAKE_OPTS="${CMAKE_OPTS} -DCMAKE_TOOLCHAIN_FILE=my_toolchain.cmake"
+        #--
+        case ${TARGET_TRIPLET} in
+            *mingw*) WCROSS_SYSNAME='Windows' ;;
+            *)       WCROSS_SYSNAME='Linux'   ;; # default
+        esac
+		#--
+		cat > my_toolchain.cmake <<EOF
+set(CMAKE_SYSTEM_NAME ${WCROSS_SYSNAME})
+set(CMAKE_C_COMPILER ${WCROSS_PREFIX}gcc)
+set(CMAKE_ASM_COMPILER ${WCROSS_PREFIX}gcc)
+set(CMAKE_CXX_COMPILER ${WCROSS_PREFIX}g++)
+set(CMAKE_C_COMPILER_WORKS 1)
+set(CMAKE_CXX_COMPILER_WORKS 1)
+set(CMAKE_SYSROOT ${W_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH ${W_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+EOF
+	fi
+	echo "# cmake ${CMAKE_OPTS} ../"
+	cmake ${CMAKE_OPTS} ../
+	if [ $? -ne 0 ] ; then
+		exit_error
+	fi
+	#cmake -LH .. &> zzcmake.all.opts
+	unset opts W_OPTS
+}
+
+
+function _configure()
+{
+	# - special configure for autotools and compatible scripts (i.e: wconf)
+	# - but also works with random configure scripts
+	#   with special params specified in the .sbuild file (i.e: zlib, clzip)
+	if [ -n "$W_CONFIGURE" ] ; then
+		${W_CONFIGURE} # function provided by ...
+		return
+	fi
+	unset host
+	export FORCE_UNSAFE_CONFIGURE=1
+	# Make sure configure exists
+	if [ ! -f configure ] &&  [ -f autogen.sh ] ; then
+		echo "*** Running autogen.sh"
+		if ! sh ./autogen.sh ; then
+			exit_error
+		fi
+	fi
+	if ! [ -f configure ] ; then
+		echo " --- configure script not found"
+		echo "PWD: $(pwd)"
+		return
+	fi
+    if [ "$W_OPTS" = "help" ] ; then
+        ./configure --help # W_OPTS is an env var
+        exit 0
+    fi
+    CONF_OPTS="$opts $W_OPTS" #opts is set in the calling script
+	#-- try to speep up some tests...
+	fn_export_autoconf_vars
+	#--
+	echo "PATH: $PATH"
+	if [ -n "${XCOMPILER}" ] ; then
+		# autotools and compatible configure scripts
+		# --build=xxx + --host=yyy = cross compilation mode
+		#      autotools will not run any test that require execution
+		if grep -q -m1 '\-\-host=' configure ; then
+			CONF_OPTS="$CONF_OPTS --host=${XCOMPILER} --build=$(gcc -dumpmachine)"
+		fi
+	fi
+	#--
+	if [ -n "$DONT_OVERRIDE_FLAGS" ] ; then
+		# ffmpeg requires empty CFLAGS & LDFLAGS
+		unset CFLAGS CXXFLAGS LDFLAGS DONT_OVERRIDE_FLAGS
+	else
+		# https://stackoverflow.com/questions/39936341/how-do-i-use-a-sysroot-with-autoconf
+		# - want static binaries / provide correct paths to include and lib dirs
+		# - change CFLAGS & LDFLAGS only if they are empty
+		if [ -z "${CFLAGS}" ] ; then
+			export CFLAGS="${WMK_CFLAGS}"
+			echo "# export CFLAGS=${WMK_CFLAGS}"
+		fi
+		if [ -z "${CXXFLAGS}" ] ; then
+			export CXXFLAGS="${WMK_CXXFLAGS}"
+			echo "# export CXXFLAGS=${WMK_CXXFLAGS}"
+		fi
+		if [ -z "${LDFLAGS}" ] ; then
+			export LDFLAGS="${WMK_LDFLAGS}"
+			echo "# export LDFLAGS=${LDFLAGS}"
+		fi
+	fi
+	#-
+    if [ "$STATIC_LINK" = "yes" ] ; then
+        # wconf configure recognizes this var
+        export W_PKG_CONFIG_STATIC=1
+        if [ -f configure.project ] && [ -z "$W_00_LOCAL_BUILD" ] ; then
+            sed -i 's/ -g / /' configure.project
+        fi
+    fi
+	# run script
+	hl_echo "./configure ${CONF_OPTS} $@"
+	./configure ${CONF_OPTS} $@
+	if [ $? -ne 0 ] ; then
+		env | grep -E '_PATH|_CONFIG'
+		echo
+		exit_error
+	fi
+	unset opts W_OPTS CFLAGS CXXFLAGS LDFLAGS DONT_OVERRIDE_FLAGS
+}
+
+
+function _make()
+{
+	# - special make for projects without autotools and cmake
+	# - works with autotools though
+	# - don't use after _cmake
+	# - just use 'make' if you want to avoid this complex logic
+	#echo "*** $(pwd)"
+	echo "PATH: $PATH"
+	if [ -z "$WMAKE" ] ; then
+		WMAKE='make'
+	fi
+	# handle paramaters
+	if [ -f configure ] || [ -e CMakeFiles ] || [ -f CMakeLists.txt ] ; then
+		# don't add CROSS_MK_PARAMS if configure script is present
+		wmkparams="${MKFLG} $@"
+	else
+		# no build system, try to make the thing compile ok
+		wmkparams="${MKFLG} ${CROSS_MK_PARAMS} $@"
+		# must pass LDFLAGS, CFLAGS and CXXFLAGS as env variables (env=xxx make ...)
+		#   otherwise it's not possible to change or edit them
+		#   if they are passed as make PARAM=xxx
+		export CFLAGS="${WMK_CFLAGS}"
+		export CXXFLAGS="${WMK_CXXFLAGS}"
+		export LDFLAGS="${WMK_LDFLAGS}"
+		echo "export CFLAGS=${WMK_CFLAGS}"
+		echo "export CXXFLAGS=${WMK_CXXFLAGS}"
+		echo "export LDFLAGS=${WMK_LDFLAGS}"
+	fi
+	#--
+	hl_echo "${WMAKE} ${wmkparams}"
+	#--
+    if [ "$WMAKE" = "bmake" ] ; then
+        # bmake needs $MAKESYSPATH if using something like '.include <bsd.prog.mk>'
+        if [ -z "$MAKESYSPATH" ] && [ -d "/usr/share/mk" ] ; then
+            export MAKESYSPATH=/usr/share/mk
+        fi
+        # for some reason LDFLAGS may be ignored.. this is <bmake-specific>
+        WMAKE="$WMAKE LDSTATIC=$GCC_STATIC"
+    fi
+    #--
+    if [ -n "$MAKE_NO_STDERR" ] ; then
+        # some apps might want to silence stderr if it gets incredibly long
+        ${WMAKE} ${wmkparams} 2>/dev/null
+    else
+        ${WMAKE} ${wmkparams}
+    fi
+	#--
+	if [ $? -ne 0 ] ; then
+		env | grep -E '_PATH|_CONFIG'
+		echo
+		exit_error
+	fi
+	unset CFLAGS CXXFLAGS LDFLAGS WMAKE
+	return 0
+}
+
+
+function _wmake() # +args
+{   # for projects with defective configure scripts and makefiles
+    # force $*FLAGS and $CROSS_MK_PARAMS
+    if [ -z "$WMAKE" ] ; then
+        WMAKE='make'
+    fi
+    hl_echo "${WMAKE} ${MKFLG} LDFLAGS="$WMK_LDFLAGS" CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CXXFLAGS" ${CROSS_MK_PARAMS} "$@""
+    ${WMAKE} ${MKFLG} LDFLAGS="$WMK_LDFLAGS" CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CXXFLAGS" \
+        ${CROSS_MK_PARAMS} "$@"
+    if [ $? -ne 0 ] ; then
+        exit_error
+    fi
+    unset CFLAGS CXXFLAGS LDFLAGS WMAKE
+}
+
+
+function _mk_configure () # mk-configure
+{
+    ## create compiler specs file, otherwise the builds fail
+    GCC_VER=$(${CC} -dumpversion)
+    if [ ! -f "$HOME/.mkcmake/mkc_imp.cc_gcc-${GCC_VER}.mk" ] ; then
+        CC=${CC} CXX=${CXX} mkc_compiler_settings
+    fi
+    ## mk-configure require special params/variables
+    ## beware of variable collision
+    # PREFIX=/usr
+    WMK_OPTS="$opts $W_OPTS SYSCONFDIR=/etc MKINFO=no MKMAN=no MKHTML=no
+MKSHLIB=no MKSTATICLIB=yes
+INSTALL=install"
+    if [ -n "${W_SYSROOT}" ] ; then
+        WMK_OPTS="${WMK_OPTS}
+SYSROOT=${TOOLCHAIN_ROOT}
+TOOLCHAIN_DIR=${XPATH}/bin
+TOOLCHAIN_PREFIX=${TARGET_TRIPLET}-"
+    fi
+    CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CFLAGS" LDFLAGS="$WMK_LDFLAGS" \
+      mkcmake ${WMK_OPTS}
+    unset opts W_OPTS
+}
+
+function _mk_configure_install () # $1: DESTDIR
+{
+    if [ -n "$1" ] && [ "$BUILD_TYPE" != "chroot" ] ; then
+        CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CFLAGS" LDFLAGS="$WMK_LDFLAGS" \
+          mkcmake install DESTDIR="$1" ${WMK_OPTS}
+    else
+        CFLAGS="$WMK_CFLAGS" CXXFLAGS="$WMK_CFLAGS" LDFLAGS="$WMK_LDFLAGS" \
+          mkcmake install ${WMK_OPTS}
+    fi
+}
+
+
+function _meson_build ()
+{
+    if command -v meson &>/dev/null ; then
+        meson='meson'
+    else
+        meson_ver=0.64.1
+        if [ ! -f ${MWD}/0sources/meson-${meson_ver}.pyz ] ; then
+            retrieve https://sourceforge.net/projects/wdl/files/pkg/meson-${meson_ver}.pyz
+        fi
+        abort_if_app_is_missing python3
+        meson="python3 ${MWD}/0sources/meson-${meson_ver}.pyz"
+    fi
+    #--
+    case $W_OPTS in help|configure)
+        meson $W_OPTS
+        exit 0 ;;
+    esac
+    #-
+    MESON_OPTS="$opts ${W_OPTS}"
+    MESON_CROSS=""
+    #-
+    #if [ "$STATIC_LINK" = "yes" ] ; then
+    if [ -n "$W_SYSROOT" ] ; then
+        MESON_CROSS="--cross-file toolchain.txt"
+        case ${TARGET_TRIPLET} in
+            *-linux-*) host_sys='linux' ;;
+            *mingw*)   host_sys='windows' ;;
+        esac
+        host_cpu=$(echo $TARGET_TRIPLET | cut -f 1 -d '-')
+        case $host_cpu in
+            i?86) host_cpu='x86' ;;
+        esac
+        cat > toolchain.txt <<EOF
+[binaries]
+c = '${CC}'
+cpp = '${CXX}'
+ar = '${AR}'
+strip = '${STRIP}'
+as = '${AS}'
+ld = '${LD}'
+ranlib = '${RANLIB}'
+#cmake = '.../bin/cmake'
+#fortran = '.../i686-buildroot-linux-gnu-gfortran'
+#pkgconfig = '.../pkgconf'
+#exe_wrapper = 'wine64'
+
+#[host_machine]
+#system = '${host_sys}'
+#cpu_family = '${host_cpu}'
+#cpu = ''
+#endian = 'little'
+
+[built-in options]
+c_args = ['${GCC_SYSROOT}', '${GCC_INCLUDE}']
+c_link_args = ['${GCC_STATIC}', '${GCC_SYSROOT}', '${GCC_LIB}']
+cpp_args = ['${GCC_SYSROOT}', '${GCC_INCLUDE}']
+cpp_link_args = ['${GCC_STATIC}', '${GCC_SYSROOT}', '${GCC_LIB}']
+#fortran_args = ['-Os', '-g0']
+#fortran_link_args = []
+#wrap_mode = 'nodownload'
+#cmake_prefix_path = '.../sysroot/usr/lib/cmake'
+
+[properties]
+sys_root = '${W_SYSROOT}'
+pkg_config_libdir = '${TOOLCHAIN_ROOT}/lib'
+pkg_config_static = 'true'
+#needs_exe_wrapper = true
+#  enable meson build to pass a toolchain file to cmake
+#cmake_toolchain_file = '.../toolchainfile.cmake'
+#cmake_defaults = false
+EOF
+    fi
+    echo "${meson} setup ${MESON_CROSS} ${MESON_OPTS} . builddir"
+    ${meson} setup ${MESON_CROSS} ${MESON_OPTS} . builddir || exit_error
+    cd builddir
+    #echo "meson configure ${MESON_OPTS}"
+    #${meson} configure ${MESON_OPTS}  || exit_error #-C builddir
+    ${meson} compile || exit_error #-C builddir ##ninja
+    unset opts W_OPTS
+}
+
+function _meson_install () # $1: DESTDIR
+{
+    if [ -z "$meson" ] ; then
+        exit_error "\$meson has not been set"
+    fi
+    if [ -n "$1" ] && [ "$BUILD_TYPE" != "chroot" ] ; then
+        DESTDIR="$1" ${meson} install --no-rebuild #-C builddir
+    else
+        ${meson} install --no-rebuild #-C builddir
+    fi
+}
+
+
+function _strip() # bin1 bin2 bin3 ...
+{
+    if [ "$ALLOW_STRIP_BIN" != "yes" ] ; then
+        return
+    fi
+    for onebinary in $@
+    do
+        local file="$onebinary"
+        if [ -f "$file" ] ; then
+            echo "${STRIP} $file"
+            ${STRIP} "$file"
+            continue
+        fi
+        case ${TARGET_TRIPLET} in *mingw*)
+            if [ -f "${file}.exe" ] ; then
+                echo "${STRIP} ${file}.exe"
+                ${STRIP} "${file}.exe"
+            fi ;;
+        esac
+    done
+}
+
+
+function check_static_exe() # app
+{
+    local xappx=$1
+    if [ -z "$1" ] && [ -n "$INSTALLED_FILE" ] ; then
+        # empty param, check INSTALLED_FILE
+        local xappx=${INSTALL_DIR}/${INSTALLED_FILE}
+    fi
+    if [ -z "${xappx}" ] ; then
+        exit_error "(check_static_exe) No param/\$INSTALLED_FILE has been specified"
+    fi
+	case ${TARGET_TRIPLET} in *mingw*)
+		[ -f "${xappx}.exe" ] && return 0
+		abort_if_file_not_found ${xappx}
+		return 0 ;;
+	esac
+	abort_if_file_not_found ${xappx}
+	if [ "$STATIC_LINK" != "yes" ] ; then
+		return 0 # not required to be static
+	fi
+	# `file` is not reliable to detect if a binary is completely static
+	if ( ${READELF} --program-headers ${xappx} | grep -E 'INTERP|program interpreter' ) ; then
+		[ -n "${INSTALL_DIR}" ] && rm -rf ${INSTALL_DIR}
+		exit_error "${xappx} is not static..!"
+	fi
+}
+
+
+function _install()
+{
+	local file="$1" dest="$2"
+	if [ -L "$file" ] ; then # symlink
+		cp -av --remove-destination "$file" "$dest"
+		return
+	fi
+	einfo=$(file $file)
+	case "$einfo" in *ELF*) # linux executable
+		check_static_exe ${file} # aborts if false
+		_strip $file
+		chmod +x "$file"
+		;;
+	esac
+	cp -av --remove-destination "$file" "$dest"
+}
+
+
+function install_exe()
+{
+    zzexe=${1}
+    case ${TARGET_TRIPLET} in *mingw*)
+        [ -f ${1}.exe ] && zzexe=${1}.exe ;;
+    esac
+    check_static_exe ${zzexe}
+    _strip ${zzexe}
+    if [ ! -d "$2" ] ; then
+        mkdir -p "$2"
+    fi
+    install -v -m 755 ${zzexe} "$2"
+}
+
+
+function set_install_dir()
+{
+    if [ -z "$INSTALL_DIR" ] ; then
+        exit_error "\$INSTALL_DIR has not been set, it's set by build_sanity_check()"
+    fi
+}
+
+
+function standard_make_install() # [strip]
+{
+    set_install_dir
+    [ -d "${INSTALL_DIR}" ] && rm -rf ${INSTALL_DIR}
+    mkdir -p ${INSTALL_DIR}
+    if [ "$1" = "strip" ] ; then
+        # autotools and compatible configure/Makefiles have a install-strip target
+        _make DESTDIR=${INSTALL_DIR} install-strip
+    else
+        _make DESTDIR=${INSTALL_DIR} install
+    fi
+}
+
+
+function check_installed_file() # [file] (otherwise use ${INSTALLED_FILE})
+{
+	if [ -n "$FORCE_BUILD" ] ; then #-f
+		return 0
+	fi
+	local xxfile
+	local xxtype=INSTALLED
+	set_install_dir
+	xxfile2=
+	xxfile3=
+	#--
+	if [ "$INSTALLED_FILE" ] ; then
+		xxfile=${INSTALL_DIR}/${INSTALLED_FILE}
+		xxfile2=${INSTALL_DIR}/usr/${INSTALLED_FILE}
+		xxfile3=${INSTALL_DIR}/${INSTALLED_FILE}.exe
+	elif [ "$TOOLCHAIN_FILE" ] ; then
+		xxfile=${TOOLCHAIN_ROOT}/${TOOLCHAIN_FILE}
+		xxfile2=${TOOLCHAIN_ROOT}/usr/${TOOLCHAIN_FILE}
+		xxfile3=${TOOLCHAIN_ROOT}/${INSTALLED_FILE}.exe
+		xxtype=TOOLCHAIN
+	elif [ "$1" ] ; then
+		xxfile=${INSTALL_DIR}/${1}
+	else
+		exit_error "check_installed_file: no file to check, empty INSTALLED_FILE or TOOLCHAIN_FILE or \$1"
+	fi
+	#--
+	# WTH: sometimes -e "$xxfile" doesn't work, but it works without quotes. WTH
+	if [ -e "$xxfile" ] || [ -e $xxfile ] ; then
+		exit_ok "${xxtype}: $xxfile"
+	fi
+	if [ -e "$xxfile2" ] || [ -e $xxfile2 ] ; then
+		exit_ok "${xxtype}: $xxfile2"
+	fi
+	case ${TARGET_TRIPLET} in *mingw*)
+		if [ -e "$xxfile3" ] || [ -e $xxfile3 ] ; then
+			exit_ok "${xxtype}: $xxfile3"
+		fi
+	esac
+}
+
+
+function standard_cleanup() # [arg]: don't add to packages.txt
+{
+	if [ -z "${SRC_DIR}" ] ; then
+		exit_error "(standard_cleanup) \${SRC_DIR} is empty"
+	fi
+	if [ -d ${MWD}/out_static/zz_build_tmp/${SRC_DIR} ] ; then
+		echo "rm -rf ${MWD}/out_static/zz_build_tmp/${SRC_DIR}"
+		rm -rf ${MWD}/out_static/zz_build_tmp/${SRC_DIR}
+		echo "--- finished with $pkgname"
+	fi
+}
+
+
+function move_from_pkg_to_toolchain() # relative path to INSTALL_DIR
+{
+	set_install_dir
+	cp -av --remove-destination ${INSTALL_DIR}/${1} ${TOOLCHAIN_ROOT}
+	rm -rf ${INSTALL_DIR}/${1}
+}
+
+
+function strip_all_binaries() # [dir] otherwise current dir
+{
+	# applies to current dir, currently only ELF binaries
+	currentdirX=$PWD
+	if [ "$1" ] ; then
+		currentdirX=$1
+	fi
+	for exe in `find "$currentdirX" -type f -executable`
+	do
+		info=$(file $exe)
+		case $info in
+			*ELF*) _strip $exe
+		esac
+	done
+
+}
+
+
+function fix_pkgconfig_for_toolchain()
+{
+	# $1=[dir] otherwise current dir
+	# $1=[file] only [file]
+	unset xpcfilesx
+	currentdirX=$PWD
+	if [ -z "$W_SYSROOT" ] ; then
+		# don't need to change directories
+		# paths are correct (/usr)
+		return 0
+	fi
+	if [ "$1" ] ; then
+		if [ -d "$1" ] ; then
+			currentdirX=$1
+		elif [ -f "$1" ] ; then
+			xpcfilesx="$1"
+		else
+			exit_error "$1 is not a file or a directory"
+		fi
+	fi
+
+	if [ -z "$xpcfilesx" ] ; then
+		xpcfilesx="`find "$currentdirX" -type f -name '*.pc'` `find . -type f -name '*.la'`"
+	fi
+
+	for pc in ${xpcfilesx}
+	do
+		echo "fix_pkgconfig_for_toolchain: $pc"
+		sed -i \
+			-e "s%/usr/local/%${TOOLCHAIN_ROOT}/%" -e "s%=/usr/local/%=${TOOLCHAIN_ROOT}%" \
+			-e "s%/usr/%${TOOLCHAIN_ROOT}/%" -e "s%=/usr%=${TOOLCHAIN_ROOT}%" \
+			${pc}
+	done
+}
+
+
+function _dist_binary() # exe1 exe2
+{
+	# copy files to ${MWD}/xxx-${pkgver}-${ARCH}[.exe]
+	local destdir=${MWD}/out_static/dist_binary
+	local basename="" zzfile=""
+	mkdir -p ${destdir}
+	XARCH=$ARCH
+    case $ARCH in
+        i686*) [ "$STATIC_LINK" = "yes" ] && XARCH="x86" ;;
+        x86_64*) XARCH="x86_64" ;;
+    esac
+	for onebinary in ${@}
+	do
+		basename=$(basename $onebinary .exe)
+		zzfile=$onebinary
+		case ${TARGET_TRIPLET} in *mingw*)
+			[ -f ${onebinary}.exe ] && zzfile=${onebinary}.exe ;;
+		esac
+		case ${TARGET_TRIPLET} in
+			*mingw*) name=${basename}-${pkgver}-${XARCH}.exe  ;;
+			*freebsd*|*openbsd*|*netbsd*) name=${basename}-${pkgver}-${XARCH}  ;;
+			*) name=${basename}-${pkgver}-linux-${XARCH} ;;
+		esac
+		cp -av --remove-destination ${zzfile} ${destdir}/${name}
+	done
+	if [ $(id -u) -eq 0 ] ; then
+		chown nobody ${destdir}/${name}
+	fi
+    case ${TARGET_TRIPLET} in
+        *mingw*) ( cd ${destdir} ; zip ${name}.zip ${name} ) ;;
+        *) lzip -k ${destdir}/${name} ;;
+    esac
+}
+
+
+function fn_deps() # $1 = action
+{
+	if [ -n "$pkgname" ] && [ -n "$pkgdeps" ] ; then
+		# make sure packages doesn't depend on itself...
+		for onedep in $pkgdeps
+		do
+			if [ "$pkgname" = "$onedep" ] ; then
+				exit_error "\$pkgname = \$pkgdeps, fix pkgdeps= to not include '$pkgname'"
+			fi
+		done
+	fi
+	#--
+	for dep in $pkgdeps
+	do
+		fn_script=''
+		if [ -f ${MWD}/pkg/0--libs/${dep}.sbuild ] ; then
+			fn_script=pkg/0--libs/${dep}.sbuild
+		elif [ -f ${MWD}/pkg/${dep}.sbuild ] ; then
+			fn_script=/pkg/${dep}.sbuild
+		fi
+		#--
+		if [ -n "${fn_script}" ] ; then
+			echo "# sh ${fn_script} ${1}"
+			sh ${MWD}/pkg/00_pkg_build ${fn_script} ${1}
+		else
+			echo "# ${dep}_${1} ()"
+			${dep}_${1}
+		fi
+		if [ $? -ne 0 ] ; then
+			exit_error
+		fi
+	done
+}
+
+
+function source_lib_versions()
+{
+	. ${MWD}/pkg/0--libs/0versions
+}
+
+
+function extract_pkg_and_cd() #requires $SRC_FILE & $SRC_DIR
+{
+	if [ -z "$SRC_FILE" ] ; then
+		exit_error '$SRC_FILE is empty -- fix the script'
+	fi
+	if [ -z "$SRC_DIR" ] ; then
+		exit_error '$SRC_DIR is empty -- fix the script'
+	fi
+    #--
+	# cd to temp build dir
+	if ! [ -d ${MWD}/out_static/zz_build_tmp ] ; then
+		mkdir -p ${MWD}/out_static/zz_build_tmp
+	fi
+	cd ${MWD}/out_static/zz_build_tmp
+    #--
+    if [ -n "$SRC_DIR_NEED_TO_CREATE" ] ; then
+        # tarball contains everything in the root dir
+        mkdir -p ${SRC_DIR}
+        cd ${SRC_DIR}
+        extract ${SRC_FILE}
+    else
+        extract ${SRC_FILE}
+        cd ${SRC_DIR}
+        if [ $? -ne 0 ] ; then
+            exit_error "(extract_pkg_and_cd): wrong dir? you should set SRC_DIR= in $PKG_SCRIPT"
+        fi
+    fi
+    unset SRC_DIR_NEED_TO_CREATE
+}
+
+
+function update_config_sub () # update_config_guess
+{
+    config_sub=${MWD}/0sources/config.sub
+    config_guess=${MWD}/0sources/config.guess
+    if ! [ -f "$config_sub" ] ; then
+        retrieve https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.sub
+    fi
+    if ! [ -f "$config_guess" ] ; then
+        retrieve https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess
+    fi
+    find . -maxdepth 2 -name config.sub | \
+        while read f ; do cp -fv ${config_sub} ${f} ; done
+    find . -maxdepth 2 -name config.guess | \
+        while read f ; do cp -fv ${config_guess} ${f} ; done
+}
+
+
+function fn_export_autoconf_vars()
+{
+	if [ -n "$ac_cv_header_stdc" ] ; then
+		return
+	fi
+	export ac_cv_header_stdc=yes
+	export ac_cv_func_malloc_0_nonnull=yes
+	export ac_cv_func_realloc_0_nonnull=yes
+	export ac_cv_func_timegm=yes
+	export ac_cv_prog_cc_g=yes
+	export am_cv_prog_cc_c_o=yes
+	export ac_cv_prog_cxx_g=yess
+	export ac_cv_c_const=yes
+	export ac_cv_c_compiler_gnu=yes
+	export lt_cv_prog_compiler_c_o=yes
+	#export lt_cv_prog_gnu_ld=yes
+	export ac_cv_lib_z_compressBound=yes
+	export ac_cv_lib_bz2_BZ2_bzCompressInit=yes
+	export ac_cv_lib_jte_libjte_set_checksum_algorithm=yes
+	#export ac_cv_lib_m_cos=yes
+	#export ac_cv_lib_rt_clock_gettime=yes
+	export ac_cv_lib_acl_adcl_to_text=yes
+	export ac_cv_lib_attr_getxattr=yes
+}
+
+
+function patch_package()
+{
+    if [ -n "$1" ] ; then
+        pkg2patch="$1"
+    else
+        pkg2patch="$pkgname"
+    fi
+    if [ ! -d ${MWD}/pkg/wpatches/${pkg2patch} ] ; then
+        return 0
+    fi
+    for onepatch in $(ls ${MWD}/pkg/wpatches/${pkg2patch}/*.patch)
+    do
+        echo "# patch -p1 -i ${onepatch}"
+        patch -p1 -i ${onepatch}
+    done
+}
+
+
+function update_toolchain_root()
+{
+    # may have sourced func when the toolchain was not ready, maybe it is now
+    # have to fix $TOOLCHAIN_ROOT
+    if [ -d ${XPATH}/${TARGET_TRIPLET} ] ; then
+        export TOOLCHAIN_ROOT=${XPATH}/${TARGET_TRIPLET}
+        if [ -d ${TOOLCHAIN_ROOT}/usr ] ; then
+            TOOLCHAIN_INSTALL_PREFIX=${TOOLCHAIN_ROOT}/usr
+        fi
+    fi
+}
+
+
+function install_system_app_if_missing()
+{
+    local app="$1"
+    shift
+    local params="$@"
+    case ${TARGET_TRIPLET} in # only linux cross compiles
+        *-linux-*) ok=1;;
+        *) return 0 ;;
+    esac
+    if command -v ${app} >/dev/null ; then
+        # app already there
+        return 0;
+    fi
+    if [ -z "$params" ] ; then
+        # no params, use $CPU_ARCH
+        if [ "$OS_ARCH" = "$CPU_ARCH" ] ; then
+            install -v -m 755 ./${app} /usr/local/bin
+        fi
+    else
+        # params, test and copy if return value = 0
+        if ./${app} ${params} 1>/dev/null 2>/dev/null ; then
+            install -v -m 755 ./${app} /usr/local/bin
+        fi
+    fi
+}
+
+
+apkbuild_check_sum()
+{
+    # checksums that include files - APKBUILD compat
+    # this is different from arch, void, etc
+    # the *sums vars have been set by manually or by a sourced script
+    if [ "$sha512sums" ] ; then
+        wsums="$sha512sums"
+        wchksum='sha512sum -c'
+    elif [ "$sha256sums" ] ; then
+        wsums="$sha256sums"
+        wchksum='sha256sum -c'
+    elif [ "$md5sums" ] ; then
+        wsums="$md5sums"
+        wchksum='md5sum -c'
+    else
+        return 0  #no checksums, return silently
+    fi
+    xcurdirx=$(pwd)
+    cd ${MWD}/0sources
+    #             remove empty lines
+    echo "$wsums" | sed -e '/^$/d' | ${wchksum}
+    if [ $? -ne 0 ] ; then
+        exit_error
+    fi
+    cd ${xcurdirx}
+    #unset sha512sums sha256sums md5sums
+}
+
+
+check_sum() # $1:type $2:sum $3:file
+{
+    local sumtype=$1
+    local sum=$2
+    local file=$3
+    if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+        exit_error "check_sum(): missing param(s)"
+    fi
+    if [ "$sumtype" = "sha512" ] ; then
+        wchksum='sha512sum -c'
+    elif [ "$sumtype" = "sha256" ] ; then
+        wchksum='sha256sum -c'
+    elif [ "$sumtype" = "sha1" ] ; then
+        wchksum='sha1sum -c'
+    elif [ "$sumtype" = "md5" ] ; then
+        wchksum='md5sum -c'
+    else
+        # shouldn't exit_error, but
+        exit_error "check_sum(): invalid checksum type"
+    fi
+    xcurdirx=$(pwd)
+    cd ${MWD}/0sources
+    echo "# echo \"$sum  $file\" | ${wchksum}"
+    echo "$sum  $file" | ${wchksum}
+    if [ $? -ne 0 ] ; then
+        exit_error
+    fi
+    cd ${xcurdirx}
+}
+
+### END ###

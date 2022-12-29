@@ -1,0 +1,39 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libburn
+pkgver=1.5.4
+pkgdeps=''
+INSTALLED_FILE='usr/bin/cdrskin'
+
+if [ "$BUILD_PACKAGE" = "cdrskin" ] ; then
+    INSTALLED_FILE='usr/bin/cdrskin'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libburn.a'
+fi
+#ALPINE_PKGS='libburn-dev' # doesn't include libburn.a (only libburn.so)
+# and the source code needs patching anyway
+
+SRC_URL=http://files.libburnia-project.org/releases/libburn-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	patch -p1 < ${PKG_SCRIPT_DIR}/libburn-cdio.patch
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	check_static_exe cdrskin/cdrskin
+	_strip cdrskin/cdrskin
+
+	_make install
+
+	mkdir -p ${INSTALL_DIR}/usr/bin
+	mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/cdrskin ${INSTALL_DIR}/usr/bin
+}
+

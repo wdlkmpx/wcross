@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/cabextract/APKBUILD
+# https://www.cabextract.org.uk
+
+pkgname=cabextract
+pkgver=1.9.1
+pkgrel=0
+pkgdesc="Tool for extracting Microsoft cabinet files"
+#makedepends="libmspack"
+source="https://www.cabextract.org.uk/cabextract-$pkgver.tar.gz"
+sha512sums="c354a4b20a222b40813f01baf8311c9a76611da427f9f44e977a3fd09508e24a18b486e3eef889a9debdca459f1b0c28d5d25429ccd555d3a2e4ff92d91cec14  cabextract-1.9.1.tar.gz"
+INSTALLED_FILE='usr/bin/cabextract'
+
+
+build()
+{
+	# mingw: local getopt.h triggers warnings, need to use the system getopt
+	sed -i 's%"getopt.h"%<getopt.h>%' src/cabextract.c
+	rm -f getopt.h
+
+	opts='--prefix=/usr'
+	_configure
+
+	# cabextract.c:(.text+0x7df): undefined reference to `rpl_fnmatch'
+	sed -i '/rpl_fnmatch/d' config.h
+
+	_make
+	install_exe ${pkgname} ${INSTALL_DIR}/usr/bin
+	_dist_binary ${pkgname}
+}
+

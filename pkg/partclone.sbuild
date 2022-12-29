@@ -1,0 +1,47 @@
+#!/bin/sh
+
+pkgver=0.3.20
+pkgname=partclone
+pkgdesc=""
+pkgdeps='util-linux ncursesw e2fsprogs ntfs-3g'
+INSTALLED_FILE='usr/sbin/partclone.dd'
+
+SRC_URL=https://github.com/Thomas-Tsai/partclone/archive/refs/tags/${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	if [ ! -f configure ] ; then
+		sh autogen
+	fi
+
+	patch -p1 < ${PKG_SCRIPT_DIR}/partclone.patch
+
+	export ac_cv_lib_ext2fs_ext2fs_initialize=yes
+	# --enable-xfs doesn't compile with gcc11
+	# --enable-ncursesw header mismatch apparently, /usr/include
+
+	opts="--prefix=/usr --enable-static --disable-nls
+--enable-fat
+--enable-exfat
+--enable-ntfs
+--enable-minix
+--enable-extfs
+--enable-f2fs
+--enable-hfsp
+--enable-btrfs
+--disable-ncursesw
+--enable-xfs
+"
+	_configure
+
+	sed -i 's%-lcrypto%%g' src/Makefile
+	sed -i '/<mcheck/d' src/main.c
+	# only one make command otherwise the apps are compiled twice or more
+	_make DESTDIR=${INSTALL_DIR} install-strip
+
+	check_static_exe ${INSTALL_DIR}/${INSTALLED_FILE}
+}
+

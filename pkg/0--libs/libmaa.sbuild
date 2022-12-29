@@ -1,0 +1,21 @@
+#!/bin/sh
+# this is only required by dictd
+
+pkgver=1.4.7
+pkgname=libmaa
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libmaa.a'
+#ALPINE_PKGS='' # no alpine pkg
+
+SRC_URL=https://sourceforge.net/projects/dict/files/libmaa/libmaa-${pkgver}/libmaa-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+    opts="PREFIX=${TOOLCHAIN_ROOT}"
+    _mk_configure
+    abort_if_file_not_found maa/libmaa.a
+    _mk_configure_install #${TOOLCHAIN_ROOT}
+}
+

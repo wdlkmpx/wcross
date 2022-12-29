@@ -1,0 +1,170 @@
+#!/bin/bash
+# - main script to compile apps/libs
+# - pkg.sbuild files are sourced
+# - called by build.sh, param is pkg.sbuild (path relative to $MWD)
+#
+# <param1>: PKG_SCRIPT
+# [param2]: action      [download or build] --optional--
+#
+
+if [ -z "$MWD" ] || [ -z "$XPATH" ] ; then
+    echo "ERROR: \$MWD has not been set"
+    exit 1
+fi
+. ${MWD}/func || exit 1
+
+# ====================================================
+
+unset pkgname pkgver pkgrel pkgdesc source makedepends pkgdir
+unset pkgdeps INSTALLED_FILE TOOLCHAIN_FILE INSTALL_DIR
+
+build() {
+    exit_error "build() function must be provided by \$PKG_SCRIPT"
+}
+
+check() {
+    echo "" # dummy
+}
+
+package() {
+    printf "" # dummy
+}
+
+default_prepare() {
+    printf "" # dummy
+}
+
+prepare() {
+    printf "" # dummy
+}
+
+# ====================================================
+
+if [ "$1" ] ; then
+    PKG_SCRIPT=${MWD}/${1}
+    if [ -e "${PKG_SCRIPT}" ] ; then
+        if [ -L "${PKG_SCRIPT}" ] ; then
+            # may need some files from the script directory, so must get the real path
+            # and use dirname on that path, keep filename and everything else
+            PKG_SCRIPT_REAL=$(realpath "${PKG_SCRIPT}")
+            PKG_SCRIPT_DIR=${PKG_SCRIPT_REAL%/*}   #$(dirname ${PKG_SCRIPT})
+        else
+            PKG_SCRIPT_DIR=${PKG_SCRIPT%/*}   #$(dirname ${PKG_SCRIPT})
+        fi
+        PKG_SCRIPT_FILE=${PKG_SCRIPT##*/} #$(basename ${PKG_SCRIPT})
+        . "${PKG_SCRIPT}"
+    else
+        exit_error "$0: ${PKG_SCRIPT} doesn't exist"
+    fi
+else
+    exit_error "$0: need param (pkg.sbuild)"
+fi
+
+
+if [ -z "$SRC_URL" ] ; then
+    if [ -n "$source" ] ; then
+        SRC_URL="${source}" # compatible with APKBUILD (alpine)
+    else
+        exit_error "\$SRC_URL has not been set"
+    fi
+fi
+
+case "$source" in
+    # APKBUILD
+    #   SRC_FILE               SRC_URL
+    #   UASM-${pkgver}.tar.gz::https://github.com/Terraspace/UASM/archive/refs/tags/UASM-${pkgver}.tar.gz
+    *::*)
+        SRC_URL=${source##*::}
+        SRC_FILE=${source%::*}
+        ;;
+esac
+
+if [ -n "$makedepends" ] ; then
+    pkgdeps="$makedepends"
+fi
+if [ -n "$depends_dev" ] ; then
+    pkgdeps="$depends_dev"
+fi
+case ${pkgdeps} in
+    *-dev) pkgdeps=${pkgdeps%-dev}
+esac
+
+if [ -z "$SRC_FILE" ] ; then
+    # assume $SRC_FILE is the basename of the url
+    SRC_FILE=${SRC_URL##*/}    # basename
+fi
+
+if [ -z "$SRC_DIR" ] ; then
+    # - assume $SRC_DIR is the $SRC_FILE without tar* extension
+    # - this is true for packages with traditional naming conventions
+    # - other packages must specify the real SRC_DIR
+    SRC_DIR=${SRC_FILE%.tar.*} # remove trailing .tar.*
+    SRC_DIR=${SRC_DIR%.t[gx]z} # remove trailing .tgz .txz
+fi
+
+# ====================================================
+
+build_pkg()
+{
+    ## prepare, build, test, package [everything]
+    build_sanity_check
+    pkgdir=${INSTALL_DIR} # APKBUILD (alpine)
+    fn_deps build
+    apkbuild_check_sum # comment out if not testing already downloaded packages
+    extract_pkg_and_cd
+    #----
+    prepare #dummy or provided by the sourced script
+    #----
+    build   #provided by the sourced script
+    #----
+    if [ "$WCROSS_TARGET_OS" = "linux" ] && [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+        check   #dummy or provided by the sourced script
+        if [ $? -ne 0 ] ; then
+            exit_error
+        fi
+    fi
+    #----
+    package #dummy or provided by the sourced script
+    #----
+    standard_cleanup
+}
+
+
+download_src()
+{
+    fn_deps download
+    if [ "$BUILD_TYPE" = "chroot" ] && [ -n "$ALPINE_PKGS" ] ; then
+        # chroot has special rules, downloads with package manager
+        build_sanity_check # !!
+        check_installed_file
+        apk add --allow-untrusted ${ALPINE_PKGS}
+        return
+    fi
+    if [ -n "$pkgsource" ] ; then
+        for oneurl in ${pkgsource}
+        do
+            retrieve ${pkgsource//|/ } # url|file -> url file
+        done
+    else
+        # only do this if $pkgsource is not set (or empty)
+        retrieve ${SRC_URL} ${SRC_FILE}
+    fi
+    # $LAST_RETRIEVED_FILE is set if retrieve() actually downloaded something
+    if [ -z "$LAST_RETRIEVED_FILE" ] ; then
+        return 0 #empty, nothing has been downloaded
+    fi
+    apkbuild_check_sum
+}
+
+# ====================================================
+
+case $2 in
+    download) download_src ; exit $? ;;
+    build)    build_pkg    ; exit $? ;;
+esac
+
+download_src
+if [ "$DLD_ONLY" = 'yes' ] ; then
+    exit
+fi
+build_pkg

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+source_lib_versions
+
+libxml2_ver=2.9.14
+#libxml2_ver=2.10.3
+libxml2_url=https://download.gnome.org/sources/libxml2/2.9/libxml2-${libxml2_ver}.tar.xz
+
+pkgname=libxml2
+pkgver=${libxml2_ver}
+pkgdeps='zlib xz'
+TOOLCHAIN_FILE='usr/lib/libxml2.a'
+ALPINE_PKGS='libxml2-dev libxml2-static'
+
+SRC_URL=${libxml2_url}
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--with-minimal
+--with-zlib
+--with-lzma
+--without-python"
+	_configure
+
+	sed -i 's%doc example fuzz xstc%%' Makefile
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+
+	rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/xmlcatalog
+	rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/xmllint
+}
+

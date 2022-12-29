@@ -1,0 +1,58 @@
+#!/bin/sh
+
+pkgname=unrar
+pkgver=6.2.3
+pkgdesc=""
+pkgdeps=
+PROJECT_TYPE='C++'
+
+if [ "$BUILD_PACKAGE" = "unrar" ] ; then
+    INSTALLED_FILE='usr/bin/unrar'
+    unrar_target="unrar"
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libunrar.a'
+    unrar_target="lib"
+fi
+
+SRC_URL=https://www.rarlab.com/rar/unrarsrc-${pkgver}.tar.gz
+SRC_DIR=${pkgname}
+
+# ====================================================
+
+build()
+{
+    #patch_package #${pkgname}
+    patch -p1 < ${PKG_SCRIPT_DIR}/unrar.patch
+
+    # - use the build system flags
+    # - don't peform strip, we'll do that later
+    # - don't remove files unless make clean is specified..
+    # - don't create shared lib
+    sed -i \
+        -e 's%/usr/local%/usr%' \
+        -e 's%CXXFLAGS=%CXXFLAGS+=%' \
+        -e 's%LDFLAGS=%LDFLAGS+=%' \
+        -e '/STRIP/d' \
+        -e 's%	clean%%' \
+        -e '/ -shared /d' \
+        makefile
+
+    case "$TARGET_TRIPLET" in
+        *mingw*)
+            sed -i -e 's%-Wno-logical-op-parentheses%%' -e 's%-DRAR_SMP%%' makefile
+            LIBS='-lshlwapi -lpowrprof -lwbemuuid' _make ${unrar_target} OS=Windows_NT
+            ;;
+        *) _make ${unrar_target} ;;
+    esac
+
+    if [ "$unrar_target" = "unrar" ] ; then
+        install_exe unrar ${INSTALL_DIR}/usr/bin
+        _dist_binary unrar
+    else # lib
+        install -m 644 libunrar.a ${TOOLCHAIN_INSTALL_PREFIX}/lib
+        mkdir -p ${TOOLCHAIN_INSTALL_PREFIX}/include/unrar
+        install -m 644 dll.hpp ${TOOLCHAIN_INSTALL_PREFIX}/include/unrar
+    fi
+}
+

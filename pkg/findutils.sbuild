@@ -1,0 +1,22 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/findutils
+
+pkgname=findutils
+pkgver=4.8.0
+pkgdesc=""
+pkgdeps=
+INSTALLED_FILE='usr/bin/find'
+SRC_URL=http://ftp.gnu.org/gnu/findutils/findutils-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	opts='--prefix=/usr --disable-nls --without-selinux'
+	_configure
+	_make LDFLAGS=${GCC_STATIC}
+
+	install_exe find/find   ${INSTALL_DIR}/usr/bin
+	install_exe xargs/xargs ${INSTALL_DIR}/usr/bin
+}
+

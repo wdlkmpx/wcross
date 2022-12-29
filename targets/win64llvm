@@ -1,0 +1,5 @@
+TARBALL_URL=${msvcrt_url}
+TARBALL_ARCH=x86_64
+TARGET_TRIPLET=x86_64-w64-mingw32
+# always enforce static link so that exe files don't depend on mingw libs
+STATIC_LINK=yes

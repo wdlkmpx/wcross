@@ -1,0 +1,26 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=alsa-lib
+pkgver=${alsalib_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libasound.a'
+
+SRC_URL=${alsalib_url}
+
+# ====================================================
+
+build()
+{
+	case "$TARGET_TRIPLET" in *mingw*)
+		return 0 ;;
+	esac
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--without-libdl"
+	_configure
+	_make
+	_make install
+}
+

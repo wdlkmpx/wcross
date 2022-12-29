@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://github.com/PCRE2Project/pcre2/releases
+
+pkgver=10.42
+pkgname=pcre2
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libpcre2-posix.a' # libpcre2-8.a
+ALPINE_PKGS='pcre2-dev libedit-static'
+
+SRC_URL=https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${pkgver}/pcre2-${pkgver}.tar.bz2
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-nls
+--enable-pcre2-16
+--enable-pcre2-32
+--enable-jit"
+	_configure
+	_make install-binSCRIPTS install-libLTLIBRARIES \
+        install-includeHEADERS install-nodist_includeHEADERS \
+        install-pkgconfigDATA #LDFLAGS=${GCC_ALL_STATIC}
+}
+

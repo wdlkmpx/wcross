@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://ftp.gnu.org/pub/gnu/nano
+
+pkgname=nano
+pkgver=7.1 # 2022-12-14
+pkgdesc="nano text editor"
+INSTALLED_FILE='usr/bin/nano'
+pkgdeps='ncursesw'
+
+SRC_URL=https://ftp.gnu.org/pub/gnu/nano/nano-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	EXE='src/nano'
+	opts="--prefix=/usr --sysconfdir=/etc " #--enable-tiny --enable-color --enable-nanorc --enable-utf8"
+	_configure
+	_make
+
+	check_static_exe ${EXE}
+	_strip ${EXE}
+
+	standard_make_install
+	echo 'include "/usr/share/nano/*.nanorc"' > nanorc
+	mkdir -p ${INSTALL_DIR}/etc
+	mkdir -p ${INSTALL_DIR}/bin
+	install nanorc ${INSTALL_DIR}/etc
+	ln -sv /usr/bin/nano ${INSTALL_DIR}/bin/nano
+}
+

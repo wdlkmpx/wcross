@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://www.einval.com/~steve/software/JTE/download
+
+pkgname=jigit
+pkgver=1.22 # 2019-11-21
+pkgdeps='zlib libbz2'
+TOOLCHAIN_FILE='usr/lib/libjte.a'
+#ALPINE_PKGS='' # -- missing in alpine --
+
+SRC_URL=https://www.einval.com/~steve/software/JTE/download/jigit-${pkgver}.tar.xz
+
+# ====================================================
+
+build()
+{
+	cd libjte
+
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+
+	# AC_FUNC_MALLOC causes trouble (configure.ac) rpl_malloc
+	sed -i 's%-DHAVE_MALLOC=0 -Dmalloc=rpl_malloc%%' Makefile
+
+	_make LDFLAGS=${GCC_ALL_STATIC}
+	_make install
+}
+

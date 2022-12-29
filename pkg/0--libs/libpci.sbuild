@@ -1,0 +1,36 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=pciutils
+pkgver=${libpci_ver}
+pkgdeps='zlib'
+TOOLCHAIN_FILE='usr/lib/libpci.a'
+#ALPINE_PKGS='pciutils-dev'  # doesn't include libpcia.a (only .so)
+
+SRC_URL=${libpci_url}/${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	sed -i -e "s%CFLAGS=%CFLAGS+=%" Makefile
+	# pci.ids is usually in /usr/share/ or /usr/share/misc or /usr/share/hwdata
+	sed -i 's%PCI_PATH_IDS_DIR%"/usr/share/misc"%' lib/init.c
+
+	CC_OPT=
+	if [ -n "${XCOMPILER}" ] ; then
+		CC_OPT="CROSS_COMPILE=${XCOMPILER}-"
+	fi
+    CC_OPT="$CC_OPT
+PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+SHARED=no
+HWDB=no
+LIBKMOD=no" # !! might want to enable libkmod
+	_make ${CC_OPT} lib/libpci.a
+	_make ${CC_OPT} install-lib
+
+	# CPU-X: names-parse.c:(.text+0x52): undefined reference to `gzgets'
+	sed -i 's%-lpci%-lpci -lz%' ${TOOLCHAIN_INSTALL_PREFIX}/lib/pkgconfig/libpci.pc
+}
+

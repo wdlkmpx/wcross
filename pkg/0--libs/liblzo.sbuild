@@ -1,0 +1,23 @@
+#!/bin/sh
+# http://www.oberhumer.com/opensource/lzo
+
+pkgname=lzo
+pkgver=2.10
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/liblzo2.a'
+ALPINE_PKGS='lzo-dev' # includes .a file
+
+SRC_URL=http://www.oberhumer.com/opensource/lzo/download/lzo-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared"
+	_configure
+
+	sed -i '/^PROGRAMS =/d' Makefile
+	_make
+	_make install
+}
+

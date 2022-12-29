@@ -1,0 +1,41 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/attr/APKBUILD
+# https://download.savannah.nongnu.org/releases/attr
+
+pkgname=attr
+pkgver=2.5.1
+pkgrel=0
+pkgdesc="utilities for managing filesystem extended attributes"
+#checkdepends="perl"
+source="https://download.savannah.nongnu.org/releases/attr/attr-$pkgver.tar.gz"
+sha512sums="
+8b4c043d61f8f3e0cd098e701181069f51117b85fd6ba18bfe9af77d894ea671232377d4793ffc822e9259ceee6ac71d75732eb93b2830c6cb5d0d918ba2d21b  attr-2.5.1.tar.gz
+"
+TOOLCHAIN_FILE='lib/libattr.a'
+ALPINE_PKGS='attr-dev attr-static'
+
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-nls"
+	_configure
+    if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+        sed -i \
+        -e "/bin_PROGRAMS = /d" -e "/PROGRAMS = /d" \
+        -e "/dist_doc_DATA = /d" -e "/dist_sysconf_DATA = /d" \
+        -e '/^MANS = /d' -e '/^DATA = /d' Makefile
+    fi
+    _make LDFLAGS=${GCC_ALL_STATIC}
+}
+
+check() {
+	# musl outputs a different string for ENOTSUP
+	# see: https://savannah.nongnu.org/bugs/?62370
+	sed -i -e 's%Operation not supported%Not supported%' test/attr.test
+	_make LDFLAGS=${GCC_ALL_STATIC} check
+}
+
+package() {
+	_make LDFLAGS=${GCC_ALL_STATIC} install
+}

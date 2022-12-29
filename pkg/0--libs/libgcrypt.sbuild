@@ -1,0 +1,35 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libgcrypt
+pkgver=${libgcrypt_ver}
+pkgdeps='libgpg-error'
+TOOLCHAIN_FILE='usr/lib/libgcrypt.a'
+ALPINE_PKGS='libgcrypt-dev libgcrypt-static' # may contain ASM stuff
+
+SRC_URL=${libgcrypt_url}
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=${TOOLCHAIN_INSTALL_PREFIX} --enable-static --disable-shared
+--disable-doc
+--disable-asm
+--disable-padlock-support
+--disable-aesni-support
+--disable-pclmul-support
+--disable-sse41-support
+--disable-drng-support
+--disable-avx-support
+--disable-avx2-support
+--disable-arm-crypto-support
+--disable-ppc-crypto-support
+--enable-ciphers=arcfour,blowfish,cast5,des,aes,twofish,serpent,rfc2268,seed,camellia,idea,chacha20,salsa20
+"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+	_make install
+}
+

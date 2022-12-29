@@ -1,0 +1,43 @@
+#!/bin/sh
+
+source_lib_versions
+
+pkgname=libcap
+pkgver=${libcap_ver}
+pkgdeps=''
+TOOLCHAIN_FILE='usr/lib/libcap.a'
+ALPINE_PKGS='libcap-dev libcap-static'
+
+SRC_URL=${libcap_url}
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+SRC_DIR=libcap-cap
+
+# ====================================================
+
+build()
+{
+	cd v${pkgver}
+	
+	linux_headers=$(find ${TOOLCHAIN_ROOT} -mindepth 2 -maxdepth 4 -type d -name include | grep musl | head -n 1)
+
+	SR_OPT=
+	if [ -n "${W_SYSROOT}" ] ; then
+		SR_OPT="--sysroot=${TOOLCHAIN_ROOT}"
+	fi
+
+	sed -i \
+		-e "s%CFLAGS ?=%CFLAGS = -static ${SR_OPT}%" \
+		-e "s%LDFLAGS ?=%LDFLAGS = -static%" \
+		Make.Rules
+
+
+	_make DYNAMIC=no SHARED=no RAISE_SETFCAP=no lib=lib \
+		prefix=${TOOLCHAIN_INSTALL_PREFIX} KERNEL_HEADERS=${linux_headers} install
+
+	rm -fv \
+		${TOOLCHAIN_ROOT}/sbin/capsh \
+		${TOOLCHAIN_ROOT}/sbin/getcap \
+		${TOOLCHAIN_ROOT}/sbin/getpcaps \
+		${TOOLCHAIN_ROOT}/sbin/setcap
+}
+

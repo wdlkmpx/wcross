@@ -1,0 +1,32 @@
+#!/bin/sh
+
+pkgname=cmus
+pkgver=2.9.1
+pkgdesc="ncurses music player"
+INSTALLED_FILE='usr/bin/cmus'
+pkgdeps='ncursesw lame alsa-lib libvorbis libopus'
+
+SRC_URL=https://github.com/cmus/cmus/archive/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	EXE='cmus'
+	opts="prefix=/usr CROSS=${XCOMPILER}- USE_FALLBACK_IP=y"
+	_configure
+	_make
+
+	check_static_exe ${EXE}
+	_strip ${EXE}
+
+#set output_plugin=alsa
+#set dsp.alsa.device=default
+#set mixer.alsa.device=default
+#set mixer.alsa.channel=Master
+
+	standard_make_install
+	install_exe cmus ${INSTALL_DIR}/usr/bin
+}
+

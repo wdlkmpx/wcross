@@ -1,0 +1,28 @@
+#!/bin/sh
+
+pkgname=squashfuse
+pkgver=0.1.104
+pkgdesc=""
+pkgdeps='zlib lz4 xz liblzo zstd'
+INSTALLED_FILE='usr/bin/squashfuse'
+
+SRC_URL=https://github.com/vasi/squashfuse/releases/download/${pkgver}/squashfuse-${pkgver}.tar.gz
+
+# ====================================================
+
+build()
+{
+	opts="--prefix=/usr --enable-static --disable-shared"
+	_configure
+	_make LDFLAGS=${GCC_ALL_STATIC}
+
+	check_static_exe squashfuse
+	_strip squashfuse
+	_strip squashfuse_ll
+
+	standard_make_install
+
+	rm -rfv ${INSTALL_DIR}/usr/lib
+	rm -rf ${INSTALL_DIR}/usr/include
+}
+
