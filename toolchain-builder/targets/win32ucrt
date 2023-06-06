@@ -1,0 +1,7 @@
+TARGET=i686-w64-mingw32
+
+MINGW_CRT_CONFIG+=" --disable-lib64 --enable-lib32"
+
+# to target the Universal CRT instead of MSVCRT,
+MINGW_CRT_CONFIG+=" --with-default-msvcrt=ucrt"
+MINGW_HEADERS_CONFIG+=" --with-default-msvcrt=ucrt"

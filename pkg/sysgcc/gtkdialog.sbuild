@@ -1,0 +1,30 @@
+#!/bin/sh
+
+pkgname=gtkdialog
+pkgver=0.8.4
+pkgrel=0
+pkgdeps=
+pkgdesc="gtkdialog"
+source=http://distro.ibiblio.org/puppylinux/sources/g/gtkdialog-${pkgver}.tar.xz
+PKGDIR_FILE='usr/bin/gtkdialog'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared (use defaults)
+IGNORE_LIBTOOL=1
+
+prepare() {
+	sed -i 's% po % %' Makefile.in
+	sed -i 's|$(TEXINFOS)||' Makefile.in src/Makefile.in doc/Makefile.in
+	sed -i 's|@MAKEINFO@|true|' Makefile.in src/Makefile.in doc/Makefile.in
+}
+
+#post_install() {
+#	EXAMPLES=`find . -type d -name 'examples'`
+#	DOCS=`find . -type d -name 'reference'`
+#	install -d -m 0755 ${pkgdir}/usr/share/doc/gtkdialog
+#	cp -arf $EXAMPLES ${pkgdir}/usr/share/doc/gtkdialog/
+#	cp -arf $DOCS ${pkgdir}/usr/share/doc/gtkdialog/
+#}

@@ -1,0 +1,15 @@
+#!/bin/sh
+# https://github.com/relan/exfat/releases
+
+pkgname=fuse-exfat
+pkgver=1.4.0
+pkgrel=0
+pkgdeps='libfuse'
+pkgdesc=""
+source=https://github.com/relan/exfat/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='sbin/mount.exfat-fuse'
+
+opts='--sbindir=/sbin'
+
+standard_autotools

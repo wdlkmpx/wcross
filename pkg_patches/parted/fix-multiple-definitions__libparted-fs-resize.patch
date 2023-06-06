@@ -1,0 +1,173 @@
+diff -Naur parted-3.6/libparted/fs/fat/fat.c parted-3.6-patched/libparted/fs/fat/fat.c
+--- parted-3.6/libparted/fs/fat/fat.c	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/fat/fat.c	2023-04-16 18:55:24.995924847 -0500
+@@ -24,7 +24,7 @@
+ #include "fat.h"
+ 
+ PedFileSystem*
+-fat_alloc (const PedGeometry* geom)
++fat_alloc_fs (const PedGeometry* geom)
+ {
+ 	PedFileSystem*		fs;
+ 
+@@ -54,7 +54,7 @@
+ }
+ 
+ void
+-fat_free (PedFileSystem* fs)
++fat_free_fs (PedFileSystem* fs)
+ {
+ 	FatSpecific* fs_info = (FatSpecific*) fs->type_specific;
+ 	free (fs_info->boot_sector);
+@@ -70,7 +70,7 @@
+ 	FatSpecific*		fs_info;
+ 	PedGeometry*		result;
+ 
+-	fs = fat_alloc (geom);
++	fs = fat_alloc_fs (geom);
+ 	if (!fs)
+ 		goto error;
+ 	fs_info = (FatSpecific*) fs->type_specific;
+@@ -84,11 +84,11 @@
+ 	result = ped_geometry_new (geom->dev, geom->start,
+ 				   fs_info->sector_count);
+ 
+-	fat_free (fs);
++	fat_free_fs (fs);
+ 	return result;
+ 
+ error_free_fs:
+-	fat_free (fs);
++	fat_free_fs (fs);
+ error:
+ 	return NULL;
+ }
+diff -Naur parted-3.6/libparted/fs/fat/fat.h parted-3.6-patched/libparted/fs/fat/fat.h
+--- parted-3.6/libparted/fs/fat/fat.h	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/fat/fat.h	2023-04-16 18:55:35.177305700 -0500
+@@ -154,8 +154,8 @@
+ 
+ extern void fat_print (const PedFileSystem* fs);
+ 
+-extern PedFileSystem* fat_alloc (const PedGeometry* geom);
+-extern void fat_free (PedFileSystem* fs);
++extern PedFileSystem* fat_alloc_fs (const PedGeometry* geom);
++extern void fat_free_fs (PedFileSystem* fs);
+ extern int fat_alloc_buffers (PedFileSystem* fs);
+ 
+ extern int fat_resize (PedFileSystem* fs, PedGeometry* geom, PedTimer* timer);
+diff -Naur parted-3.6/libparted/fs/hfs/hfs.c parted-3.6-patched/libparted/fs/hfs/hfs.c
+--- parted-3.6/libparted/fs/hfs/hfs.c	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/hfs/hfs.c	2023-04-16 19:02:18.396128138 -0500
+@@ -39,10 +39,10 @@
+ #include "hfs.h"
+ #include "probe.h"
+ 
+-uint8_t* hfs_block = NULL;
+-uint8_t* hfsp_block = NULL;
+-unsigned hfs_block_count;
+-unsigned hfsp_block_count;
++uint8_t* hfs_blockx = NULL;
++uint8_t* hfsp_blockx = NULL;
++unsigned hfs_blockx_count;
++unsigned hfsp_blockx_count;
+ 
+ static PedFileSystemOps hfs_ops = {
+ 	probe:		hfs_probe,
+diff -Naur parted-3.6/libparted/fs/hfs/hfs.h parted-3.6-patched/libparted/fs/hfs/hfs.h
+--- parted-3.6/libparted/fs/hfs/hfs.h	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/hfs/hfs.h	2023-04-16 19:02:02.597120165 -0500
+@@ -640,9 +640,9 @@
+ };
+ typedef struct _HfsCPrivateLeafRec HfsCPrivateLeafRec;
+ 
+-extern uint8_t*    hfs_block;
+-extern uint8_t*    hfsp_block;
+-extern unsigned    hfs_block_count;
+-extern unsigned    hfsp_block_count;
++extern uint8_t*    hfs_blockx;
++extern uint8_t*    hfsp_blockx;
++extern unsigned    hfs_blockx_count;
++extern unsigned    hfsp_blockx_count;
+ 
+ #endif /* _HFS_H */
+diff -Naur parted-3.6/libparted/fs/hfs/probe.c parted-3.6-patched/libparted/fs/hfs/probe.c
+--- parted-3.6/libparted/fs/hfs/probe.c	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/hfs/probe.c	2023-04-16 19:05:51.780248162 -0500
+@@ -36,7 +36,7 @@
+ #include "probe.h"
+ 
+ int
+-hfsc_can_use_geom (PedGeometry* geom)
++hfsc_can_use_geomx (PedGeometry* geom)
+ {
+ 	PedDevice* dev;
+ 
+@@ -61,14 +61,14 @@
+ it is in fact a wrapper to an HFS+ volume */
+ /* Used by hfsplus_probe and hfs_probe */
+ PedGeometry*
+-hfs_and_wrapper_probe (PedGeometry* geom)
++hfs_and_wrapper_probex (PedGeometry* geom)
+ {
+ 	HfsMasterDirectoryBlock	*mdb;
+ 	PedGeometry*	geom_ret;
+ 	PedSector	search, max;
+ 
+ 	PED_ASSERT (geom != NULL);
+-	PED_ASSERT (hfsc_can_use_geom (geom));
++	PED_ASSERT (hfsc_can_use_geomx (geom));
+ 
+ 	const int	sectors = ((3 * 512) + geom->dev->sector_size - 1) /
+ 				   geom->dev->sector_size;
+@@ -110,10 +110,10 @@
+ 
+ 	PED_ASSERT (geom != NULL);
+ 
+-	if (!hfsc_can_use_geom (geom))
++	if (!hfsc_can_use_geomx (geom))
+ 		return NULL;
+ 
+-	if ((geom_ret = hfs_and_wrapper_probe(geom))) {
++	if ((geom_ret = hfs_and_wrapper_probex(geom))) {
+ 		/* HFS+ is embedded in an HFS volume ? */
+ 		HfsMasterDirectoryBlock	*mdb;
+ 		mdb = (HfsMasterDirectoryBlock *) buf;
+@@ -182,10 +182,10 @@
+ 
+ 	PED_ASSERT (geom != NULL);
+ 
+-	if (!hfsc_can_use_geom (geom))
++	if (!hfsc_can_use_geomx (geom))
+ 		return NULL;
+ 
+-	if ((geom_base = hfs_and_wrapper_probe(geom))
++	if ((geom_base = hfs_and_wrapper_probex(geom))
+ 	    && (!(geom_plus = hfsplus_probe(geom_base))))
+ 		return geom_base;
+ 	else {
+@@ -205,7 +205,7 @@
+ 
+ 	PED_ASSERT (geom != NULL);
+ 
+-	if (!hfsc_can_use_geom (geom))
++	if (!hfsc_can_use_geomx (geom))
+ 		return NULL;
+ 
+ 	if ((geom->length < 5)
+diff -Naur parted-3.6/libparted/fs/hfs/probe.h parted-3.6-patched/libparted/fs/hfs/probe.h
+--- parted-3.6/libparted/fs/hfs/probe.h	2023-03-24 19:02:17.000000000 -0500
++++ parted-3.6-patched/libparted/fs/hfs/probe.h	2023-04-16 19:05:35.260148542 -0500
+@@ -27,10 +27,10 @@
+ #include "hfs.h"
+ 
+ int
+-hfsc_can_use_geom (PedGeometry* geom);
++hfsc_can_use_geomx (PedGeometry* geom);
+ 
+ PedGeometry*
+-hfs_and_wrapper_probe (PedGeometry* geom);
++hfs_and_wrapper_probex (PedGeometry* geom);
+ 
+ PedGeometry*
+ hfsplus_probe (PedGeometry* geom);

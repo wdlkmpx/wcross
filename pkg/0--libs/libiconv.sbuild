@@ -1,0 +1,45 @@
+#!/bin/sh
+# https://ftp.gnu.org/pub/gnu/libiconv
+
+pkgname=libiconv
+pkgver=1.17 # 2022-05-15
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://ftp.gnu.org/pub/gnu/libiconv/libiconv-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libiconv.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='' #not in alpine
+
+
+standard_autotools
+
+prepare()
+{
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		# HACK: custom error.h with static functions causes the build to fail
+		if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h ] ; then
+			mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h \
+				${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw
+		fi
+	fi
+}
+
+post_install()
+{
+	create_pkg_config_file \
+		${TOOLCHAIN_INSTALL_PREFIX} \
+		${pkgname} \
+		${pkgver} \
+		-liconv
+	#--
+	if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw ] ; then
+		mv -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw \
+			${TOOLCHAIN_INSTALL_PREFIX}/include/error.h
+	fi
+}
+
+opts="
+--enable-cross-guesses=conservative
+"

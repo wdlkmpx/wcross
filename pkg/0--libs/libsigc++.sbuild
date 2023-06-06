@@ -1,0 +1,45 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libsigc++/APKBUILD
+
+pkgname=libsigc++
+
+max_iso_cxx=$(cc_get_max_iso_cxx_properly_supported ${CXX})
+if [ ${max_iso_cxx} -ge 11 ] ; then
+	# libsigc++ version 2.5.1 and later require a C++11-compliant compiler.
+	pkgver=2.12.0
+else
+	pkgver=2.4.1
+fi
+
+pkgrel=0
+pkgdeps=""
+pkgdesc=""
+source="https://download.gnome.org/sources/libsigc++/${pkgver%.*}/libsigc++-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libsigc-2.0.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libsigc++-dev'  # no .a file
+
+#===================================================================
+
+prepare()
+{
+	if [ -f meson.build ] ; then
+		# muon misbehaves with this project
+		W_MESON='meson'
+		standard_meson
+		# --
+		opts="
+-Dbuild-documentation=false
+-Dbuild-deprecated-api=true
+-Dvalidation=false
+-Dbuild-pdf=false
+-Dbuild-examples=false
+-Dbuild-tests=false
+-Ddefault_library=static"
+
+	else # autotools
+		opts='--disable-documentation'
+		standard_autotools
+	fi
+}

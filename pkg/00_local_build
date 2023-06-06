@@ -1,0 +1,113 @@
+#!/bin/sh
+# special script that is called if `-pkg local`
+
+export W_00_LOCAL_BUILD='yes'
+
+if [ -z "$MWD" ] || [ -z "$XPATH" ] ; then
+    echo "ERROR: \$MWD has not been set"
+    exit 1
+fi
+. ${MWD}/functions.sh     || exit 1
+. ${MWD}/pkg/0pkgfuncs.sh || exit 1
+
+# ====================================================
+
+_exit()
+{
+    if [ ${1} -eq 0 ] ; then
+        exit 0
+    else
+        exit_error
+    fi
+}
+
+if [ -z "$ORIG_DIR" ] ; then
+    exit_error "\$ORIG_DIR has not been set"
+fi
+
+if [ -d /WBUILDS ] ; then
+    # this is a chroot, must fix ORIG_DIR set by wcross_make
+    ORIG_DIR=$(echo $ORIG_DIR | sed "s%${MWD_ORIG}%${MWD}%")
+fi
+cd $ORIG_DIR
+
+echo -- $ORIG_DIR
+
+# ====================================================
+# ./wcross_script
+# no need to guess what to do, this script contains all the steps
+
+if [ -f wcross_script ] ; then
+    sh wcross_script
+    _exit $?
+fi
+
+# ====================================================
+# ./configure
+
+if [ -f configure.ac ] || [ -f configure ] ; then
+    if [ -f configure ] && [ ! -d /WBUILDS ] ; then
+        if [ ! -f configure.ac ] && [ ! -f configure.project ] ; then
+            # not autotools or wconf add more stuff
+            CC_OPT="$CROSS_MK_PARAMS CFLAGS=--sysroot=${TOOLCHAIN_ROOT} CXXFLAGS=--sysroot=${TOOLCHAIN_ROOT}"
+        fi
+        opts="${CC_OPT}"
+    fi
+    if [ -z "$WCROSS_ONLY_MAKE" ] ; then
+		_configure ${WCONF_PARAMS} #extra opts
+	fi
+    #WMAKE='bmake'
+    _make ${WMAKE_PARAMS}
+    #_make strip
+    _exit $?
+fi
+
+
+# ====================================================
+# CMake
+if [ -f CMakeLists.txt ] ; then
+	if [ "$WCROSS_ONLY_MAKE" ] ; then
+		cd builddir
+	else
+		_cmake
+    fi
+    _make
+    _exit $?
+fi
+
+
+# ====================================================
+# meson
+if [ -f meson.build ] ; then
+	if [ "$WCROSS_ONLY_MAKE" ] ; then
+		samu -v -C builddir
+	else
+		_meson_build
+	fi
+    _exit $?
+fi
+
+
+# ====================================================
+# Makefile
+
+Makefile=''
+if [ -f Makefile ] ; then
+    Makefile='Makefile'
+elif [ -f makefile ] ; then
+    Makefile='makefile'
+else
+    exit_error "ERROR: missing Makefile / configure / configure.ac"
+fi
+
+# detect mk-configure project
+if test -n "${Makefile}" && grep '\.include <mkc.' ${Makefile} ; then
+    _mkcmake
+# detect bmake Makefile
+elif test -n "${Makefile}" && grep '\.include <' ${Makefile} ; then
+    _bmake
+else
+    _make
+fi
+_exit $?
+

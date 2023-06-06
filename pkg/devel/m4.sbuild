@@ -1,0 +1,44 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/m4
+
+pkgname=m4
+pkgver=1.4.19
+pkgrel=0
+pkgdeps='libsigsegv'
+#makedepends=texinfo
+#checkdepends=diffutils
+pkgdesc="GNU macro processor"
+source="https://ftp.gnu.org/gnu/m4/m4-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/m4'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_autotools
+
+opts='
+--disable-c++
+--with-libsigsegv
+'
+
+prepare()
+{
+	sed -i -e 's% doc % %' -e 's% po % %' Makefile.in
+	#-- libsigsegv doesn't seem to be added to LIBS.. (system BUILT_TYPE fails)
+	sed -i 's%^LIBS = %LIBS = -lsigsegv %' src/Makefile.in
+	#--
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		# HACK: custom error.h with static functions causes the build to fail
+		if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h ] ; then
+			mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h \
+				${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw
+		fi
+	fi
+}
+
+post_install() {
+	if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw ] ; then
+		mv -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw \
+			${TOOLCHAIN_INSTALL_PREFIX}/include/error.h
+	fi
+}

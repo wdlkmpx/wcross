@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://scons.org/pages/download.html
+#
+# this is noarch, requires python3
+
+pkgname=scons
+pkgver=4.5.2
+pkgrel=0
+pkgdeps=
+pkgdesc="Software construction system"
+source="http://prdownloads.sourceforge.net/scons/scons-local-${pkgver}.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='opt/python3/scons.py'
+DEV_IN_pkgdir=1
+SRC_DIR_NEED_TO_CREATE=1
+
+
+build() {
+	echo -n
+}
+
+package() {
+	mkdir -p ${pkgdir}/opt/python3
+	mkdir -p ${pkgdir}/usr/bin
+	cp -af \
+		scons-local-${pkgver} \
+		scons.py \
+		scons-configure-cache.py \
+		scons-time.py \
+		sconsign.py \
+			${pkgdir}/opt/python3/
+	ln -snfv /opt/python3/scons.py      ${pkgdir}/usr/bin/scons
+	ln -snfv /opt/python3/scons-configure-cache.py ${pkgdir}/usr/bin/scons-configure-cache
+	ln -snfv /opt/python3/scons-time.py ${pkgdir}/usr/bin/scons-time
+	ln -snfv /opt/python3/sconsign.py   ${pkgdir}/usr/bin/sconsign
+}

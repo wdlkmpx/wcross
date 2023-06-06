@@ -1,0 +1,20 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/autoconf-archive/APKBUILD
+# https://ftp.gnu.org/gnu/autoconf-archive
+#
+# this is noarch
+
+pkgname=autoconf-archive
+pkgver=2023.02.20
+pkgrel=0
+pkgdeps=
+pkgdesc="Collection of re-usable GNU Autoconf macros"
+source="https://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-$pkgver.tar.xz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/share/aclocal/ax_am_macros.m4'
+DEV_IN_PKGDIR=1
+
+
+standard_autotools
+
+#opts='--help'

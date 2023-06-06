@@ -1,0 +1,19 @@
+#!/bin/sh
+# https://github.com/akheron/jansson
+# https://git.alpinelinux.org/aports/tree/main/jansson/APKBUILD
+
+pkgname=jansson
+pkgver=2.14
+pkgrel=0
+pkgdeps=
+pkgdesc='C library for encoding, decoding and manipulating JSON data'
+source="https://github.com/akheron/jansson/releases/download/v$pkgver/$pkgname-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libjansson.a'
+INSTALL_TO_TOOLCHAIN=1
+#ALPINE_PKGS='jansson-dev'  # no .a file
+
+
+standard_autotools
+
+#opts='--help'

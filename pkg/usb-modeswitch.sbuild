@@ -1,0 +1,52 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/dmidecode/APKBUILD
+# http://download.savannah.gnu.org/releases/dmidecode
+#
+# usb-modeswitch-data is noarch
+
+if [ "$PKG_SCRIPT_BASE" = "usb-modeswitch" ] ; then
+
+	pkgname=usb-modeswitch
+	pkgver=2.6.1
+	pkgrel=0
+	pkgdeps='libusb jimtcl usb-modeswitch-data'
+	pkgdesc="A mode switching tool for controlling flip flop (multiple device) USB gear"
+	source="http://www.draisberghof.de/usb_modeswitch/usb-modeswitch-$pkgver.tar.bz2"
+	PKGDIR_FILE='usr/sbin/usb_modeswitch_dispatcher'
+
+	build() {
+		_make all-with-statlink-dispatcher
+	}
+	#no test
+	package() {
+		#install_to_pkgdir
+		_make DESTDIR=${pkgdir} install-statlink
+	}
+
+elif [ "$PKG_SCRIPT_BASE" = "usb-modeswitch-data" ] ; then
+
+	pkgname=usb-modeswitch-data
+	pkgver=20191128
+	pkgrel=0
+	pkgdeps=''
+	source=http://www.draisberghof.de/usb_modeswitch/usb-modeswitch-data-${pkgver}.tar.bz2
+	PKGDIR_FILE='usr/share/usb_modeswitch/03f0:002a'
+
+	build() {
+		echo -n
+	}
+	#no test
+	package() {
+		#install_to_pkgdir
+		make DESTDIR=${pkgdir} install
+	}
+
+fi
+
+
+DL_SUBDIR=''
+LINUX_ONLY=1
+
+prepare() { #?
+	sed -i -e 's/--mode=/-m/' Makefile
+}

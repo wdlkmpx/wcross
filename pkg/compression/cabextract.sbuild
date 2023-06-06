@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/cabextract/APKBUILD
+# https://www.cabextract.org.uk
+
+pkgname=cabextract
+pkgver=1.10
+pkgrel=0
+pkgdeps=
+pkgdesc="Tool for extracting Microsoft cabinet files"
+#makedepends="libmspack"
+source="https://www.cabextract.org.uk/cabextract-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/cabextract'
+DIST_BINARY=cabextract
+
+
+standard_autotools
+
+prepare() {
+	# mingw: local getopt.h triggers warnings, need to use the system getopt
+	sed -i 's%"getopt.h"%<getopt.h>%' src/cabextract.c
+	rm -f getopt.h
+}
+
+woptimize_flag -O2

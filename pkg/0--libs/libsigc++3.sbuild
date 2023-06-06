@@ -1,0 +1,39 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libsigc++3/APKBUILD
+# requires a C++17-compliant compiler.
+
+pkgname=libsigc++3
+pkgver=3.4.0
+max_iso_cxx=$(cc_get_max_iso_cxx_properly_supported ${CXX})
+if [ ${max_iso_cxx} -lt 17 ] ; then
+	cc_set_version_vars ${CXX}
+	echo "*** WARNING: $CXX ${cc_ver} is thought to NOT [properly] support C++17"
+fi
+pkgrel=0
+pkgdeps=""
+pkgdesc=""
+source="https://download.gnome.org/sources/libsigc++/${pkgver%.*}/libsigc++-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libsigc-3.0.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libsigc++3-dev'  # no .a file
+
+
+standard_meson
+
+WCROSS_MAKE_CHECK=no #TODO
+
+prepare()
+{
+	# muon misbehaves with this project
+	W_MESON='meson'
+	# --
+	opts="
+-Dbenchmark=false
+-Dbuild-documentation=false
+-Dvalidation=false
+-Dbuild-pdf=false
+-Dbuild-examples=false
+-Dbuild-tests=false
+-Ddefault_library=static"
+}

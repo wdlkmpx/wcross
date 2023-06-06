@@ -1,0 +1,22 @@
+#!/bin/sh
+# http://files.libburnia-project.org/releases
+# https://git.alpinelinux.org/aports/tree/main/libburn/
+
+pkgname=libburn
+pkgver=1.5.4
+pkgrel=0
+pkgdeps=''
+source=http://files.libburnia-project.org/releases/libburn-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "cdrskin" ] ; then
+	PKGDIR_FILE='usr/bin/cdrskin'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libburn.a'
+fi
+#ALPINE_PKGS='libburn-dev' # doesn't include libburn.a, and the source code needs patching anyway
+
+
+#check_static_exe cdrskin/cdrskin
+standard_autotools

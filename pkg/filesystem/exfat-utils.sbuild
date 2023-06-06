@@ -1,0 +1,18 @@
+#!/bin/sh
+# https://github.com/relan/exfat/releases
+#
+# fuse-exfat must have the same version
+
+pkgname=exfat-utils
+pkgver=1.4.0
+pkgrel=0
+pkgdeps=
+pkgdesc=""
+source=https://github.com/relan/exfat/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='sbin/exfatfsck'
+
+
+opts='--sbindir=/sbin'
+
+standard_autotools

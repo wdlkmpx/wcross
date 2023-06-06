@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://dev.yorhel.nl/download
+
+pkgname=ncdu
+pkgver=1.18.1
+pkgrel=0
+pkgdeps='ncursesw'
+pkgdesc="ncdu text editor"
+source=https://dev.yorhel.nl/download/ncdu-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/ncdu'
+
+
+standard_autotools
+
+opts='--with-ncursesw'

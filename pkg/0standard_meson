@@ -1,0 +1,118 @@
+#!/bin/sh
+# this file is sourced by .sbuild pkgs that are known to build with meson
+#
+# https://mesonbuild.com/Builtin-options.html
+#
+# - override package() if you want to install files manually
+#
+# set WCROSS_MAKE_CHECK=no to not run tests (broken or missing deps)
+#
+# 0pkgfuncs.sh(): _meson_build creates builddir
+#
+# muon:
+#  MUON_NO_TESTS=1   (skip tests with muon)
+#
+
+if [ -z "$W_MESON" ] ; then
+	# muon is the default meson app, because it just works everywhere (python is not needed)
+	W_MESON='muon'
+fi
+
+case ${W_MESON} in
+	*meson*) MESON_IS_MUON= ;;
+	*muon*)  MESON_IS_MUON=1  ;;
+	*) exit_error "$W_MESON must be *meson* or *muon*" ;;
+esac
+
+MESON_VERBOSE=1
+
+if [ -n "$MESON_VERBOSE" ] ; then
+	MESON_V='-v'
+fi
+
+
+build()
+{
+	# new opts are prepended, so they can be overriden
+	# by previously set opts
+	if [ "$IGNORE_LIBTOOL" ] ; then
+		# (00_pkg_build) copy dev to $TOOLCHAIN_ROOT but don't delete the dev stuff from the $pkgdir
+		DEV_IN_PKGDIR=1
+	fi
+	#--
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		# - use this to avoid possible issues when fixing .la files
+		#   just install directly to ${TOOLCHAIN_INSTALL_PREFIX}
+		# - if you don't need anything in PKGDIR, then you should use this
+		opts="
+-Dprefix=${TOOLCHAIN_INSTALL_PREFIX}
+-Dlibdir=${TOOLCHAIN_INSTALL_LIBDIR}
+$opts"
+	else
+		# detect if -Dprefix and -Dlibdir have been specified
+		case $opts in
+			*-Dlibdir*) ok=1 ;; #-Dlibdir has already been specified
+			*) opts="
+-Dlibdir=/usr/${WLIBDIR} $opts" ;;
+		esac
+		case $opts in
+			*-Dprefix*) ok=1 ;; #-Dprefix has already been specified
+			*) opts="
+-Dprefix=/usr $opts" ;;
+		esac
+	fi
+	#-- _meson_build sets $W_MESON
+	_meson_build \
+		-Dsysconfdir=/etc \
+		-Dlocalstatedir=/var \
+		-Dsharedstatedir=/var/lib \
+		-Dwarning_level=3
+		#-Db_lto=false
+		#-Db_staticpic=true
+		#-Db_pie=true
+}
+
+
+check()
+{
+	if [ "$W_MESON" = "muon" ] ; then
+		if [ "$MUON_NO_TESTS" ] ; then
+			# this might happen because of https://todo.sr.ht/~lattis/muon/94
+			hl_echo "* Tests skipped because tests for this project are known to fail with muon"
+			return 0
+		fi
+#		if [ "$BUILD_TYPE" = "cross" ] ; then
+#			hl_echo "* Tests skipped because tests are known to fail when cross compiling with muon
+#https://todo.sr.ht/~lattis/muon/95"
+#			return 0
+#		fi
+	fi
+	if [ "${MESON_IS_MUON}" ] ; then
+		cmd_echo ${W_MESON} ${MESON_V} -C builddir test -R
+	else
+		cmd_echo ${W_MESON} test --no-rebuild --print-errorlogs -C builddir
+	fi
+}
+
+
+package()
+{
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		ok=1
+	else
+		case $opts in
+			*-Dprefix=/usr*) # shouldn't install to system, $pkgdir is the place
+				rm -rf ${pkgdir}
+				cmd_echo export DESTDIR="$pkgdir"
+				;;
+		esac
+	fi
+	#--
+	if [ "${MESON_IS_MUON}" ] ; then
+		# TODO: see if muon supports 'install -C <builddir>' in a future release
+		cmd_echo ${W_MESON} ${MESON_V} -C builddir install
+	else
+		cmd_echo ${W_MESON} install --no-rebuild -C builddir
+	fi
+}
+

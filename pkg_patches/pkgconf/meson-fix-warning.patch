@@ -1,0 +1,30 @@
+From d74380c634a4471caca8fa2a960eac3a373fec0d Mon Sep 17 00:00:00 2001
+From: wdlkmpx <wdlkmpx@gmail.com>
+Date: Mon, 5 Jun 2023 12:45:08 -0500
+Subject: [PATCH] meson.build: fix warning
+
+fix this warning:
+  tests/meson.build:2: WARNING: The variable(s) 'datarootdir', 'exec_prefix', 'prefix' in the input file 'tests/test_env.sh.in' are not present in the given configuration data.
+
+muon errors out:
+  tests/test_env.sh.in:32:10: error key not found in configuration data
+    32 | prefix="@prefix@"
+---
+ meson.build | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/meson.build b/meson.build
+index 2b4abd9..e039934 100644
+--- a/meson.build
++++ b/meson.build
+@@ -58,6 +58,10 @@ cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
+ cdata.set_quoted('PACKAGE_BUGREPORT', 'https://todo.sr.ht/~kaniini/pkgconf')
+ cdata.set('abs_top_srcdir', meson.current_source_dir())
+ cdata.set('abs_top_builddir', meson.current_build_dir())
++# required by tests/test_env.sh.in (autoconf)
++cdata.set_quoted('prefix', get_option('prefix'))
++cdata.set_quoted('exec_prefix', get_option('prefix'))
++cdata.set_quoted('datarootdir', join_paths(get_option('prefix'), 'share'))
+ 
+ 
+ subdir('libpkgconf')

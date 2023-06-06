@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/dmidecode/APKBUILD
+# http://download.savannah.gnu.org/releases/dmidecode
+
+pkgname=dmidecode
+pkgver=3.5
+pkgrel=0
+pkgdeps=
+pkgdesc="A utility for reporting system hardware as described by BIOS"
+source="http://download.savannah.gnu.org/releases/dmidecode/dmidecode-$pkgver.tar.xz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/dmidecode'
+LINUX_ONLY=1
+
+
+build()
+{
+	sed -i 's%/usr/local%/usr%' Makefile
+	_make
+}
+
+#no test
+
+package() {
+	install_to_pkgdir
+}
+

@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://ftp.gnu.org/pub/gnu/nano
+
+pkgname=nano
+pkgver=7.2
+pkgrel=0
+pkgdeps='ncursesw'
+pkgdesc="nano text editor"
+source=https://ftp.gnu.org/pub/gnu/nano/nano-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/nano'
+
+
+standard_autotools
+
+opts='--enable-tiny --enable-color --enable-nanorc --enable-utf8'
+
+post_install() {
+	echo 'include "/usr/share/nano/*.nanorc"' > nanorc
+	mkdir -p ${pkgdir}/etc
+	mkdir -p ${pkgdir}/bin
+	install nanorc ${pkgdir}/etc
+	ln -sv /usr/bin/nano ${pkgdir}/bin/nano
+}
+

@@ -1,0 +1,285 @@
+diff --git a/archival/bbunzip.c b/archival/bbunzip.c
+index 0ac059c..828fbfc 100644
+--- a/archival/bbunzip.c
++++ b/archival/bbunzip.c
+@@ -48,6 +48,7 @@ int FAST_FUNC bbunpack(char **argv,
+ 	char *filename, *new_name;
+ 	smallint exitcode = 0;
+ 	transformer_state_t xstate;
++	char *p, *ext;
+ 
+ 	do {
+ 		/* NB: new_name is *maybe* malloc'ed! */
+@@ -59,6 +60,28 @@ int FAST_FUNC bbunpack(char **argv,
+ 
+ 		/* Open src */
+ 		if (filename) {
++			if (option_mask32 & BBUNPK_OPT_LIST) {
++				p = strrchr(filename, '/');
++				if (p) {
++					new_name = xstrdup(p+1);
++				} else {
++					new_name = xstrdup(filename);
++				}
++				ext = strrchr(new_name, '.');
++				if (ext) *ext = 0;
++				if (unpacker == unpack_gz_stream) {
++					printf ("         compressed        uncompressed  ratio uncompressed_name\n");
++					printf ("                  0                   0      ? %s\n", new_name);
++				} else if (unpacker == unpack_lzo_stream) {
++					printf ("method      compressed  uncompr. ratio uncompressed_name\n");
++					printf ("?                    0       0       ? %s\n", new_name);
++				} else if (unpacker == unpack_xz_stream) {
++					printf ("Strms  Blocks   Compressed Uncompressed  Ratio  Check   Filename\n");
++					printf ("    1       1          0 B          0 B    ?      ?     %s\n", new_name);
++				}
++				free(new_name);
++				return 0;
++			}
+ 			if (!(option_mask32 & BBUNPK_SEAMLESS_MAGIC)) {
+ 				if (stat(filename, &stat_buf) != 0) {
+  err_name:
+@@ -99,7 +122,6 @@ int FAST_FUNC bbunpack(char **argv,
+ 				bb_error_msg("%s: unknown suffix - ignored", filename);
+ 				goto err;
+ 			}
+-
+ 			/* -f: overwrite existing output files */
+ 			if (option_mask32 & BBUNPK_OPT_FORCE) {
+ 				unlink(new_name);
+@@ -278,13 +300,14 @@ int uncompress_main(int argc UNUSED_PARAM, char **argv)
+  * Ken Turkowski, Dave Mack and Peter Jannesen.
+  */
+ //usage:#define gunzip_trivial_usage
+-//usage:       "[-cfkt] [FILE]..."
++//usage:       "[-cfktl] [FILE]..."
+ //usage:#define gunzip_full_usage "\n\n"
+ //usage:       "Decompress FILEs (or stdin)\n"
+ //usage:     "\n	-c	Write to stdout"
+ //usage:     "\n	-f	Force"
+ //usage:     "\n	-k	Keep input files"
+ //usage:     "\n	-t	Test integrity"
++//usage:     "\n	-l	List compressed file"
+ //usage:
+ //usage:#define gunzip_example_usage
+ //usage:       "$ ls -la /tmp/BusyBox*\n"
+@@ -356,6 +379,7 @@ static const char gunzip_longopts[] ALIGN1 =
+ 	"force\0"               No_argument       "f"
+ 	"test\0"                No_argument       "t"
+ 	"no-name\0"             No_argument       "n"
++	"list\0"                No_argument       "l"
+ 	;
+ #endif
+ 
+@@ -376,9 +400,9 @@ int gunzip_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int gunzip_main(int argc UNUSED_PARAM, char **argv)
+ {
+ #if ENABLE_FEATURE_GUNZIP_LONG_OPTIONS
+-	getopt32long(argv, BBUNPK_OPTSTR "dtn", gunzip_longopts);
++	getopt32long(argv, BBUNPK_OPTSTR "dtln", gunzip_longopts);
+ #else
+-	getopt32(argv, BBUNPK_OPTSTR "dtn");
++	getopt32(argv, BBUNPK_OPTSTR "dtln");
+ #endif
+ 	argv += optind;
+ 
+@@ -442,7 +466,7 @@ int gunzip_main(int argc UNUSED_PARAM, char **argv)
+ int bunzip2_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int bunzip2_main(int argc UNUSED_PARAM, char **argv)
+ {
+-	getopt32(argv, BBUNPK_OPTSTR "dt");
++	getopt32(argv, BBUNPK_OPTSTR "dtl");
+ 	argv += optind;
+ 	if (ENABLE_BZCAT && (!ENABLE_BUNZIP2 || applet_name[2] == 'c')) /* bzcat */
+ 		option_mask32 |= BBUNPK_OPT_STDOUT;
+@@ -517,7 +541,7 @@ int bunzip2_main(int argc UNUSED_PARAM, char **argv)
+ int unlzma_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int unlzma_main(int argc UNUSED_PARAM, char **argv)
+ {
+-	IF_LZMA(int opts =) getopt32(argv, BBUNPK_OPTSTR "dt");
++	IF_LZMA(int opts =) getopt32(argv, BBUNPK_OPTSTR "dtl");
+ # if ENABLE_LZMA
+ 	/* lzma without -d or -t? */
+ 	if (applet_name[2] == 'm' && !(opts & (BBUNPK_OPT_DECOMPRESS|BBUNPK_OPT_TEST)))
+@@ -534,7 +558,7 @@ int unlzma_main(int argc UNUSED_PARAM, char **argv)
+ 
+ 
+ //usage:#define unxz_trivial_usage
+-//usage:       "[-cfk] [FILE]..."
++//usage:       "[-cfktl] [FILE]..."
+ //usage:#define unxz_full_usage "\n\n"
+ //usage:       "Decompress FILEs (or stdin)\n"
+ //usage:     "\n	-c	Write to stdout"
+@@ -543,7 +567,7 @@ int unlzma_main(int argc UNUSED_PARAM, char **argv)
+ //usage:     "\n	-t	Test integrity"
+ //usage:
+ //usage:#define xz_trivial_usage
+-//usage:       "-d [-cfk] [FILE]..."
++//usage:       "-d [-cfktl] [FILE]..."
+ //usage:#define xz_full_usage "\n\n"
+ //usage:       "Decompress FILEs (or stdin)\n"
+ //usage:     "\n	-d	Decompress"
+@@ -587,10 +611,10 @@ int unlzma_main(int argc UNUSED_PARAM, char **argv)
+ int unxz_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int unxz_main(int argc UNUSED_PARAM, char **argv)
+ {
+-	IF_XZ(int opts =) getopt32(argv, BBUNPK_OPTSTR "dt");
++	IF_XZ(int opts =) getopt32(argv, BBUNPK_OPTSTR "dtl");
+ # if ENABLE_XZ
+ 	/* xz without -d or -t? */
+-	if (applet_name[2] == '\0' && !(opts & (BBUNPK_OPT_DECOMPRESS|BBUNPK_OPT_TEST)))
++	if (applet_name[2] == '\0' && !(opts & (BBUNPK_OPT_DECOMPRESS|BBUNPK_OPT_TEST|BBUNPK_OPT_LIST)))
+ 		bb_show_usage();
+ # endif
+ 	/* xzcat? */
+diff --git a/archival/gzip.c b/archival/gzip.c
+index 91bd4d0..d9eefff 100644
+--- a/archival/gzip.c
++++ b/archival/gzip.c
+@@ -69,7 +69,7 @@ aa:      85.1% -- replaced with aa.gz
+ //kbuild:lib-$(CONFIG_GZIP) += gzip.o
+ 
+ //usage:#define gzip_trivial_usage
+-//usage:       "[-cfk" IF_FEATURE_GZIP_DECOMPRESS("dt") IF_FEATURE_GZIP_LEVELS("123456789") "] [FILE]..."
++//usage:       "[-cfk" IF_FEATURE_GZIP_DECOMPRESS("dtl") IF_FEATURE_GZIP_LEVELS("123456789") "] [FILE]..."
+ //usage:#define gzip_full_usage "\n\n"
+ //usage:       "Compress FILEs (or stdin)\n"
+ //usage:	IF_FEATURE_GZIP_LEVELS(
+@@ -83,6 +83,7 @@ aa:      85.1% -- replaced with aa.gz
+ //usage:     "\n	-k	Keep input files"
+ //usage:	IF_FEATURE_GZIP_DECOMPRESS(
+ //usage:     "\n	-t	Test integrity"
++//usage:     "\n	-l	List compressed file"
+ //usage:	)
+ //usage:
+ //usage:#define gzip_example_usage
+@@ -2174,6 +2175,7 @@ static const char gzip_longopts[] ALIGN1 =
+ 	"fast\0"                No_argument       "1"
+ 	"best\0"                No_argument       "9"
+ 	"no-name\0"             No_argument       "n"
++	"list\0"                No_argument       "l"
+ 	;
+ #endif
+ 
+@@ -2220,16 +2222,16 @@ int gzip_main(int argc UNUSED_PARAM, char **argv)
+ 
+ 	/* Must match bbunzip's constants OPT_STDOUT, OPT_FORCE! */
+ #if ENABLE_FEATURE_GZIP_LONG_OPTIONS
+-	opt = getopt32long(argv, BBUNPK_OPTSTR IF_FEATURE_GZIP_DECOMPRESS("dt") "n123456789", gzip_longopts);
++	opt = getopt32long(argv, BBUNPK_OPTSTR IF_FEATURE_GZIP_DECOMPRESS("dtl") "n123456789", gzip_longopts);
+ #else
+-	opt = getopt32(argv, BBUNPK_OPTSTR IF_FEATURE_GZIP_DECOMPRESS("dt") "n123456789");
++	opt = getopt32(argv, BBUNPK_OPTSTR IF_FEATURE_GZIP_DECOMPRESS("dtl") "n123456789");
+ #endif
+ #if ENABLE_FEATURE_GZIP_DECOMPRESS /* gunzip_main may not be visible... */
+-	if (opt & (BBUNPK_OPT_DECOMPRESS|BBUNPK_OPT_TEST)) /* -d and/or -t */
++	if (opt & (BBUNPK_OPT_DECOMPRESS|BBUNPK_OPT_TEST|BBUNPK_OPT_LIST)) /* -d and/or -t */
+ 		return gunzip_main(argc, argv);
+ #endif
+ #if ENABLE_FEATURE_GZIP_LEVELS
+-	opt >>= (BBUNPK_OPTSTRLEN IF_FEATURE_GZIP_DECOMPRESS(+ 2) + 1); /* drop cfkvq[dt]n bits */
++	opt >>= (BBUNPK_OPTSTRLEN IF_FEATURE_GZIP_DECOMPRESS(+ 3) + 1); /* drop cfkvq[dtl]n bits */
+ 	if (opt == 0)
+ 		opt = 1 << 5; /* default: 6 */
+ 	opt = ffs(opt >> 4); /* Maps -1..-4 to [0], -5 to [1] ... -9 to [5] */
+diff --git a/archival/lzop.c b/archival/lzop.c
+index 74df8ff..67b781c 100644
+--- a/archival/lzop.c
++++ b/archival/lzop.c
+@@ -87,6 +87,7 @@
+ //usage:     "\n	-U	Delete input files"
+ ///////:     "\n	-k	Keep input files" (default, so why bother documenting?)
+ //usage:     "\n	-t	Test integrity"
++//usage:     "\n	-l	List compressed file"
+ //usage:     "\n	-v	Verbose"
+ //usage:     "\n	-F	Don't verify checksum"
+ 
+@@ -476,7 +477,7 @@ struct globals {
+ // lzop wants to be weird:
+ // unlike all other compressosrs, its -k "keep" option is the default,
+ // and -U is used to delete the source. We will invert the bit after getopt().
+-#define OPTION_STRING "cfUvqdt123456789CFk"
++#define OPTION_STRING "cfUvqdtl123456789CFk"
+ 
+ /* Note: must be kept in sync with archival/bbunzip.c */
+ enum {
+@@ -487,18 +488,19 @@ enum {
+ 	OPT_QUIET       = (1 << 4),
+ 	OPT_DECOMPRESS  = (1 << 5),
+ 	OPT_TEST        = (1 << 6),
+-	OPT_1           = (1 << 7),
+-	OPT_2           = (1 << 8),
+-	OPT_3           = (1 << 9),
+-	OPT_4           = (1 << 10),
+-	OPT_5           = (1 << 11),
+-	OPT_6           = (1 << 12),
+-	OPT_7           = (1 << 13),
+-	OPT_8           = (1 << 14),
+-	OPT_9           = (1 << 15),
+-	OPT_C           = (1 << 16),
+-	OPT_F           = (1 << 17),
+-	OPT_k           = (1 << 18),
++	OPT_LIST        = (1 << 7),
++	OPT_1           = (1 << 8),
++	OPT_2           = (1 << 9),
++	OPT_3           = (1 << 10),
++	OPT_4           = (1 << 11),
++	OPT_5           = (1 << 12),
++	OPT_6           = (1 << 13),
++	OPT_7           = (1 << 14),
++	OPT_8           = (1 << 15),
++	OPT_9           = (1 << 16),
++	OPT_C           = (1 << 17),
++	OPT_F           = (1 << 18),
++	OPT_k           = (1 << 19),
+ 	OPT_789         = OPT_7 | OPT_8 | OPT_9
+ };
+ 
+@@ -1114,11 +1116,15 @@ static char* FAST_FUNC make_new_name_lzop(char *filename, const char *expected_e
+ 
+ static IF_DESKTOP(long long) int FAST_FUNC pack_lzop(transformer_state_t *xstate UNUSED_PARAM)
+ {
+-	if (option_mask32 & OPT_DECOMPRESS)
+-		return do_lzo_decompress();
+ 	return do_lzo_compress();
+ }
+ 
++IF_DESKTOP(long long) int FAST_FUNC unpack_lzo_stream(transformer_state_t *xstate UNUSED_PARAM)
++{
++	return do_lzo_decompress();
++}
++
++
+ int lzop_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int lzop_main(int argc UNUSED_PARAM, char **argv)
+ {
+@@ -1141,5 +1147,8 @@ int lzop_main(int argc UNUSED_PARAM, char **argv)
+ 		option_mask32 |= OPT_DECOMPRESS;
+ 
+ 	global_crc32_new_table_le();
+-	return bbunpack(argv, pack_lzop, make_new_name_lzop, /*unused:*/ NULL);
++	if (option_mask32 & (OPT_DECOMPRESS|OPT_LIST))
++		return bbunpack(argv, unpack_lzo_stream, make_new_name_lzop, /*unused:*/ NULL);
++	else
++		return bbunpack(argv, pack_lzop, make_new_name_lzop, /*unused:*/ NULL);
+ }
+diff --git a/include/bb_archive.h b/include/bb_archive.h
+index e0ef8fc..5a883a0 100644
+--- a/include/bb_archive.h
++++ b/include/bb_archive.h
+@@ -254,6 +254,7 @@ IF_DESKTOP(long long) int unpack_gz_stream(transformer_state_t *xstate) FAST_FUN
+ IF_DESKTOP(long long) int unpack_bz2_stream(transformer_state_t *xstate) FAST_FUNC;
+ IF_DESKTOP(long long) int unpack_lzma_stream(transformer_state_t *xstate) FAST_FUNC;
+ IF_DESKTOP(long long) int unpack_xz_stream(transformer_state_t *xstate) FAST_FUNC;
++IF_DESKTOP(long long) int unpack_lzo_stream(transformer_state_t *xstate) FAST_FUNC;
+ 
+ char* append_ext(char *filename, const char *expected_ext) FAST_FUNC;
+ int bbunpack(char **argv,
+@@ -274,6 +275,7 @@ enum {
+ 	/* not included in BBUNPK_OPTSTR: */
+ 	BBUNPK_OPT_DECOMPRESS = 1 << 5,
+ 	BBUNPK_OPT_TEST       = 1 << 6,
++	BBUNPK_OPT_LIST       = 1 << 7,
+ 	BBUNPK_SEAMLESS_MAGIC = (1 << 31) * ENABLE_ZCAT * SEAMLESS_COMPRESSION,
+ };
+ 

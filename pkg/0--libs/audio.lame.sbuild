@@ -1,0 +1,44 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/lame/APKBUILD
+# https://sourceforge.net/projects/lame/files/lame
+
+pkgname=lame
+pkgver=3.100
+pkgrel=0
+pkgdeps=
+pkgdesc="An MP3 encoder and graphical frame analyzer"
+source="https://downloads.sourceforge.net/project/lame/lame/$pkgver/lame-$pkgver.tar.gz"
+DL_SUBDIR=''
+
+DIST_BINARY=lame
+if [ "$BUILD_PACKAGE" = "lame" ] ; then
+	PKGDIR_FILE='usr/bin/lame'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libmp3lame.a'
+fi
+ALPINE_PKGS='lame-dev' # includes static lib
+
+#===========================================================
+
+standard_autotools
+
+prepare() {
+	# fix for parallel builds
+	mkdir -p libmp3lame/i386/.libs
+	# fix for pic build with new nasm
+	sed -i -e '/define sp/s/+/ + /g' libmp3lame/i386/nasm.h
+	#--
+	sed -i -e '/define sp/s/+/ + /g' libmp3lame/i386/nasm.h
+}
+
+opts='
+--enable-nasm
+--disable-mp3x
+--disable-gtktest
+--without-libiconv-prefix
+--disable-cpml
+--with-fileio=lame
+'
+
+# check_static_exe frontend/lame

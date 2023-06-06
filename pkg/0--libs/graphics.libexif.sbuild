@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://archlinux.org/packages/extra/x86_64/libexif/
+
+pkgname=libexif
+pkgver=0.6.24
+pkgrel=0
+pkgdeps=
+pkgdesc="library to parse an EXIF file and read the data from those tags"
+source="https://github.com/libexif/libexif/releases/download/v$pkgver/libexif-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libexif.a'
+INSTALL_TO_TOOLCHAIN=1
+#ALPINE_PKGS='libexif-dev' # no .a file
+
+
+standard_autotools
+
+opts='
+--disable-docs
+--disable-internal-docs
+--enable-static
+--disable-shared
+--without-libiconv-prefix
+--without-libintl-prefix
+'

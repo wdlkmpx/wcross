@@ -1,0 +1,204 @@
+#!/bin/bash
+
+pkgname=wlxde
+pkgver=1
+pkgrel=0
+pkgdeps=
+pkgdesc="A collection of small apps for the desktop"
+PKGDIR_FILE='usr/bin/openbox'
+PKGDIR_FILE='etc/xdg/pcmanfm/LXDE'
+DL_SUBDIR='gui'
+
+
+# (00_pkg_build) copy dev to $TOOLCHAIN_ROOT but don't delete the dev stuff from the $pkgdir
+DEV_IN_PKGDIR=1
+
+#============================ lxde
+## http://www.linuxfromscratch.org/blfs/view/cvs/lxde/lxde-desktop.html
+lxmenu_data_ver=0.1.5   #2016-02-20 https://git.lxde.org/gitweb/?p=lxde/lxmenu-data.git;a=summary
+libfm_ver=1.3.2         #2018-12-17 https://github.com/lxde/libfm/releases
+menu_cache_ver=1.1.0    #2017-11-02 https://git.lxde.org/gitweb/?p=lxde/menu-cache.git;a=summary
+pcmanfm_ver=1.3.2       #2018-12-17 https://sourceforge.net/projects/pcmanfm/files/PCManFM%20%2B%20Libfm%20%28tarball%20release%29/PCManFM/
+#-----
+openbox_ver=3.6.1       #           http://openbox.org/wiki/Openbox:Download
+obconf_ver=2.0.4        #           http://openbox.org/wiki/Openbox:Download
+lxappearance_ver=0.6.3  #2017-01-25 https://git.lxde.org/gitweb/?p=lxde/lxappearance.git;a=summary
+lxpanel_ver=0.9.3       #2017-01-20 requires libfm keybinder2 libwnck #https://git.lxde.org/gitweb/?p=lxde/lxpanel.git;a=summary
+lxsession_ver=0.5.5     #2019-02-28 https://git.lxde.org/gitweb/?p=lxde/lxsession.git;a=summary
+lxdecommon_ver=0.99.2   #2016-11-21 https://git.lxde.org/gitweb/?p=lxde/lxde-common.git;a=summary
+pvm_ver=0.2.1w          # w
+#=======================================================================================
+
+
+#https://downloads.sourceforge.net/lxde/lxde-icon-theme-${lxde_icontheme}.tar.xz
+sources_lxde="
+https://downloads.sourceforge.net/lxde/lxappearance-${lxappearance_ver}.tar.xz
+https://downloads.sourceforge.net/lxde/lxsession-${lxsession_ver}.tar.xz
+https://downloads.sourceforge.net/lxde/lxde-common-${lxdecommon_ver}.tar.xz
+http://openbox.org/dist/openbox/openbox-${openbox_ver}.tar.gz
+http://openbox.org/dist/obconf/obconf-${obconf_ver}.tar.gz
+
+http://ftp.gnome.org/pub/gnome/sources/libwnck/2.30/libwnck-2.30.7.tar.xz
+https://distfiles.macports.org/keybinder/keybinder-0.3.0.tar.gz
+https://downloads.sourceforge.net/lxde/lxpanel-${lxpanel_ver}.tar.xz
+"
+sources_pcmanfm="
+http://downloads.sourceforge.net/lxde/lxmenu-data-${lxmenu_data_ver}.tar.xz
+http://downloads.sourceforge.net/pcmanfm/libfm-${libfm_ver}.tar.xz
+http://downloads.sourceforge.net/lxde/menu-cache-${menu_cache_ver}.tar.xz
+http://downloads.sourceforge.net/pcmanfm/pcmanfm-${pcmanfm_ver}.tar.xz
+"
+
+extra_sources="
+https://github.com/wdlkmpx/pup-volume-monitor/releases/download/${pvm_ver}/pup-volume-monitor-${pvm_ver}.tar.xz
+"
+
+SRC_URL=noextract
+pkgsource="${sources_lxde}${sources_pcmanfm}${extra_sources}"
+
+
+std_make()
+{
+    set_src_vars_from_url "$1"
+    extract_pkg_and_cd
+    _configure --prefix=/usr --disable-nls --sysconfdir=/etc --localstatedir=/var --disable-doc
+    _make DESTDIR=${pkgdir} install
+    standard_cleanup
+}
+
+
+build()
+{
+    std_make https://downloads.sourceforge.net/lxde/lxappearance-${lxappearance_ver}.tar.xz
+    #std_make https://downloads.sourceforge.net/lxde/lxsession-${lxsession_ver}.tar.xz
+    std_make https://downloads.sourceforge.net/lxde/lxde-common-${lxdecommon_ver}.tar.xz
+    return 0
+    std_make http://openbox.org/dist/openbox/openbox-${openbox_ver}.tar.gz
+    std_make http://openbox.org/dist/obconf/obconf-${obconf_ver}.tar.gz
+
+    std_make http://ftp.gnome.org/pub/gnome/sources/libwnck/2.30/libwnck-2.30.7.tar.xz
+    std_make https://distfiles.macports.org/keybinder/keybinder-0.3.0.tar.gz
+    std_make https://downloads.sourceforge.net/lxde/lxpanel-${lxpanel_ver}.tar.xz
+
+    std_make http://downloads.sourceforge.net/lxde/lxmenu-data-${lxmenu_data_ver}.tar.xz
+    std_make http://downloads.sourceforge.net/pcmanfm/libfm-${libfm_ver}.tar.xz
+    std_make http://downloads.sourceforge.net/lxde/menu-cache-${menu_cache_ver}.tar.xz
+    std_make http://downloads.sourceforge.net/pcmanfm/pcmanfm-${pcmanfm_ver}.tar.xz
+
+    exit
+    #lxmenu-data
+    PKGDIR_FILE='usr/share/desktop-directories/lxde-audio-video.directory'
+
+    #libfm
+	PKGDIR_FILE='usr/lib/libfm-extra.so.4'
+	opts='--with-extra-only --with-gtk=no --disable-static'
+
+    #menu-cache
+    PKGDIR_FILE='usr/libexec/menu-cache/menu-cached'
+    opts='--with-extra-only --with-gtk=no --disable-static' #??
+
+    #libfm
+    PKGDIR_FILE='usr/lib/libfm.so.4'
+    opts='--disable-gtk-doc --disable-gtk-doc-html --with-gtk=2 --disable-old-actions --disable-static'
+
+    #pcmanfm
+    PKGDIR_FILE='usr/bin/pcmanfm'
+    opts='--disable-gtk-doc --disable-gtk-doc-html --with-gtk=2'
+
+	#-- lxpanel
+	## libwnck-2.30.7 is an old version required by lxpanel
+    PKGDIR_FILE='usr/lib/libwnck-1.so.22'
+    opts='--disable-gtk-doc --disable-gtk-doc-html --program-suffix=-1'
+
+	std_make \
+		usr/lib/libkeybinder.so.0 \
+		--disable-gtk-doc \
+		--disable-gtk-doc-html \
+		--disable-lua \
+		--disable-python
+
+	std_make \
+		usr/bin/lxpanel \
+
+	#-- openbox
+	std_make usr/bin/openbox    openbox-${openbox_ver}.tar.gz
+	std_make usr/bin/obconf     obconf-${obconf_ver}.tar.gz
+	std_make usr/bin/lxappearance lxappearance-${lxappearance_ver}.tar.xz
+
+	# requires libunique
+	#std_make usr/bin/lxsession lxsession-${lxsession_ver}.tar.xz
+
+	std_make etc/xdg/lxpanel/LXDE/config lxde-common-${lxdecommon_ver}.tar.xz
+
+	dl_pkg 
+	std_make \
+		usr/bin/pup-volume-monitor \
+		pup-volume-monitor-${pvm_ver}.tar.xz \
+		--disable-static
+}
+
+#=========================================================
+
+set_default_apps()
+{
+	mkdir -p ${pkgdir}/usr/local/bin
+	DEFAULTAPPS="
+defaultfilemanager=pcmanfm
+defaultprocessmanager=lxtask
+defaultterminal=lxterminal
+defaultimageviewer=gpicview
+defaultrun=gmrun
+"
+	echo "$DEFAULTAPPS" | \
+	sed -e '/^$/d' | \
+	while read entry
+	do
+		IFS="=" read -r field value <<< "$entry"
+		[ "$field" = "" -o "$value" = "" ] && continue
+		echo "$field -> $value"
+		echo "#!/bin/sh
+exec $value \"\$@\"" > ${pkgdir}/usr/local/bin/$field
+		chmod 755 ${pkgdir}/usr/local/bin/$field
+		mkdir -p ${pkgdir}/etc
+		echo -n pcmanfm > ${pkgdir}/etc/desktop_app
+	done
+
+}
+
+
+build_hardinfo()
+{
+	if [ -d hardinfo ] ; then
+		cd hardinfo
+		git pull
+	else
+		git clone https://github.com/lpereira/hardinfo
+		cd hardinfo
+	fi
+	mkdir -p build
+	cd build
+	cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+	make install
+	make DESTDIR=${pkgdir} install
+	cd ..
+	cd ..
+}
+
+
+build_lmsensors()
+{
+	if [ -f ${pkgdir}/usr/bin/sensors ] ; then
+		return
+	fi
+	if [ -d lm-sensors ] ; then
+		cd lm-sensors
+		git pull
+	else
+		git clone --depth 1 -b master https://github.com/groeck/lm-sensors
+		cd lm-sensors
+	fi
+	make
+	make PREFIX=/usr install
+	make PREFIX=/usr DESTDIR=${pkgdir} install
+	cd ..
+}

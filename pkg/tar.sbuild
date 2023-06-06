@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://ftp.gnu.org/gnu/tar
+
+pkgname=tar
+pkgver=1.34  #2021-02-13
+pkgrel=0
+pkgdeps='libacl'
+pkgdesc=""
+source=https://ftp.gnu.org/gnu/tar/tar-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='bin/tar'
+
+
+standard_autotools
+
+opts='
+--enable-cross-guesses=conservative
+--with-included-regex
+--disable-dependency-tracking
+'
+
+package() {
+	install_exe src/tar ${pkgdir}/bin
+}
+

@@ -1,0 +1,48 @@
+#!/bin/sh
+#!not up-to-date
+# https://www.gnupg.org/ftp/gcrypt/libgpg-error
+
+pkgname=libgpg-error
+pkgver=1.46
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libgpg-error.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libgpg-error-dev libgpg-error-static'
+
+
+
+standard_autotools
+
+opts='
+--disable-nls
+--disable-doc
+--without-readline
+--without-libiconv-prefix
+--without-libintl-prefix
+'
+
+if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+	opts="$opts
+--disable-tests"
+fi
+
+prepare()
+{
+	case $CPU_ARCH in
+		i?86)    SF='lock-obj-pub.i686-unknown-linux-gnu.h' ;;
+		x86_64)  SF='lock-obj-pub.x86_64-unknown-linux-gnu.h' ;;
+		arm*)    SF='lock-obj-pub.arm-unknown-linux-gnueabi.h' ;;
+		aarch64) SF='lock-obj-pub.aarch64-unknown-linux-gnu.h' ;;
+	esac
+	if [ -f src/syscfg/$SF ] ; then
+		ln -sfnv $SF src/syscfg/lock-obj-pub.linux.h
+		ln -sfnv $SF src/syscfg/lock-obj-pub.linux-musl.h
+	fi
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		opts="$opts --disable-tests"
+	fi
+}

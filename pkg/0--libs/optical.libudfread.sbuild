@@ -1,0 +1,16 @@
+#!/bin/sh
+# http://download.videolan.org/pub/videolan/libudfread
+
+pkgname=libudfread
+pkgver=1.1.2
+pkgrel=0
+pkgdeps=
+pkgdesc=""
+source="https://download.videolan.org/pub/videolan/libudfread/libudfread-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libudfread.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='' #not in alpine
+
+
+standard_autotools

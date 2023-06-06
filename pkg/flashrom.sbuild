@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://download.flashrom.org/releases
+
+pkgname=flashrom
+pkgver=v1.3.0
+pkgrel=0
+#       libftdi1 deps: libusb ##libconfuse
+#       libpci   deps: zlib
+pkgdeps='libpci libftdi1 libjaylink' # zlib libusb 
+pkgdesc=""
+source=https://download.flashrom.org/releases/flashrom-${pkgver}.tar.bz2
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/flashrom'
+DIST_BINARY=flashrom
+
+
+build()
+{
+	mk_opts="WARNERROR=no CONFIG_STATIC=yes LIBS_BASE=${TOOLCHAIN_ROOT} PREFIX=/usr"
+	_make ${mk_opts}
+}
+
+#no tests
+
+package() {
+	_make ${mk_opts} DESTDIR=${pkgdir} install
+}

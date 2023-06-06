@@ -1,0 +1,27 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/sed
+
+pkgname=sed
+pkgver=4.9 #2022-11-06
+pkgrel=0
+pkgdeps=
+pkgdesc=""
+source=http://ftp.gnu.org/gnu/sed/sed-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='bin/sed'
+
+
+standard_autotools
+
+prepare() {
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		sed -i 's%po \. gnulib-tests%.%' Makefile.in
+	fi
+}
+
+opts='
+--bindir=/bin
+--disable-i18n
+--without-selinux
+--enable-cross-guesses=conservative
+'

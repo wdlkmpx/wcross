@@ -1,0 +1,31 @@
+#!/bin/sh
+# this is only required by dictd
+# https://sourceforge.net/projects/dict/files/libmaa
+
+pkgver=1.4.7
+pkgrel=0
+pkgname=libmaa
+pkgdeps=''
+pkgdesc='Provides many low-level data structures which are helpful for writing compileres'
+source=https://sourceforge.net/projects/dict/files/libmaa/libmaa-${pkgver}/libmaa-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libmaa.a'
+#ALPINE_PKGS='' # no alpine pkg
+
+# ====================================================
+
+build()
+{
+	opts="PREFIX=${TOOLCHAIN_INSTALL_PREFIX}"
+	_mkcmake
+	abort_if_file_not_found maa/libmaa.a
+}
+
+check() {
+	_mkcmake test
+}
+
+package() {
+	_mkcmake install
+}
+

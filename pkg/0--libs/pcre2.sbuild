@@ -1,0 +1,40 @@
+#!/bin/sh
+# https://github.com/PCRE2Project/pcre2/releases
+# https://git.alpinelinux.org/aports/tree/main/pcre2
+
+pkgname=pcre2
+pkgver=10.42
+pkgrel=0
+pkgdeps=''
+pkgdesc="Perl-compatible regular expression library"
+source=https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${pkgver}/pcre2-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libpcre2-posix.a' # libpcre2-8.a
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='pcre2-dev libedit-static'
+
+
+standard_autotools
+
+opts='
+--enable-pcre2-16
+--enable-pcre2-32
+--enable-jit
+--disable-pcre2grep-libz
+--disable-pcre2grep-libbz2
+--disable-pcre2test-libedit
+--disable-pcre2test-libreadline
+'
+
+check() {
+	sed -i 's%which locale%which localex%' RunGrepTest
+	_make check
+}
+
+post_install() {
+	if [ "$BUILD_TYPE" != "chroot" ] ; then
+		# only remove /bin stuff if not in a chroot
+		rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/pcre2grep
+		rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/pcre2test
+	fi
+}

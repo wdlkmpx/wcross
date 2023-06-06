@@ -1,0 +1,19 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libusb
+# https://github.com/libusb/libusb
+
+pkgname=libusb
+pkgver=1.0.26
+pkgrel=0
+pkgdeps=''
+pkgdesc="Library that enables userspace access to USB devices"
+source=https://github.com/libusb/libusb/releases/download/v${pkgver}/libusb-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libusb-1.0.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libusb-dev'
+
+
+standard_autotools
+
+opts='--disable-udev'

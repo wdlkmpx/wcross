@@ -1,0 +1,9 @@
+Download patches from:
+
+https://git.alpinelinux.org/aports/tree/main/busybox?h=master
+
+make sure all patches have been downloaded correctly
+
+grep -r href . | cut -f1 -d ':' | sort -u | grep -v "readme.txt"
+
+(the listed files have html code (need to download RAW patch)

@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+#dep tree
+#--------
+# libsigc++
+#    glibmm
+#    cairomm
+#    atkmm     glibmm
+#    pangomm   glibmm cairomm
+#    gtkmm     atkmm pangomm
+
+# Package versions:
+# - this is really a complex issue, so create profiles for known systems
+
+. /etc/os-release
+
+if [ "$PRETTY_NAME" = "Slackware 14.0" ] ; then #aka Porteus 2.1
+	case ${PKG_SCRIPT_BASE} in
+	gtkmm_sigc2.2|libsigc++2.2)
+		# old *mm versions require this, in Slackware 14.0
+		pkgname=libsigc++2.2
+		pkgver=2.2.11w
+		pkgrel=0
+		pkgdeps=''
+		source=https://sourceforge.net/projects/wdl/files/src/libsigc%2B%2B-2.2.11w.tar.xz
+		TOOLCHAIN_FILE='usr/lib/libsigc-2.2.a'
+		;;
+	gtkmm_cairo|cairomm)
+		pkgname=cairomm
+		pkgver=1.10.0
+		pkgrel=0
+		pkgdeps='gtkmm_sigc2.2'
+		source=https://www.cairographics.org/releases/cairomm-${pkgver}.tar.gz
+		TOOLCHAIN_FILE='usr/lib/libcairomm-1.0.a'
+		prepare() {
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+		}
+		;;
+	gtkmm_glib|glibmm)
+		pkgname=glibmm
+		pkgver=2.32.1
+		pkgrel=0
+		pkgdeps='gtkmm_sigc2.2'
+		source=https://download.gnome.org/sources/glibmm/${pkgver%.*}/glibmm-${pkgver}.tar.xz
+		TOOLCHAIN_FILE='usr/lib/libglibmm-2.4.a'
+		prepare() {
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' glib/glibmm.pc.in 
+		}
+		;;
+	gtkmm_atk|atkmm)
+		pkgname=atkmm
+		#pkgver=2.22.7 #(atk >= 1.12 glibmm-2.4 >= 2.36) 
+		pkgver=2.22.6
+		pkgrel=0
+		pkgdeps='gtkmm_glib'
+		source=https://download.gnome.org/sources/atkmm/${pkgver%.*}/atkmm-${pkgver}.tar.xz
+		TOOLCHAIN_FILE='usr/lib/libatkmm-1.6.a'
+		prepare() {
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+		}
+		;;
+	gtkmm_pango|pangomm)
+		pkgname=pangomm
+		pkgver=2.28.4
+		pkgrel=0
+		pkgdeps='gtkmm_glib gtkmm_cairo'
+		source=https://download.gnome.org/sources/pangomm/${pkgver%.*}/pangomm-${pkgver}.tar.xz
+		TOOLCHAIN_FILE='usr/lib/libpangomm-1.4.a'
+		prepare() {
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+		}
+		;;
+	gtkmm)
+		pkgname=gtkmm
+		pkgver=2.24.2 # later versions may not work with the other libs
+		pkgrel=0
+		pkgdeps='gtkmm_atk gtkmm_pango'
+		source=https://download.gnome.org/sources/gtkmm/${pkgver%.*}/gtkmm-${pkgver}.tar.xz
+		TOOLCHAIN_FILE='usr/lib/libgtkmm-2.4.a'
+		prepare() {
+			sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+		}
+		;;
+	esac
+
+####
+else
+	exit_error "Unknown system: $PRETTY_NAME, edit me to add PKG versions for that system"
+fi
+
+pkgdesc=""
+DL_SUBDIR='gui'
+INSTALL_TO_TOOLCHAIN=1  #directly install everything to $TOOLCHAIN_INSTALL_PREFIX
+
+
+#=============================================================
+
+if [ -f meson.build ] ; then
+	standard_meson
+	#opts="-Dbuild-documentation=false"
+else
+	standard_autotools
+	opts="--disable-documentation"
+fi
+

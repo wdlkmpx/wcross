@@ -1,0 +1,10 @@
+#!/bin/sh
+
+pkgname=gcc_libs
+pkgver=1
+pkgrel=0
+pkgdesc="libgmp / libmpfr / libmpc / libisl"
+pkgdeps='mpc isl'
+source=ignore
+DL_SUBDIR=''
+

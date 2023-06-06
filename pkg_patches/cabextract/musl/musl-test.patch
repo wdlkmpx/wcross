@@ -1,0 +1,29 @@
+# enconding.test:
+#    musl: FATAL ERROR: encoding 'koi8-ru' is not recognised
+# symlinks.test:
+#    busybox find doesn't implement -ls (find: unrecognized: -ls)
+
+diff -Naur cabextract-1.10/test/encoding.test cabextract-1.10-patched/test/encoding.test
+--- cabextract-1.10/test/encoding.test	2018-12-03 18:05:14.000000000 +0800
++++ cabextract-1.10-patched/test/encoding.test	2023-02-10 16:06:27.000000000 +0800
+@@ -7,7 +7,7 @@
+     exit 77
+ fi
+ 
+-"$cabextract" -e koi8-ru -l cabs/encoding-koi8.cab >$actual
++"$cabextract" -e koi8-r -l cabs/encoding-koi8.cab >$actual
+ compare_with <<'EOF'
+ Viewing cabinet: cabs/encoding-koi8.cab
+  File size | Date       Time     | Name
+diff -Naur cabextract-1.10/test/symlinks.test cabextract-1.10-patched/test/symlinks.test
+--- cabextract-1.10/test/symlinks.test	2023-02-04 20:13:26.000000000 +0800
++++ cabextract-1.10-patched/test/symlinks.test	2023-02-10 16:06:12.000000000 +0800
+@@ -40,7 +40,7 @@
+ # check that those symlinks are preserved, but symlinks in the parts
+ # of the path that are archive-controlled are removed
+ rm -rf $tmpdir/1 $tmpdir/other/4.c $tmpdir/other.c $tmpdir/plain.c
+-find $tmpdir -ls
++find $tmpdir
+ touch $tmpdir/other.c
+ mkdir $tmpdir/real
+ ln -s $tmpdir/real $tmpdir/fake

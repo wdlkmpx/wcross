@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/f2fs-tools/
+
+pkgname=f2fs-tools
+pkgver=1.15.0
+pkgrel=0
+# requires sys/queue.h from musl-compat-headers
+# liblzo & lz4 are two unknown deps (distros don't include them)
+pkgdeps='util-linux' #libuuid liblzo lz4
+pkgdesc="Tools and library for the Flash-Friendly File System (F2FS)"
+source=https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git/snapshot/${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "f2fs-tools" ] ; then
+	PKGDIR_FILE='sbin/fsck.f2fs'
+else
+	# .a file may exist in a chroot and need it quickly to build another app
+	TOOLCHAIN_FILE='usr/lib/libf2fs.a'
+fi
+ALPINE_PKGS='f2fs-tools-dev f2fs-tools-static'
+
+
+opts='--sbindir=/sbin --without-selinux'
+# check_static_exe fsck/fsck.f2fs
+
+standard_autotools

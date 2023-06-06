@@ -1,0 +1,14 @@
+# panic-tests.sh fails with root... root can do anything
+
+diff -Naur sed-4.9/testsuite/panic-tests.sh sed-4.9-p/testsuite/panic-tests.sh
+--- sed-4.9/testsuite/panic-tests.sh	2022-01-02 07:00:07.000000000 +0800
++++ sed-4.9-p/testsuite/panic-tests.sh	2023-02-12 20:45:27.000000000 +0800
+@@ -1,6 +1,8 @@
+ #!/bin/sh
+ # Exercise some panic stops
+ 
++exit 0
++
+ # Copyright (C) 2016-2022 Free Software Foundation, Inc.
+ 
+ # This program is free software: you can redistribute it and/or modify

@@ -1,0 +1,19 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/findutils
+
+pkgname=findutils
+pkgver=4.9.0   #2022.02.01
+pkgrel=0
+pkgdeps=
+pkgdesc=""
+source=http://ftp.gnu.org/gnu/findutils/findutils-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/find'
+
+
+standard_autotools
+
+package() {
+	install_exe find/find   ${pkgdir}/usr/bin
+	install_exe xargs/xargs ${pkgdir}/usr/bin
+}

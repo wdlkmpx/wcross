@@ -1,0 +1,13 @@
+diff --git a/src/meson.build b/src/meson.build
+index 2e1c89f..5d2365c 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -46,7 +46,7 @@ liblcms2_lib = library(
+   lcms2_srcs,
+   include_directories: inc_dirs,
+   gnu_symbol_visibility: 'hidden',
+-  dependencies: deps,
++  dependencies: [deps, jpeg_dep, tiff_dep],
+   c_args: cargs,
+   version: library_version,
+   # vs_module_defs: 'lcms2.def',

@@ -1,0 +1,15 @@
+#!/bin/sh
+# https://sourceforge.net/projects/wdl/files/src
+
+pkgname=yasm
+pkgver=1.3_2022.12
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=https://sourceforge.net/projects/wdl/files/src/yasm-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/yasm'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_autotools

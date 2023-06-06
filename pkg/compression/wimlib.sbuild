@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://wimlib.net/
+# https://git.alpinelinux.org/aports/tree/community/wimlib
+
+pkgname=wimlib
+pkgver=1.13.6
+pkgrel=0
+pkgdeps='libattr libfuse libxml2 ntfs-3g'
+source=https://wimlib.net/downloads/wimlib-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "wimlib" ] ; then
+	PKGDIR_FILE='usr/bin/wimlib-imagex'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libwim.a'
+fi
+ALPINE_PKGS='libwim-dev' # also includes the .a lib
+
+
+standard_autotools
+
+woptimize_flag -O2
+opts='--without-libcrypto'
+#check_static_exe wimlib-imagex

@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/popt/APKBUILD
+# https://github.com/rpm-software-management/popt/releases
+
+pkgname=popt
+pkgver=1.19
+pkgrel=0
+pkgdeps=
+pkgdesc="commandline option parser"
+source="http://ftp.rpm.org/popt/releases/popt-${pkgver%.*}.x/popt-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libpopt.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='popt-dev popt-static' #(alpine 3.18)
+
+
+standard_autotools

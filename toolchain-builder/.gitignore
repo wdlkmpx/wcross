@@ -1,0 +1,16 @@
+/config.mak
+/sources/
+/output/
+/binutils-*/
+/gcc-*/
+/musl-*/
+/gmp-*/
+/mpc-*/
+/mpfr-*/
+/build-*/
+/linux-*/
+/isl-*/
+/build/
+0buildtmp
+0output
+0sources

@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://github.com/libfuse/libfuse/releases
+
+pkgname=fuse
+pkgver=3.14.1
+pkgrel=0
+pkgdeps=''
+pkgdesc="The reference implementation of the Linux FUSE (Filesystem in Userspace) interface"
+source=https://github.com/libfuse/libfuse/releases/download/fuse-${pkgver}/fuse-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libfuse3.a'
+#TOOLCHAIN_ONLY=1
+ALPINE_PKGS='fuse3 fuse3-dev fuse3-static' # eudev-dev
+
+
+standard_meson
+
+prepare() {
+	# this dir is required otherwise the build fail
+	mkdir -p /etc/udev/rules.d
+}
+
+# TEST SUITE FAILS: https://github.com/libfuse/libfuse/issues/675
+WCROSS_MAKE_CHECK=no
+
+opts="
+-Dexamples=false
+-Dtests=$(want_tests && echo true || echo false)
+-Dutils=false
+-Ddefault_library=static
+-Dudevrulesdir=/etc/udev/rules.d
+"

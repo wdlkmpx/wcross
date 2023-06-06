@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/wbbox/tags
+
+pkgname=wbbox
+pkgver=0.1
+pkgrel=0
+pkgdeps=''
+pkgdesc="the w box"
+source="${pkgname}-${pkgver}.tar.gz::https://github.com/wdlkmpx/wbbox/archive/refs/tags/${pkgver}.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/wbbox'
+LINUX_ONLY=1
+
+
+build()
+{
+	_configure --prefix=/usr
+	_make
+}
+
+#no tests
+
+package() {
+	install_to_pkgdir
+}

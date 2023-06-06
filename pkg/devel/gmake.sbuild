@@ -1,0 +1,19 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/make
+# https://github.com/archlinux/svntogit-packages/blob/packages/make/trunk/PKGBUILD
+
+pkgname=make
+pkgver=4.4.1
+pkgrel=0
+pkgdeps=
+pkgdesc="GNU make utility to maintain groups of programs"
+source="https://ftp.gnu.org/gnu/make/make-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/make'
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%po doc%%' Makefile.in
+}

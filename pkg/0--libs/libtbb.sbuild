@@ -1,0 +1,42 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libtbb/APKBUILD
+# https://github.com/oneapi-src/oneTBB
+
+pkgname=libtbb
+pkgver=2021.8.0
+pkgrel=0
+pkgdeps='libucontext' # hwloc swig
+pkgdesc="oneAPI Threading Building Blocks"
+source="oneTBB-$pkgver.tar.gz::https://github.com/oneapi-src/oneTBB/archive/v$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libtbb.a'
+TOOLCHAIN_ONLY=1
+
+
+standard_cmake
+
+prepare() {
+	sed -e "s@#define MALLOC_UNIXLIKE_OVERLOAD_ENABLED __linux__@@"  \
+		-i src/tbbmalloc_proxy/proxy.h
+	EXTRA_CFLAGS="-flto=auto"
+	EXTRA_CXXFLAGS="-flto=auto"
+	EXTRA_LDFLAGS="-lucontext"
+}
+
+# tests take hours to run
+WCROSS_MAKE_CHECK=no
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DTBB4PY_BUILD=OFF
+-DTBB_STRICT=OFF
+-DTBB_TEST=OFF
+"
+
+package() {
+	install_to_pkgdir
+	create_pkg_config_file ${TOOLCHAIN_INSTALL_PREFIX} tbb ${pkgver} -ltbb
+	create_pkg_config_file ${TOOLCHAIN_INSTALL_PREFIX} tbbmalloc ${pkgver} -ltbbmalloc
+	create_pkg_config_file ${TOOLCHAIN_INSTALL_PREFIX} tbbmalloc_proxy ${pkgver} -ltbbmalloc_proxy -ltbbmalloc
+}
+

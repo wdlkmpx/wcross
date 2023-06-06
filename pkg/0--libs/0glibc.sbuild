@@ -1,0 +1,68 @@
+#!/bin/sh
+## TODO
+# update glibc cross toolchains
+# https://ftp.gnu.org/gnu/glibc
+# https://github.com/archlinux/svntogit-packages/blob/packages/glibc/trunk/PKGBUILD
+#
+# Use -f to manually compile this, example:
+#   ./buidl.sh -arch i686gnu -pkg 0glibc -f
+
+pkgname=glibc
+pkgver=2.37
+pkgrel=0
+pkgdeps=''
+pkgdesc="GNU libc"
+source=https://ftp.gnu.org/gnu/glibc/glibc-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libc.a'
+
+# only glibc cross-compilers
+if [ -z "$GLIBC_TOOLCHAIN" ] || [ -z "$XCOMPILER" ] ; then
+	echo "** the GLIBC pkg must only be compiled by GLIBC cross-compilers... to update the libc"
+	echo "** ignoring this pkg"
+	exit 0
+fi
+
+
+build()
+{
+	src_dir=$(pwd)
+	build_dir=${src_dir}-build
+	cmd_echo mkdir -p ${build_dir}
+	cmd_echo cd ${build_dir}
+	#--
+	GPREFIX=${XPATH}/${TARGET_TRIPLET}
+	# discarded
+	#  --enable-kernel=4.4 --enable-stack-protector=strong
+	#  --enable-systemtap ## error: systemtap support needs sys/sdt.h with asm support
+	#  --enable-cet
+	#  --disable-shared	 # <command-line>: fatal error: .../glibc-2.36-build/libc-modules.h: No such file or directory
+	#  --enable-static-nss  # nss_module.c:153:7: error: 'is_nscd' undeclared (first use in this function)
+	CFLAGS="-I${GPREFIX}/include" \
+	CXXFLAGS="-I${GPREFIX}/include" \
+	cmd_echo \
+	${src_dir}/configure \
+		--disable-build-nscd \
+		--host=${TARGET_TRIPLET} \
+		--build=$(gcc -dumpmachine) \
+		--disable-timezone-tools \
+		--prefix=${GPREFIX} \
+		--with-headers=${GPREFIX}/inlcude \
+		--enable-bind-now \
+		--disable-multi-arch \
+		--disable-profile \
+		--disable-crypt \
+		--disable-werror \
+		--libdir=${GPREFIX}/lib \
+		--libexecdir=${GPREFIX}/lib || exit 1
+	cmd_echo make
+}
+
+# no test suite
+
+package() {
+	cmd_echo make install
+	echo > ${TOOLCHAIN_ROOT}/glibc-${pkgver}
+	cmd_echo rm -rf ${src_dir} ${build_dir}
+}
+

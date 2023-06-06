@@ -1,0 +1,30 @@
+#!/bin/sh
+# http://downloads.xiph.org/releases/opus
+# https://git.alpinelinux.org/aports/tree/main/opus
+
+pkgname=libopus
+pkgver=1.3.1  #2019-04-12
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=http://downloads.xiph.org/releases/opus/opus-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libopus.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='opus-dev'
+
+
+standard_autotools
+
+opts='--disable-doc'
+
+prepare() {
+	#export X86_SSE_CFLAGS=""
+	#export X86_SSE2_CFLAGS="" # uncomment to support ancient processors
+	export X86_SSE4_1_CFLAGS=""
+	export X86_AVX_CFLAGS=""
+	export ARM_NEON_INTR_CFLAGS=""
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		opts="$opts --disable-extra-programs"
+	fi
+}

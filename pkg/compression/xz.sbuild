@@ -1,0 +1,38 @@
+#!/bin/sh
+# https://tukaani.org/xz
+# https://git.alpinelinux.org/aports/tree/main/xz
+
+pkgname=xz
+pkgver=5.4.3
+pkgrel=0
+pkgdeps=''
+pkgdesc="Library and CLI tools for XZ and LZMA compressed files"
+source=https://tukaani.org/xz/xz-${pkgver}.tar.xz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "xz" ] ; then
+	PKGDIR_FILE='usr/bin/xz'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/liblzma.a'
+fi
+ALPINE_PKGS='xz-dev xz-static'
+
+#=====================================================================================
+
+standard_autotools
+
+woptimize_flag -O2
+
+# --disable-assembler
+opts='
+--disable-doc
+--disable-scripts
+--disable-lzma-links
+--disable-lzmainfo
+--disable-lzmadec
+--disable-werror
+--disable-symbol-versions
+'
+
+#check_static_exe src/xz/xz

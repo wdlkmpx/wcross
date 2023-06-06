@@ -1,0 +1,64 @@
+#!/bin/sh
+# https://github.com/dinoex/iroffer-dinoex
+#
+# https://iroffer.net/INSTALL-linux-en.html
+#
+# http://kasumi.moe/xdccguide/
+#
+# /msg bot admin <cmd>
+#                https://iroffer.net/help-admin-en.txt
+#
+# NOTE: issue with musl? defunt processes are created every few minutes?
+#      ps aux | grep iroffer
+
+
+pkgname=iroffer
+_commit=1993813
+_cdate=2023.05.06 #this is the date the commit was acknowledged... it may be old
+pkgrel=0
+pkgdeps='libminiupnpc curl openssl'
+pkgdesc=" An IRC fileserver using DCC "
+source="iroffer-${_cdate}-${_commit}.tar.gz::https://github.com/dinoex/iroffer-dinoex/tarball/${_commit}"
+SRC_DIR=dinoex-iroffer-dinoex-${_commit}
+pkgver=${_cdate}
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/iroffer'
+
+
+
+build()
+{
+	sed -i 's/geteuid/getpid/' src/iroffer_misc.c
+	cmd_echo ./Configure \
+		-curl -no-chroot -upnp -no-libs -no-telnet \
+		PREFIX=/usr \
+		CFLAGS="${WMK_CFLAGS}" \
+		LDFLAGS="${WMK_LDFLAGS}" \
+		CC=${CC}
+		# -no-openssl -no-blowfish
+	make
+}
+
+package() {
+	install_to_pkgdir
+}
+
+post_install()
+{
+	if [ -f $HOME/.iroffer/config ] ; then
+		mkdir -p ${pkgdir}
+		echo '#!/bin/sh
+if [ -f $HOME/.iroffer/config ] ; then
+	# need to cd to config dir...
+	cd $HOME/.iroffer
+	echo "iroffer -b $HOME/.iroffer/config $@"
+	exec iroffer -b $HOME/.iroffer/config "$@"
+else
+	echo "$HOME/.iroffer/config is missing"
+	echo "iroffer $@"
+	exec iroffer "$@"
+fi
+' > ${pkgdir}/usr/bin/iroffer_start.sh
+		chmod +x ${pkgdir}/usr/bin/iroffer_start.sh
+	fi
+}

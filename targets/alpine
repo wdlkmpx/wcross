@@ -1,0 +1,9 @@
+BUILD_TYPE=chroot
+export MUSL_TOOLCHAIN='yes'
+
+if [ -z "$STATIC_LINK" ] ; then
+	STATIC_LINK=yes #default if not specified
+fi
+
+
+

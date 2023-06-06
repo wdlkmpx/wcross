@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# compile for the running system
+# but store compiled static libs and headers in ${XPATH}/
+# 
+
+BUILD_TYPE=system
+EXTRA_PKG_DIR='pkg/sysgcc'
+
+# default to no, only if STATIC_LINK is empty
+if [ -z "$STATIC_LINK" ] ; then
+	# want to be able to compile any pkg, don't link libc statically
+	STATIC_LINK=no
+fi
+
+# it's a linux system
+export TARGET_TRIPLET=linux-system
+
+. /etc/os-release
+if [ "$ID" = "alpine" ] ; then
+	export MUSL_TOOLCHAIN='yes'
+	export ALPINE_LINUX='yes'
+else
+	# if not using alpine, assume it's a glibc system
+	echo "Assuming system LIBC is GLIBC (otherwise fix targets/system)"
+	export GLIBC_TOOLCHAIN='yes'
+	case ${OS_ARCH} in
+		*64) export WLIBDIR='lib64' ;;
+		*)   export WLIBDIR='lib'   ;;
+	esac
+fi
+
+#echo $WLIBDIR ; exit

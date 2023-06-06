@@ -1,0 +1,49 @@
+From 4fc34ed77ee985c19acb818dee1ed27054ddd434 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim-Philipp=20M=C3=BCller?= <tim@centricular.com>
+Date: Sun, 4 Jun 2023 10:28:43 +0100
+Subject: [PATCH] meson: fix build with -Dbin=false and -Dtests=true
+
+The fribidi binary is needed by the unit test setup, so
+if tests are enabled we need to build it even if binaries
+are disabled. We just won't install it in that case.
+
+Fixes #198
+---
+ bin/meson.build | 8 +++++++-
+ meson.build     | 2 +-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/bin/meson.build b/bin/meson.build
+index e4faa33..b4bbd68 100644
+--- a/bin/meson.build
++++ b/bin/meson.build
+@@ -1,9 +1,15 @@
++# The fribidi binary is used by the test setup, so if bin=false we still
++# need to build it for internal usage, we just won't install it.
+ fribidi = executable('fribidi',
+   'fribidi-main.c', 'getopt.c', 'getopt1.c', fribidi_unicode_version_h,
+   c_args: ['-DHAVE_CONFIG_H'] + fribidi_static_cargs,
+   include_directories: incs,
+   link_with: libfribidi,
+-  install: true)
++  install: get_option('bin'))
++
++if not get_option('bin')
++  subdir_done()
++endif
+ 
+ executable('fribidi-benchmark',
+   'fribidi-benchmark.c', 'getopt.c', 'getopt1.c', fribidi_unicode_version_h,
+diff --git a/meson.build b/meson.build
+index 3db0d09..49f5515 100644
+--- a/meson.build
++++ b/meson.build
+@@ -76,7 +76,7 @@ incs = include_directories('.', 'lib', 'gen.tab')
+ 
+ subdir('gen.tab')
+ subdir('lib')
+-if get_option('bin')
++if get_option('bin') or get_option('tests')
+   subdir('bin')
+ endif
+ if get_option('tests')

@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://github.com/intel/libipt/tags
+
+pkgname=libipt2
+pkgver=2.0.5
+pkgrel=0
+pkgdeps=''
+pkgdesc="Intel Processor Trace Decoder Library"
+source="libipt-${pkgver}.tar.gz::https://github.com/intel/libipt/archive/refs/tags/v${pkgver}.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libipt.a'
+INSTALL_TO_TOOLCHAIN=1
+#ALPINE_PKGS='' # not in alpine
+
+
+standard_cmake
+
+prepare() {
+	case $CPU_ARCH in
+		i686*|x86_64*) ok=1 ;;
+		*) echo "libipt2: only x86 is supported" ; exit 0 ;;
+	esac
+}
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+"

@@ -1,0 +1,14 @@
+#!/bin/sh
+# https://github.com/vasi/squashfuse/releases
+
+pkgname=squashfuse
+pkgver=0.1.105
+pkgrel=0
+pkgdeps='zlib lz4 xz liblzo zstd'
+pkgdesc=""
+source="squashfuse-${pkgver}.tar.gz::https://github.com/vasi/squashfuse/archive/refs/tags/${pkgver}.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/squashfuse'
+
+
+standard_autotools

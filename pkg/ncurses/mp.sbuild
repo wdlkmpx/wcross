@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/mp/tags
+
+pkgname=mp
+pkgver=3.3.21w
+pkgrel=0
+pkgdeps='ncursesw'
+pkgdesc="mp text editor"
+source="${pkgname}-${pkgver}.tar.gz::https://github.com/wdlkmpx/mp/archive/refs/tags/${pkgver}.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/mp'
+
+
+build()
+{
+	_configure --prefix=/usr --sysconfdir=/etc --disable-nls
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	install_to_pkgdir
+}

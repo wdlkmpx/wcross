@@ -1,0 +1,38 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/xxhash/APKBUILD
+
+pkgname=xxhash
+pkgver=0.8.1
+pkgrel=0
+pkgdesp=
+pkgdesc="Extremely fast non-cryptographic hash algorithm"
+source="xxHash-$pkgver.tar.gz::https://github.com/Cyan4973/xxHash/archive/v$pkgver.tar.gz"
+DL_SUBDIR=''
+#xPKGDIR_FILE='usr/sbin/xxhsum'
+TOOLCHAIN_FILE='usr/lib/libxxhash.a'
+ALPINE_PKGS='xxhash-dev' # APKBUILD removes libxxhash.a
+LINUX_ONLY=1
+
+
+build()
+{
+	sed -i -e 's%/usr/local%/usr%' Makefile
+		#-e 's%libxxhash.a libxxhash%libxxhash.a%' 
+	EXTRA_CFLAGS="-DXXH_FORCE_MEMORY_ACCESS=1"
+	woptimize_flag -O2
+	case "$CARCH" in
+		x86*) local dispatch="1" ;; # only implemented for x86/x86_64
+		*)    local dispatch="0" ;;
+	esac
+	_make DISPATCH="$dispatch"
+}
+
+check() {
+	_make check
+}
+
+package() {
+	install_to_pkgdir
+	rm -rfv ${pkgdir}/usr/lib/libxxhash.so*
+}
+

@@ -1,0 +1,83 @@
+#!/bin/sh
+# this file is sourced by .sbuild pkgs that are known to build with cmake
+#
+# https://cmake.org/cmake/help/v3.0/module/GNUInstallDirs.html
+# https://cmake.org/cmake/help/latest/generator/Ninja.html
+#
+# set WCROSS_MAKE_CHECK=no to not run tests (broken or missing deps)
+#
+# - override package() if you want to install files manually
+#
+# Tip: cmake . -LH should configure your project, then output all your cached, non-advanced variables along with their help strings.
+
+
+# PKG_CONFIG='pkg-config --static' breaks cmake's pkg_check_modules()
+#     theory 1: it probably tries to execute the whole string including --static as the exe)
+#     theory 2: cmake might duplicate env variables and the result is broken paths
+unset PKG_CONFIG
+
+
+build()
+{
+	# new opts are prepended, so they can be overriden
+	# by previously set opts
+	if [ "$IGNORE_LIBTOOL" ] ; then
+		# (00_pkg_build) copy dev to $TOOLCHAIN_ROOT but don't delete the dev stuff from the $pkgdir
+		DEV_IN_PKGDIR=1
+	fi
+	#--
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		# - use this to avoid possible issues when fixing .la files
+		#   just install directly to ${TOOLCHAIN_INSTALL_PREFIX}
+		# - if you don't need anything in PKGDIR, then you should use this
+		opts="
+-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DCMAKE_INSTALL_FULL_LIBDIR=${TOOLCHAIN_INSTALL_LIBDIR}
+$opts"
+	else
+		# detect if -DCMAKE_INSTALL_PREFIX and -DCMAKE_INSTALL_FULL_LIBDIR have been specified
+		case $opts in
+			*-DCMAKE_INSTALL_LIBDIR*|*-DCMAKE_INSTALL_FULL_LIBDIR*) ok=1 ;; #libdir has already been specified
+			*) opts="-DCMAKE_INSTALL_FULL_LIBDIR=/usr/${WLIBDIR} $opts" ;;
+		esac
+		case $opts in
+			*-DCMAKE_INSTALL_PREFIX*) ok=1 ;; #prefix has already been specified
+			*) opts="-DCMAKE_INSTALL_PREFIX=/usr $opts" ;;
+		esac
+	fi
+	#--
+	_cmake \
+		-DCMAKE_INSTALL_FULL_SYSCONFDIR=/etc \
+		-DCMAKE_INSTALL_FULL_LOCALSTATEDIR=/var \
+		-DCMAKE_INSTALL_FULL_SHAREDSTATEDIR=/var/lib \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-G Ninja
+	#cmd_echo make
+	cmd_echo cmake --build .
+}
+
+
+check() {
+	CTEST_OUTPUT_ON_FAILURE=TRUE \
+		cmd_echo ctest --timeout 300 #-V --output-on-failure -j 4
+}
+
+
+package()
+{
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		DESTDIR=
+	else
+		DESTDIR=
+		case $opts in *-DCMAKE_INSTALL_PREFIX=/usr*)
+			# shouldn't install to system, $pkgdir is the place
+			rm -rf ${pkgdir}
+			#DESTDIR="DESTDIR=${pkgdir}" ;;
+			export DESTDIR="${pkgdir}" ;;
+		esac
+	fi
+	#cmd_echo make ${DESTDIR} install
+	cmd_echo cmake --build . --target install
+	unset DESTDIR
+}
+

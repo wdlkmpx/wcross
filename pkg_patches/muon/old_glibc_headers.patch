@@ -1,0 +1,13 @@
+diff --git a/subprojects/bestline/bestline.c b/subprojects/bestline/bestline.c
+index 5361f8b4..cda6f101 100644
+--- a/subprojects/bestline/bestline.c
++++ b/subprojects/bestline/bestline.c
+@@ -132,7 +132,7 @@
+ #include "bestline.h"
+ 
+ #ifndef __COSMOPOLITAN__
+-#define _POSIX_C_SOURCE  1 /* so GCC builds in ANSI mode */
++#define _POSIX_C_SOURCE  200809L /* so GCC builds in ANSI mode */
+ #define _XOPEN_SOURCE  700 /* so GCC builds in ANSI mode */
+ #define _DARWIN_C_SOURCE 1 /* so SIGWINCH / IUTF8 on XNU */
+ #ifdef __sun

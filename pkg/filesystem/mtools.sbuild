@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/mtools?h=master
+
+pkgname=mtools
+pkgver=4.0.43
+pkgrel=0
+pkgdeps=
+pkgdesc="collection of utilities to access MS-DOS disks from Unix without mounting them"
+source="https://ftp.gnu.org/gnu/mtools/mtools-$pkgver.tar.bz2"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/mtools'
+
+
+standard_autotools
+
+prepare() {
+	EXTRA_CFLAGS="-DOS_linux"
+}
+
+opts='
+--sysconfdir=/etc/mtools
+--without-x
+'
+
+post_install() {
+	# delete some unneeded stuff
+	# unfortunately apps seem to need the mtools symlinks (too many!)
+	#  otherwise the symlinks must be gone, since mtools supports them as commands
+	for i in  mxtar lz tgz uz
+	do
+		rm -rfv ${pkgdir}/usr/bin/${i}
+	done
+}
+

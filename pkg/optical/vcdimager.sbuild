@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://sourceforge.net/projects/wdl/files/src
+
+pkgname=vcdimager
+pkgver=2.0.2w
+pkgrel=0
+pkgdeps='libcdio popt' # libxml2 
+pkgdesc=""
+source=https://sourceforge.net/projects/wdl/files/src/vcdimager-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/vcdimager'
+
+
+standard_autotools
+
+opts='
+--without-xml-frontend
+--without-versioned-libs
+--disable-doc
+'
+#check_static_exe frontends/cli/vcdimager

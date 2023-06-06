@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/engrampa
+
+pkgname=engrampa
+pkgver=1.19.1w    # w 1.14.1 = last gtk2
+pkgrel=0
+pkgdeps=''
+pkgdesc=" GTK file archiver "
+source=https://github.com/wdlkmpx/engrampa/releases/download/v${pkgver}/engrampa-${pkgver}.tar.xz
+PKGDIR_FILE='usr/bin/engrampa'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+opts='--disable-packagekit --with-gtk=2.0'
+

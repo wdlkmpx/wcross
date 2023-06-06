@@ -1,0 +1,39 @@
+#!/bin/sh
+# https://github.com/webmproject/libvpx/tags
+
+pkgname=libvpx
+pkgver=1.11.0
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://github.com/webmproject/libvpx/archive/v${pkgver}.tar.gz
+DL_SUBDIR=''
+SRC_FILE=libvpx-${pkgver}.tar.gz
+TOOLCHAIN_FILE='usr/lib/libvpx.a'
+#ALPINE_PKGS='libvpx-dev'  # doesn't include .a file
+
+
+build()
+{
+	CROSS=${WCROSS_PREFIX} \
+	_configure \
+		--prefix=${TOOLCHAIN_INSTALL_PREFIX} \
+		--enable-static \
+		--disable-shared \
+		--disable-examples \
+		--disable-unit-tests \
+		--disable-docs \
+		--disable-tools \
+		--enable-pic \
+		--enable-vp9-highbitdepth
+	_make install
+}
+
+## TODO
+#check() {
+#	_make check
+#}
+
+package() {
+	_make install
+}

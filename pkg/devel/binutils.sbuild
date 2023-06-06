@@ -1,0 +1,161 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/binutils
+# https://archlinux.org/packages/core/x86_64/binutils/
+# https://github.com/buildroot/buildroot/tree/master/package/binutils
+# https://github.com/crosstool-ng/crosstool-ng/tree/master/packages/binutils
+# https://github.com/void-linux/void-packages/tree/master/srcpkgs/binutils
+# 
+# 2.39
+#   https://git.alpinelinux.org/aports/tree/main/binutils/APKBUILD?h=3.17-stable
+#   https://github.com/archlinux/svntogit-packages/blob/b917411933c07f9314cd4f4fa9702e4a5f9c547e/trunk/PKGBUILD
+#
+# only with glibc the full package is produced, so using system gcc makes more sense
+#
+
+pkgname=binutils
+pkgver=2.40
+pkgrel=0
+pkgdeps='libjansson zlib zstd isl'
+#if [ "$MUSL_TOOLCHAIN" ] ; then
+#	pkgdeps="$pkgdeps libucontext"
+#fi
+pkgdesc="Tools necessary to build programs"
+source="https://ftp.gnu.org/gnu/binutils/binutils-$pkgver.tar.xz"
+builddir="$srcdir/$pkgname-$pkgver"
+DL_SUBDIR=''
+if [ -n "$XCOMPILER" ] ; then
+	PKGDIR_FILE="usr/bin/${TARGET_TRIPLET}-ld"
+else
+	PKGDIR_FILE="usr/bin/ld"
+fi
+
+#==================================================================================
+
+standard_autotools
+
+prepare() {
+	#enforce_cross_compiler ${pkgdir}/usr/bin
+	#exit
+	# ld/Makefile: ld-new requires $(ld_new_DEPENDENCIES)
+	#      which includes JANSSON_LIBS, but deps require files not GCC flags
+	# make[2]: *** No rule to make target '-L/mnt/sda3/wcross/cross-compiler/i686-linux-musl-cross/i686-linux-musl/lib', needed by 'ld-new'.  Stop.
+	export JANSSON_LIBS=${TOOLCHAIN_INSTALL_LIBDIR}/libjansson.a
+	export JANSSON_CFLAGS=-I${TOOLCHAIN_INSTALL_PREFIX}/include
+	## gprofng + musl: https://sourceware.org/bugzilla/show_bug.cgi?id=29477
+	## off_t erros... issues with 64 bit stuff
+	#if [ "$MUSL_TOOLCHAIN" ] ; then
+	#	sed -i "s%^LIBS = %LIBS = ${TOOLCHAIN_INSTALL_LIBDIR}/libucontext.a %" gprofng/Makefile.in
+	#fi
+    #-- Makefile: recipe for target 'all-bfd' failed
+    sed -i 's%doc po%%' bfd/Makefile.in
+    sed -i '/SUBDIRS = po/d' $(find . -maxdepth 2 -name Makefile.in)
+    # https://sourceware.org/bugzilla/show_bug.cgi?id=27397
+    # problems with --enable-cet, force enable if gcc >= 11 (I might be wrong)
+    cc_set_version_vars ${CC}
+    if [ ${cc_ver_major} -ge 11 ] ; then
+		opts="$opts --enable-cet"
+    fi
+}
+
+opts="
+--enable-static
+--disable-shared
+--without-libiconv-prefix
+--without-libintl-prefix
+--with-system-zlib
+--disable-nls
+--enable-libctf
+--without-debuginfod
+--enable-deterministic-archives
+--enable-64-bit-bfd
+--enable-64-bit-archive
+--enable-jansson
+--disable-werror
+--disable-multilib
+--enable-default-execstack=no
+--enable-install-libiberty
+--enable-relro
+--with-zstd
+--enable-year2038
+--enable-gold
+"
+
+if [ "$MUSL_TOOLCHAIN" ] ; then
+	opts="$opts --with-mmap
+"
+fi
+
+if [ -z "$GLIBC_TOOLCHAIN" ] ; then
+	#only use gprofng with glibc
+	opts="$opts --disable-gprofng
+"
+else
+	opts="$opts --enable-gprofng
+"
+fi
+	
+if [ "$STATIC_LINK" = "yes" ] ; then
+	opts="$opts --disable-plugins
+"
+else
+	opts="$opts --enable-plugins
+"
+fi
+
+if [ -n "$XCOMPILER" ] ; then
+	opts="$opts --target=${TARGET_TRIPLET}
+--program-prefix=${TARGET_TRIPLET}-
+"
+fi
+
+#if [ "$CPU_ARCH" = "x86_64" ]; then
+#	opts="$opts --enable-targets=x86_64-pep"
+#fi
+
+post_install()
+{
+	(
+		cd ${pkgdir}/usr
+		#ztriplet=$(command ls -d *-*-*)
+		ztriplet=$(find . -mindepth 1 -maxdepth 1 -type d -name '*-*-*' | sed 's%^\./%%')
+		if [ "$BUILD_TYPE" = "system" ] && [ -f /etc/slackware-version ] ; then
+			if [ "$CPU_ARCH" = "i686" ] ; then
+				ln -snfv ${ztriplet} i486-slackware-linux
+				ln -snfv ${ztriplet} i586-slackware-linux
+			elif [ "$CPU_ARCH" = "x86_64" ] ; then
+				ln -snfv ${ztriplet} x86_64-slackware-linux
+			fi
+		fi
+		dedup_toolchain_apps ${ztriplet}
+	)
+	if [ -n "$XCOMPILER" ] ; then
+		enforce_cross_compiler ${pkgdir}/usr/bin
+		xxLD=${TARGET_TRIPLET}-ld
+	else
+		xxLD=ld
+	fi
+	#--
+	if [ "$BUILD_TYPE" = "chroot" ] ; then
+		# chroot not allowed in the following lines
+		return 0
+	fi
+	if [ -n "$XCOMPILER" ] && [ ! -f ${TOOLCHAIN_INSTALL_PREFIX}/bin/as ] ; then
+		# CLANG probably
+		return 0
+	fi
+	#--
+	diff ${pkgdir}/usr/bin/${xxLD} ${pkgdir}/usr/bin/${xxLD}.bfd
+	if [ $? -eq 0 ] ; then
+		ln -snfv ${xxLD}.bfd ${pkgdir}/usr/bin/${xxLD}
+	fi
+	# replace toolchain's binutils
+	if [ -n "$XCOMPILER" ] ; then
+		rm -rf ${TOOLCHAIN_INSTALL_PREFIX}/lib/ldscripts
+	fi
+	#--
+	rm -rf ${pkgdir}/usr/share
+	if [ "$BUILD_TYPE" = "cross" ] ; then
+		cp -av --remove-destination ${pkgdir}/usr/* ${XPATH}/usr/
+		cp -av --remove-destination ${pkgdir}/etc ${XPATH}
+	fi
+}

@@ -1,0 +1,31 @@
+#!/bin/sh
+# basic lib
+# https://git.alpinelinux.org/aports/tree/main/expat/APKBUILD
+
+pkgname=expat
+pkgver=2.5.0
+pkgrel=0
+pkgdeps=
+pkgdesc="XML Parser library written in C"
+source="https://downloads.sourceforge.net/project/expat/expat/$pkgver/expat-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libexpat.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='expat-dev expat-static'
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%xmlwf doc%%' Makefile.in
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		opts="$opts --without-tests"
+	fi
+}
+
+opts='
+--without-xmlwf
+--without-examples
+--without-xmlwf
+--without-docbook
+'

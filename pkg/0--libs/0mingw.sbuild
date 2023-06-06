@@ -1,0 +1,74 @@
+#!/bin/sh
+## TODO
+# update mingw cross toolchains
+# https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/
+#
+# Use -f to manually compile this, example:
+#   ./buidl.sh -arch win32 -pkg 0mingw -f
+
+pkgname=mingw
+pkgver=v10.0.0
+pkgrel=0
+pkgdeps=''
+pkgdesc="mingw"
+source=https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-${pkgver}.tar.bz2
+DL_SUBDIR=''
+#TOOLCHAIN_FILE='usr/lib/libc.a'
+
+
+build()
+{
+	case ${TARGET_TRIPLET} in
+		x86_64*) crt_lib='--enable-lib64 --disable-lib32' ;;
+		i686*)   crt_lib='--enable-lib32 --disable-lib64' ;;
+		*) exit 0 ;; #aarch64 armv7
+	esac
+	mcrt='ucrt' # msvcrt
+	# https://github.com/Zeranoe/mingw-w64-build
+	#--
+	BUILD_MACHINE=$($CC -dumpmachine)
+	#--
+	cmd_echo cd mingw-w64-headers
+	cmd_echo \
+    ./configure \
+		--build=${BUILD_MACHINE} \
+		--host=${TARGET_TRIPLET} \
+		--prefix=${TOOLCHAIN_ROOT} \
+		--with-default-msvcrt=${mcrt} \
+		--with-sysroot=${TOOLCHAIN_ROOT}
+	cmd_echo make install
+	cmd_echo cd ..
+	#--
+	cmd_echo cd mingw-w64-crt
+	cmd_echo \
+    ./configure \
+		--build=${BUILD_MACHINE} \
+		--host=${TARGET_TRIPLET} \
+		--prefix=${TOOLCHAIN_ROOT} \
+		--with-default-msvcrt=${mcrt} ${crt_lib} \
+		--with-sysroot=${TOOLCHAIN_ROOT}
+	cmd_echo make install
+	cmd_echo cd ..
+	#--
+	cmd_echo cd mingw-w64-libraries/winpthreads
+	cmd_echo \
+    ./configure \
+		--build=${BUILD_MACHINE} \
+		--host=${TARGET_TRIPLET} \
+		--prefix=${TOOLCHAIN_ROOT} \
+		--disable-shared \
+		--enable-static \
+		--with-sysroot=${TOOLCHAIN_ROOT}
+	cmd_echo make install
+	cmd_echo cd ../../../
+	#--
+	cmd_echo rm -rf ${SRC_DIR}/*
+}
+
+# no test suite
+
+package() {
+	#cmd_echo make install
+	echo > ${TOOLCHAIN_ROOT}/mingw-${pkgver}
+}
+

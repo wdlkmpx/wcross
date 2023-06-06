@@ -1,0 +1,55 @@
+#!/bin/sh
+## TODO
+# https://github.com/mpv-player/mpv
+#
+pkgname=mpv
+pkgver=0.35.1
+pkgrel=0
+
+if [ "$BUILD_PACKAGE" = "mpv-portable" ] ; then
+# all possible libs to update:
+# maximum portability
+# - zlib       (libpng)
+# - libbz2
+# - libexpat
+# - libgpng
+# - xz
+# libass     (libfribidi, libenca, libunibreak, libfreetype, libfontconfig)
+# libvorbis  (libogg)
+# libdvdread (libdvdnav libdvdcss)
+# libbluray
+# luajit
+# lcms2      (libtiff libjpeg zlib)
+
+#	mpvopt='--disable-rubberband
+#--disable-vapoursynth
+#--disable-lcms2
+#--disable-cdda
+#--disable-libsmbclient
+#--disable-gl'
+    pkgdeps='
+      libdvdnav
+      libbluray
+      libass
+      libx264
+      libvorbis
+      luajit
+      libxvid
+      lame
+    '
+else
+    pkgdeps=''
+fi
+pkgdesc="Command line video player "
+source="$pkgname-$pkgver.tar.gz::https://github.com/mpv-player/mpv/archive/refs/tags/v${pkgver}.tar.gz"
+PKGDIR_FILE='usr/bin/mpv'
+DL_SUBDIR='gui'
+
+
+standard_meson
+
+opts="
+-Dbuildtype=plain
+-Dauto_features=auto
+-Dwrap_mode=nodownload
+"

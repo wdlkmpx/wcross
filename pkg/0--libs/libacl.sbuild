@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/acl/APKBUILD
+# https://download.savannah.nongnu.org/releases/acl
+
+pkgname=acl
+pkgver=2.3.1
+pkgrel=0
+pkgdeps="libattr"
+pkgdesc="Access control list utilities"
+source="https://download.savannah.nongnu.org/releases/acl/acl-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libacl.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='acl-dev acl-static'
+
+
+standard_autotools
+
+prepare() {
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		sed -i \
+		-e "/bin_PROGRAMS = /d" -e "/^PROGRAMS = /d" \
+		-e "/dist_sysconf_DATA = /d" \
+		-e '/^MANS = /d' -e '/^DATA = /d' Makefile.in
+	fi
+	# tests fail
+	WCROSS_MAKE_CHECK=no
+}

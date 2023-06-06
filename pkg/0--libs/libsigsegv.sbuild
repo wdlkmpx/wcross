@@ -1,0 +1,15 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libsigsegv/APKBUILD
+
+pkgname=libsigsegv
+pkgver=2.14
+pkgrel=0
+pkgdesc="Page fault detection library"
+source="https://ftp.gnu.org/gnu/libsigsegv/libsigsegv-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libsigsegv.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libsigsegv-dev'  #no .a file
+
+
+standard_autotools

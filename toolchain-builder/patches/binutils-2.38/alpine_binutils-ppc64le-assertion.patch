@@ -1,0 +1,153 @@
+From 97dd8079feb35456d7b387a594b5e00f7654b3b8 Mon Sep 17 00:00:00 2001
+From: Alan Modra <amodra@gmail.com>
+Date: Thu, 23 Jun 2022 17:50:30 +0930
+Subject: [PATCH] PowerPC64: fix assertion in ppc_build_one_stub with -Os code
+
+save_res stubs aren't written in ppc_build_one_stub, their offsets
+(which are zero) should not be checked.
+
+	* elf64-ppc.c (ppc_build_one_stub): Don't check save_res offsets.
+
+(cherry picked from commit 570e911f4e533fad33ad5e4e1102929cf7e80bd7)
+---
+ bfd/elf64-ppc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index cb12ed476d8..df503341fe9 100644
+--- a/bfd/elf64-ppc.c
++++ b/bfd/elf64-ppc.c
+@@ -11700,7 +11700,8 @@ ppc_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
+   if (htab == NULL)
+     return false;
+ 
+-  BFD_ASSERT (stub_entry->stub_offset >= stub_entry->group->stub_sec->size);
++  BFD_ASSERT (stub_entry->stub_offset >= stub_entry->group->stub_sec->size
++	      || stub_entry->type.main == ppc_stub_save_res);
+   loc = stub_entry->group->stub_sec->contents + stub_entry->stub_offset;
+ 
+   htab->stub_count[stub_entry->type.main - 1] += 1;
+-- 
+2.31.1
+
+option>
+<option value='2.2-stable'>2.2-stable</option>
+<option value='2.3-stable'>2.3-stable</option>
+<option value='2.4-stable'>2.4-stable</option>
+<option value='2.5-stable'>2.5-stable</option>
+<option value='2.6-stable'>2.6-stable</option>
+<option value='2.7-stable'>2.7-stable</option>
+<option value='3.0-stable'>3.0-stable</option>
+<option value='3.1-stable'>3.1-stable</option>
+<option value='3.10-stable'>3.10-stable</option>
+<option value='3.11-stable'>3.11-stable</option>
+<option value='3.12-stable'>3.12-stable</option>
+<option value='3.13-stable'>3.13-stable</option>
+<option value='3.14-stable'>3.14-stable</option>
+<option value='3.15-stable'>3.15-stable</option>
+<option value='3.16-stable' selected='selected'>3.16-stable</option>
+<option value='3.17-stable'>3.17-stable</option>
+<option value='3.2-stable'>3.2-stable</option>
+<option value='3.3-stable'>3.3-stable</option>
+<option value='3.4-stable'>3.4-stable</option>
+<option value='3.5-stable'>3.5-stable</option>
+<option value='3.6-stable'>3.6-stable</option>
+<option value='3.7-stable'>3.7-stable</option>
+<option value='3.8-stable'>3.8-stable</option>
+<option value='3.9-stable'>3.9-stable</option>
+<option value='master'>master</option>
+<option value='patches/3538'>patches/3538</option>
+<option value='patches/3539'>patches/3539</option>
+<option value='patches/3808'>patches/3808</option>
+<option value='patches/3888'>patches/3888</option>
+<option value='patches/3913'>patches/3913</option>
+<option value='patches/3977'>patches/3977</option>
+<option value='patches/3998'>patches/3998</option>
+</select> <input type='submit' value='switch'/></form></td></tr>
+<tr><td class='sub'>Alpine packages build scripts
+</td><td class='sub right'>uwsgi</td></tr></table>
+<table class='tabs'><tr><td>
+<a href='/aports/about/?h=3.16-stable'>about</a><a href='/aports/?h=3.16-stable'>summary</a><a href='/aports/refs/?h=3.16-stable'>refs</a><a href='/aports/log/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>log</a><a class='active' href='/aports/tree/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>tree</a><a href='/aports/commit/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>commit</a><a href='/aports/diff/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>diff</a><a href='/aports/stats/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>stats</a></td><td class='form'><form class='right' method='get' action='/aports/log/main/binutils/binutils-ppc64le-assertion.patch'>
+<input type='hidden' name='h' value='3.16-stable'/><select name='qt'>
+<option value='grep'>log msg</option>
+<option value='author'>author</option>
+<option value='committer'>committer</option>
+<option value='range'>range</option>
+</select>
+<input class='txt' type='search' size='10' name='q' value=''/>
+<input type='submit' value='search'/>
+</form>
+</td></tr></table>
+<div class='path'>path: <a href='/aports/tree/?h=3.16-stable'>root</a>/<a href='/aports/tree/main?h=3.16-stable'>main</a>/<a href='/aports/tree/main/binutils?h=3.16-stable'>binutils</a>/<a href='/aports/tree/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>binutils-ppc64le-assertion.patch</a></div><div class='content'>blob: cd6113e6f8b20f70b649f7e880125e345c8a6957 (<a href='/aports/plain/main/binutils/binutils-ppc64le-assertion.patch?h=3.16-stable'>plain</a>)
+<table summary='blob content' class='blob'>
+<tr><td class='linenumbers'><pre><a id='n1' href='#n1'>1</a>
+<a id='n2' href='#n2'>2</a>
+<a id='n3' href='#n3'>3</a>
+<a id='n4' href='#n4'>4</a>
+<a id='n5' href='#n5'>5</a>
+<a id='n6' href='#n6'>6</a>
+<a id='n7' href='#n7'>7</a>
+<a id='n8' href='#n8'>8</a>
+<a id='n9' href='#n9'>9</a>
+<a id='n10' href='#n10'>10</a>
+<a id='n11' href='#n11'>11</a>
+<a id='n12' href='#n12'>12</a>
+<a id='n13' href='#n13'>13</a>
+<a id='n14' href='#n14'>14</a>
+<a id='n15' href='#n15'>15</a>
+<a id='n16' href='#n16'>16</a>
+<a id='n17' href='#n17'>17</a>
+<a id='n18' href='#n18'>18</a>
+<a id='n19' href='#n19'>19</a>
+<a id='n20' href='#n20'>20</a>
+<a id='n21' href='#n21'>21</a>
+<a id='n22' href='#n22'>22</a>
+<a id='n23' href='#n23'>23</a>
+<a id='n24' href='#n24'>24</a>
+<a id='n25' href='#n25'>25</a>
+<a id='n26' href='#n26'>26</a>
+<a id='n27' href='#n27'>27</a>
+<a id='n28' href='#n28'>28</a>
+<a id='n29' href='#n29'>29</a>
+<a id='n30' href='#n30'>30</a>
+<a id='n31' href='#n31'>31</a>
+<a id='n32' href='#n32'>32</a>
+</pre></td>
+<td class='lines'><pre><code>From 97dd8079feb35456d7b387a594b5e00f7654b3b8 Mon Sep 17 00:00:00 2001
+From: Alan Modra &lt;amodra&#64;gmail.com&gt;
+Date: Thu, 23 Jun 2022 17:50:30 +0930
+Subject: [PATCH] PowerPC64: fix assertion in ppc_build_one_stub with -Os code
+
+save_res stubs aren&#39;t written in ppc_build_one_stub, their offsets
+(which are zero) should not be checked.
+
+	* elf64-ppc.c (ppc_build_one_stub): Don&#39;t check save_res offsets.
+
+(cherry picked from commit 570e911f4e533fad33ad5e4e1102929cf7e80bd7)
+<span style="color:#000000; font-weight:bold">---</span>
+ bfd/elf64-ppc.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/bfd/elf64-ppc.c b/bfd/elf64-ppc.c
+index cb12ed476d8..df503341fe9 100644
+<span style="color:#000000; font-weight:bold">--- a/bfd/elf64-ppc.c</span>
+<span style="color:#0057ae">+++ b/bfd/elf64-ppc.c</span>
+&#64;&#64; -11700,7 +11700,8 &#64;&#64; ppc_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
+   if (htab == NULL)
+     return false;
+ 
+<span style="color:#000000; font-weight:bold">-  BFD_ASSERT (stub_entry-&gt;stub_offset &gt;= stub_entry-&gt;group-&gt;stub_sec-&gt;size);</span>
+<span style="color:#0057ae">+  BFD_ASSERT (stub_entry-&gt;stub_offset &gt;= stub_entry-&gt;group-&gt;stub_sec-&gt;size</span>
+<span style="color:#0057ae">+	      || stub_entry-&gt;type.main == ppc_stub_save_res);</span>
+   loc = stub_entry-&gt;group-&gt;stub_sec-&gt;contents + stub_entry-&gt;stub_offset;
+ 
+   htab-&gt;stub_count[stub_entry-&gt;type.main - 1] += 1;
+<span style="color:#000000; font-weight:bold">-- </span>
+2.31.1
+
+</code></pre></td></tr></table>
+</div> <!-- class=content -->
+<div class='footer'>generated by <a href='https://git.zx2c4.com/cgit/about/'>cgit v1.2.3</a> (<a href='https://git-scm.com/'>git 2.25.1</a>) at 2023-01-25 20:53:09 +0000</div>
+</div> <!-- id=cgit -->
+</body>
+</html>

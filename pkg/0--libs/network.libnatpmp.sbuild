@@ -1,0 +1,28 @@
+#!/bin/sh
+# http://miniupnp.free.fr/files/
+
+pkgname=libnatpmp
+pkgver=20230423
+pkgrel=0
+pkgdeps=
+pkgdesc="A portable and fully compliant implementation of the NAT-PMP protocol"
+source="http://miniupnp.free.fr/files/libnatpmp-${pkgver}.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libnatpmp.a'
+#TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='' #missing in alpine
+
+
+build() {
+	export_make_wflags
+	cmd_echo make ${CROSS_MK_PARAMS}
+}
+
+check() {
+	cmd_echo make ${CROSS_MK_PARAMS} check
+}
+
+package() {
+	# Makefile is broken, must install to toolchain directly
+	cmd_echo make ${CROSS_MK_PARAMS} INSTALLPREFIX=${TOOLCHAIN_INSTALL_PREFIX} install
+}

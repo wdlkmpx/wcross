@@ -1,0 +1,3 @@
+TARGET=s390x-linux-musl
+
+GCC_CONFIG_FOR_TARGET+=' --with-long-double-128'

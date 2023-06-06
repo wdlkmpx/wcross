@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/autoconf/APKBUILD
+# https://ftp.gnu.org/gnu/autoconf
+#
+# this is noarch
+
+pkgname=autoconf
+pkgver=2.71
+pkgrel=0
+pkgdeps=
+pkgdesc="GNU tool for automatically configuring source code"
+source="https://ftp.gnu.org/gnu/autoconf/autoconf-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/share/autoconf/build-aux/config.sub'
+DEV_IN_PKGDIR=1
+
+
+standard_autotools
+
+# too many deps to check
+WCROSS_MAKE_CHECK=no

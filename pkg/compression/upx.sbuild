@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://github.com/ninja/upx/releases
+# C++
+
+pkgname=upx
+pkgver=4.0.2
+pkgrel=0
+pkgdeps=''
+pkgdesc="The Ultimate Packer for eXecutables"
+PKGDIR_FILE='usr/bin/upx'
+source="https://github.com/upx/upx/releases/download/v$pkgver/upx-$pkgver-src.tar.xz"
+DL_SUBDIR=''
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_cmake
+
+#woptimize_flag -O2
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DUPX_CONFIG_DISABLE_WERROR=ON
+-DUPX_CONFIG_DISABLE_SANITIZE=ON
+-DUPX_CONFIG_DISABLE_GITREV=ON
+"

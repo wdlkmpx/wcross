@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://github.com/Thomas-Tsai/partclone/releases
+# https://git.alpinelinux.org/aports/tree/community/partclone
+
+pkgname=partclone
+pkgver=0.3.23
+pkgrel=0
+pkgdesc=""
+pkgdeps='util-linux ncursesw e2fsprogs ntfs-3g'
+source=${pkgname}-${pkgver}.tar.gz::https://github.com/Thomas-Tsai/partclone/archive/refs/tags/${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/partclone.dd'
+
+
+standard_autotools
+
+prepare() {
+	export ac_cv_lib_ext2fs_ext2fs_initialize=yes
+	W_AUTOGEN='autogen'
+}
+
+# --enable-ncursesw header mismatch apparently, /usr/include
+opts='
+--enable-static
+--enable-fat
+--enable-exfat
+--enable-ntfs
+--enable-minix
+--enable-extfs
+--enable-f2fs
+--enable-hfsp
+--enable-btrfs
+--enable-xfs
+--disable-ncursesw
+'

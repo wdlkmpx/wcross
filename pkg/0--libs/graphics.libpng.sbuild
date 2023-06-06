@@ -1,0 +1,18 @@
+#!/bin/sh
+# basic lib
+# https://git.alpinelinux.org/aports/tree/main/libpng/APKBUILD
+
+pkgname=libpng
+pkgver=1.6.39
+pkgrel=0
+pkgdeps='zlib'
+pkgdesc="Portable Network Graphics library"
+source="https://downloads.sourceforge.net/libpng/libpng-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libpng.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libpng-dev libpng-static'
+
+
+# WARNING: tests takes too long
+standard_autotools

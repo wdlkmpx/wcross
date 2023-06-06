@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/mk-configure/APKBUILD
+
+pkgname=mk-configure
+pkgver=0.38.2
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=https://sourceforge.net/projects/mk-configure/files/mk-configure/mk-configure-${pkgver}/mk-configure-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/share/mk-configure/mk/sys.mk'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+build()
+{
+    mk_opts="PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man"
+    _bmake ${mk_opts}
+}
+
+#no tests
+
+package() {
+    _bmake ${mk_opts} DESTDIR="${pkgdir}" install
+    rm -fv ${pkgdir}/usr/share/mk-configure/mk/mkc_imp.cc_*
+    rm -fv ${pkgdir}/usr/share/mk-configure/mk/mkc_imp.cxx_*
+}

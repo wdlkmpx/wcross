@@ -1,0 +1,22 @@
+diff --git a/api.cpp b/api.cpp-mod
+index 10031d1..aa9190f 100644
+--- a/api.cpp
++++ b/api.cpp-mod
+@@ -698,6 +698,8 @@ const x265_api* x265_api_get(int bitDepth)
+         if (bitDepth == 12) return x265_12bit::x265_api_get(0);
+ #endif
+ 
++        return NULL;
++
+         const char* libname = NULL;
+         const char* method = "x265_api_get_" xstr(X265_BUILD);
+         const char* multilibname = "libx265" ext;
+@@ -784,6 +786,8 @@ const x265_api* x265_api_query(int bitDepth, int apiVersion, int* err)
+         if (bitDepth == 12) return x265_12bit::x265_api_query(0, apiVersion, err);
+ #endif
+ 
++        return NULL;
++
+         const char* libname = NULL;
+         const char* method = "x265_api_query";
+         const char* multilibname = "libx265" ext;

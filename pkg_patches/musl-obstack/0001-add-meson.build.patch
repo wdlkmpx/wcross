@@ -1,0 +1,66 @@
+From 2f0c9f7dec39cb80e3bad21f5bf69418eb85aa51 Mon Sep 17 00:00:00 2001
+From: wdlkmpx <wdlkmpx@gmail.com>
+Date: Fri, 2 Jun 2023 15:12:35 -0500
+Subject: [PATCH] add meson.build
+
+a single file for the meson build system, completely self-contained
+
+it's many times faster than bootstrap + configure and produces the same results as the autotools stuff..
+
+When creating a new release, also update the meson.build project version... 2nd line
+---
+ meson.build | 42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+ create mode 100644 meson.build
+
+diff --git a/meson.build b/meson.build
+new file mode 100644
+index 0000000..031eadc
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,42 @@
++project('musl-obstack', 'c',
++	version: '1.2.3',
++	default_options: 'default_library=both')
++
++obstack_source = files([
++	'obstack.c',
++	'obstack_printf.c',
++])
++
++install_headers('obstack.h')
++
++conf_data = configuration_data()
++
++cc = meson.get_compiler('c')
++
++#conf_data.set('HAVE_CONFIG_H', true)
++
++# check_header
++conf_data.set('HAVE_STDDEF_H', cc.has_header('stddef.h'))
++conf_data.set('HAVE_STDIO_H', cc.has_header('stdio.h'))
++conf_data.set('HAVE_STDINT_H', cc.has_header('stdint.h'))
++conf_data.set('HAVE_INTTYPES_H', cc.has_header('inttypes.h'))
++
++
++configure_file(output : 'config.h',
++               configuration : conf_data)
++
++add_project_arguments('-DHAVE_CONFIG_H=1', language : 'c')
++
++obstacklib = library('obstack',
++	obstack_source,
++	include_directories : '.',
++	install : true
++)
++
++# musl-obstack.pc
++pkg = import('pkgconfig')
++pkg.generate(obstacklib,
++  name: 'musl-obstack',
++  filebase: 'musl-obstack',
++  description: 'Implementation of obstack functions for musl libc',
++  version: meson.project_version())
+-- 
+2.30.6
+

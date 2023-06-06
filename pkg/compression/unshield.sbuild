@@ -1,0 +1,27 @@
+#!/bin/sh
+
+pkgname=unshield
+pkgver=3c8147f
+pkgrel=0
+pkgdeps='' # libiconv
+pkgdesc=""
+source=https://sourceforge.net/projects/wdl/files/apps/unshield/unshield-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/unshield'
+DIST_BINARY=unshield
+
+
+build()
+{
+	woptimize_flag -O2
+	_configure --prefix=/usr --enable-static --disable-shared
+	_make
+}
+
+#check() {
+#	_make check
+#}
+
+package() {
+	install_to_pkgdir
+}

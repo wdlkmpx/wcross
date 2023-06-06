@@ -1,0 +1,8 @@
+TARGET=x86_64-w64-mingw32
+
+# disable building lib32 crt when building 64-bit compiler
+MINGW_CRT_CONFIG+=" --disable-lib32 --enable-lib64 --disable-libarm32"
+
+# msvcrt
+MINGW_CRT_CONFIG+=" --with-default-msvcrt=msvcrt"
+MINGW_HEADERS_CONFIG+=" --with-default-msvcrt=msvcrt"

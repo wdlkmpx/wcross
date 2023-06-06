@@ -1,0 +1,56 @@
+#!/bin/sh
+# update musl cross toolchains
+# https://git.musl-libc.org/cgit/musl
+#
+# This is triggered after an outdated toolchain is extracted
+# Use -f to manually compile this, example:
+#   ./buidl.sh -arch i686 -pkg 0musl -f
+
+pkgname=musl
+pkgver=1.2.4
+#_commit=f5f55d6589940fd2c2188d76686efe3a530e64e0
+#_cdate=2023.05.02 #this is the date the commit was acknowledged... it may be old
+pkgrel=0
+pkgdeps='' # 0musl-fts 0musl-obstack argp libucontext
+pkgdesc="musl libc"
+if [ -n "${_commit}" ] ; then
+	source="https://git.musl-libc.org/cgit/musl/snapshot/$_commit.tar.gz"
+	SRC_FILE=musl-${_cdate}-${_commit}.tar.gz
+	SRC_DIR=${_commit}
+	pkgver=${_cdate}
+else
+	source=https://musl.libc.org/releases/musl-${pkgver}.tar.gz
+fi
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libc.a'
+ALPINE_PKGS='musl-dev'
+
+
+build()
+{
+    # only musl cross-compilers
+	if [ -z "$MUSL_TOOLCHAIN" ] || [ -z "$XCOMPILER" ] ; then
+		echo "** the musl pkg must only be compiled by musl cross-compilers... to update the libc"
+		echo "** ignoring this pkg"
+		exit 0
+	fi
+
+	## musl doesn't need linux headers... only the compiler
+	#export PATH=${XPATH}/bin:${PATH}
+	cmd_echo \
+	./configure \
+		--build=$(gcc -dumpmachine) \
+		--host=${TARGET_TRIPLET} \
+		--prefix=${TOOLCHAIN_INSTALL_PREFIX} \
+		--syslibdir=${TOOLCHAIN_ROOT}/lib \
+		CFLAGS=-I${TOOLCHAIN_ROOT}/include
+	cmd_echo make
+}
+
+# no test suite
+
+package() {
+	cmd_echo make install
+	echo "${_commit}" > ${TOOLCHAIN_ROOT}/musl-${pkgver}
+}
+

@@ -1,0 +1,35 @@
+From 51c91c0df04da81bbe1242812e97147036fdb133 Mon Sep 17 00:00:00 2001
+From: Jonathan Watt <jwatt@jwatt.org>
+Date: Wed, 16 Nov 2022 02:14:04 +0000
+Subject: [PATCH 2/2] Avoid accidental truncation of user specified sizes.
+
+`ped_unit_format` calls return rounded MB values, by default. That
+could cause the `if` condition to consider values that are close to
+each other to be the same. Worse though, the `ped_unit_parse` call
+in the following `else if` condition would use the rounded MB
+value, and that could really mess things up since the rounded value
+could easily end up not being sector aligned (MB != MiB).
+
+Signed-off-by: Jonathan Watt <jwatt@jwatt.org>
+---
+ fatresize.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fatresize.c b/fatresize.c
+index fe72c17..414f9e7 100644
+--- a/fatresize.c
++++ b/fatresize.c
+@@ -631,8 +631,8 @@ int main(int argc, char **argv) {
+ 
+   end = part_geom.start + opts.size / dev->sector_size;
+   printd(3, "ped_unit_parse(%llu)\n", end);
+-  old_str = ped_unit_format(dev, part_geom.end);
+-  def_str = ped_unit_format(dev, end);
++  old_str = ped_unit_format_custom(dev, part_geom.end, PED_UNIT_SECTOR);
++  def_str = ped_unit_format_custom(dev, end, PED_UNIT_SECTOR);
+   if (!strcmp(old_str, def_str)) {
+     range_end = ped_geometry_new(dev, part_geom.end, 1);
+     if (!range_end) {
+-- 
+2.17.0
+

@@ -1,0 +1,463 @@
+#!/bin/bash
+# - main script to compile apps/libs
+# - pkg.sbuild files are sourced
+# - called by build.sh, param is pkg.sbuild (path relative to $MWD)
+#
+# <param1>: PKG_SCRIPT
+# [param2]: action      [download or build] --optional--
+#
+
+if [ -z "$MWD" ] || [ -z "$XPATH" ] ; then
+    echo "ERROR: \$MWD has not been set"
+    exit 1
+fi
+. ${MWD}/functions.sh     || exit 1
+. ${MWD}/pkg/0pkgfuncs.sh || exit 1
+
+
+# may need to disable WCROSS_MAKE_CHECK if ARCH/OS is not suitable
+if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+    if [ "$WCROSS_TARGET_OS" != "linux" ] || [ "$WCROSS_MAKE_NOCHECK" ] ; then
+        unset WCROSS_MAKE_CHECK
+    elif [ "$OS_ARCH" = "x86_64" ] ; then
+        if [ "$CPU_ARCH" != "i686" ] && [ "$CPU_ARCH" != "x86_64" ] ; then
+            unset WCROSS_MAKE_CHECK
+        fi
+    elif [ "$OS_ARCH" != "$CPU_ARCH" ] ; then
+        unset WCROSS_MAKE_CHECK
+    fi
+fi
+
+want_tests() {
+	if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+		return 0 #yes
+	else
+		return 1 #no
+	fi
+}
+
+#===============================================================
+
+unset pkgname pkgver pkgrel pkgdesc source makedepends pkgdir
+unset pkgdeps PKGDIR_FILE TOOLCHAIN_FILE INSTALL_DIR
+
+build() {
+    exit_error "build() function must be provided by \$PKG_SCRIPT"
+}
+
+check() {
+    printf "" # dummy
+}
+
+package() {
+    printf "" # dummy
+}
+
+default_prepare() {
+    printf "" # dummy
+}
+
+prepare() {
+    printf "" # dummy
+}
+
+post_install() {
+    printf "" # dummy
+}
+
+#===============================================================
+
+if [ "$1" ] ; then
+    PKG_SCRIPT=${MWD}/${1}
+    if [ -e "${PKG_SCRIPT}" ] ; then
+        opts=
+        PKG_SCRIPT_NAME=${PKG_SCRIPT##*/}
+        PKG_SCRIPT_BASE=${PKG_SCRIPT_NAME%.*}
+        if [ -L "${PKG_SCRIPT}" ] ; then
+            # may need some files from the script directory, so must get the real path
+            # and use dirname on that path, keep filename and everything else
+            PKG_SCRIPT_REAL=$(realpath "${PKG_SCRIPT}")
+            PKG_SCRIPT_DIR=${PKG_SCRIPT_REAL%/*}   #$(dirname ${PKG_SCRIPT})
+        else
+            PKG_SCRIPT_DIR=${PKG_SCRIPT%/*}   #$(dirname ${PKG_SCRIPT})
+        fi
+        PKG_SCRIPT_FILE=${PKG_SCRIPT##*/} #$(basename ${PKG_SCRIPT})
+        . "${PKG_SCRIPT}"
+    else
+        exit_error "$0: ${PKG_SCRIPT} doesn't exist"
+    fi
+else
+    exit_error "$0: need param (pkg.sbuild)"
+fi
+
+
+if [ -z "$SRC_URL" ] ; then
+    if [ -n "$source" ] ; then
+        SRC_URL="${source}" # compatible with APKBUILD (alpine)
+    else
+        exit_error "\$SRC_URL has not been set"
+    fi
+fi
+
+case "$source" in # APKBUILD compat
+    #   SRC_FILE               SRC_URL
+    #   UASM-${pkgver}.tar.gz::https://github.com/Terraspace/UASM/archive/refs/tags/UASM-${pkgver}.tar.gz
+    *::*)
+        SRC_URL=${source##*::}
+        SRC_FILE=${source%::*}
+        ;;
+esac
+
+if [ -n "$makedepends" ] ; then #APKBUILD compat
+    pkgdeps="$makedepends"
+fi
+if [ -n "$depends_dev" ] ; then #APKBUILD compat
+    pkgdeps="$depends_dev"
+fi
+case ${pkgdeps} in
+    *-dev) pkgdeps=${pkgdeps%-dev}
+esac
+
+if [ -z "$SRC_FILE" ] ; then
+    # assume $SRC_FILE is the basename of the url
+    SRC_FILE=${SRC_URL##*/}    # basename
+fi
+
+if [ -z "$SRC_DIR" ] ; then
+	# - assume $SRC_DIR is the $SRC_FILE without tar* extension
+	# - this is true for packages with traditional naming conventions
+	# - other packages must specify the real SRC_DIR
+	case ${SRC_FILE} in
+		*.tar.*) SRC_DIR=${SRC_FILE%.tar.*} ;; # remove trailing .tar.*
+		*) SRC_DIR=${SRC_FILE%.*} ;; #remove extension, whatever that is
+	esac
+fi
+
+#===============================================================
+
+set_src_vars_from_url()  #$1:<URL>
+{
+	# useful to compile several apps in a single pkgbuild
+	case "$1" in
+		*::*) # file::url (APKBUILD)
+			SRC_URL=${1##*::}
+			SRC_FILE=${1%::*}
+			;;
+		*'|'*) # url|file
+			SRC_URL=${1%|*}
+			SRC_FILE=${1##*|}
+			;;
+		*)  # url 
+			SRC_URL=${1}
+			SRC_FILE=${1##*/} #basename
+			;;
+	esac
+	SRC_DIR=${SRC_FILE%.tar.*} # remove trailing .tar.*
+	SRC_DIR=${SRC_DIR%.t[gx]z} # remove trailing .tgz .txz
+}
+
+
+want_check() #APKBUILD compat
+{
+    if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+        return 0 #yes
+    else
+        return 1 #no
+    fi
+}
+
+
+pkgdir_move_devel_to_toolchain()
+{
+	# only do this if $ALPINE_PKGS is empty (chroot without $ALPINE_PKGS works too)
+	if [ "$BUILD_TYPE" = "chroot" ] && [ -n "$ALPINE_PKGS" ] ; then
+		return
+	fi
+	if [ "$DEV_IN_PKGDIR_ONLY" ] ; then
+		return #some packages have non-dev stuff in /lib or /usr/lib
+	fi
+	pkgmoved=
+	# -config files
+	for zdir in bin sbin usr/bin usr/sbin usr/local/bin
+	do
+		if [ ! -d ${pkgdir}/${zdir} ] ; then
+			continue
+		fi
+		config_files=$(ls ${pkgdir}/${zdir}/*-config 2>/dev/null)
+		if [ -n "$config_files" ] ; then
+			pkgmoved=1
+			if [ "$BUILD_TYPE" != "chroot" ] ; then
+				# not chroot.. in a chroot the prefix is ok, no need to fix it
+				if [ "$DEV_IN_PKGDIR" ] ; then
+					mkdir -p /tmp/pc_files_backup
+					cp -a ${config_files} /tmp/pc_files_backup
+				fi
+				fix_pkgconfig_for_toolchain ${config_files}
+			fi
+			cp -av --remove-destination ${config_files} ${TOOLCHAIN_SYSROOT_BIN}
+			if [ "$DEV_IN_PKGDIR" ] ; then
+				if [ "$BUILD_TYPE" != "chroot" ] ; then
+					# not chroot.. restore original -config file(s)..
+					for cfilex in ${config_files} ; do
+						cmd_echo cp -av --remove-destination $(basename ${cfilex}) ${pkgdir}/${zdir}/
+					done
+					rm -rf /tmp/pc_files_backup
+				fi
+			else
+				rm -fv ${config_files}
+			fi
+		fi
+	done
+	#--
+	if [ -z "$W_ACLOCAL_DIR" ] ; then
+		# if don't want to move aclocal, set W_ACLOCAL_DIR=' ' in .sbuild
+		W_ACLOCAL_DIR=usr/share/aclocal
+	fi
+	for zdir in lib lib64 include usr/lib usr/lib64 \
+		usr/include usr/local/include ${W_ACLOCAL_DIR}
+	do
+		if [ ! -d ${pkgdir}/${zdir} ] ; then
+			continue
+		fi
+		pkgmoved=1
+		PC_FILES_BACKUP_DIR=
+		if [ "$DEV_IN_PKGDIR" ] ; then
+			echo "*** copying $zdir to toolchain"
+			if [ "$BUILD_TYPE" != "chroot" ] ; then
+				# not in chroot.. in a chroot the prefix is ok, no need to fix it
+				# need to restore the original files after copying
+				PC_FILES_BACKUP_DIR=/tmp/pc_files_backup
+				mkdir -p ${PC_FILES_BACKUP_DIR}
+			fi
+		else
+			echo "*** moving $zdir to toolchain"
+		fi
+		if [ "$BUILD_TYPE" != "chroot" ] ; then
+			# not chroot.. in a chroot the prefix is ok, no need to fix it
+			fix_pkgconfig_for_toolchain ${pkgdir}/${zdir}
+		fi
+		mkdir -p ${TOOLCHAIN_INSTALL_PREFIX}/${zdir}
+		cmd_echo cp -a --remove-destination ${pkgdir}/${zdir}/* ${TOOLCHAIN_INSTALL_PREFIX}/${zdir}
+		if [ "$DEV_IN_PKGDIR" ] ; then
+			if [ "$BUILD_TYPE" != "chroot" ] ; then
+				# not chroot.. restore original pc files (with /usr prefix most likely)
+				for pcfilex in $(ls ${PC_FILES_BACKUP_DIR}/)
+				do
+					xfound=$(find ${pkgdir}/${zdir} -name ${pcfilex})
+					cmd_echo cp -af ${PC_FILES_BACKUP_DIR}/${pcfilex} ${xfound}
+				done
+				rm -rf ${PC_FILES_BACKUP_DIR}
+			fi
+		else #remove dir
+			rm -rf ${pkgdir}/${zdir}
+			# handle excetions 1 by 1... 
+			if [ "$zdir" = "lib" ] ; then
+				# lib/udev must go in $pkgdir
+				if [ -d ${TOOLCHAIN_INSTALL_PREFIX}/${zdir}/udev ] ; then
+					mkdir -p ${pkgdir}/${zdir}/
+					mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/${zdir}/udev ${pkgdir}/${zdir}/
+				fi
+			fi
+		fi
+	done
+	#--
+	if [ "$pkgmoved" ] ; then
+		mkdir -p ${TOOLCHAIN_ROOT}/var/wcross
+		echo -n > ${TOOLCHAIN_ROOT}/var/wcross/${pkgname}-${pkgver}-r${pkgrel}
+	fi
+}
+
+#===============================================================
+
+process_dependencies() # $1 = action
+{
+	if [ -n "$pkgname" ] && [ -n "$pkgdeps" ] ; then
+		# make sure package doesn't depend on itself...
+		for onedep in ${pkgdeps}
+		do
+			if [ "$pkgname" = "$onedep" ] ; then
+				exit_error "\$pkgname = \$pkgdeps, fix pkgdeps= to not include '$pkgname'"
+			fi
+		done
+	fi
+	if [ -n "${W_FORCED_PKG_DEPS}" ] ; then
+		# hack to insert pkgdeps, but only once
+		# this is used when updating musl after extract, etc
+		pkgdeps="$pkgdeps ${W_FORCED_PKG_DEPS}"
+		unset W_FORCED_PKG_DEPS
+	fi
+	for dep in ${pkgdeps}
+	do
+		fn_script=''
+		searchdirs="pkg/0--libs pkg"
+		case ${BUILD_TYPE} in system|chroot)
+			searchdirs="${searchdirs} pkg/sysgcc" ;;
+		esac
+		for xdir in ${searchdirs} ; do
+			if [ -f ${MWD}/${xdir}/${dep}.sbuild ] ; then
+				fn_script=${xdir}/${dep}.sbuild
+				break
+			fi
+		done
+		if [ -z "$fn_script" ] ; then
+			echo "ERROR "
+			for xdir in ${searchdirs} ; do
+				echo "Cannot find: ${xdir}/${dep}.sbuild"
+			done
+			exit_error
+		fi
+		cmd_echo sh ${MWD}/pkg/00_pkg_build ${fn_script} ${1}
+	done
+}
+
+
+build_pkg()	 # == most important func ==
+{
+	## prepare, build, test, package [everything]
+	# NOTE: PKGDIR_FILE takes precedence over TOOLCHAIN_FILE
+	#       if both are specified in the same .sbuild
+	build_sanity_check
+	process_dependencies build
+    ## override WDOWNLOAD_DIR if DL_SUBDIR is defined
+	if [ -n "$DL_SUBDIR" ] && [ -z "$WDOWNLOAD_DIR_PREVIOUS" ] ; then
+		WDOWNLOAD_DIR_PREVIOUS=${WDOWNLOAD_DIR}
+		WDOWNLOAD_DIR=${WDOWNLOAD_DIR}/${DL_SUBDIR}
+	fi
+	#apkbuild_check_sum # comment out if not testing already downloaded packages 
+	case ${SRC_URL} in
+		ignore)	#ignore url, don't build anything
+			return 0 ;;
+		noextract) #let pkgbuild decide the command to extract
+			check_installed_file ;;
+		*) #standard behavior, extract pkg and cd
+			check_installed_file
+			extract_pkg_and_cd ;;
+	esac
+	#--
+	unenforce_cross_compiler #just in case it was enforced
+	#--
+	cmd_echo prepare #dummy or provided by the sourced script
+	#--
+	if [ "$PKGDIR_FILE" ] ; then
+		rm -rf ${pkgdir}
+	fi
+	#--
+	cmd_echo build   # REQUIRED - provided by the sourced script
+	#--
+	if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+		cmd_echo check   #dummy or provided by the sourced script
+		if [ $? -ne 0 ] ; then
+			exit_error
+		fi
+	fi
+	#-- package() must create $pkgdir, unless it's a TOOLCHAIN_ONLY pkg
+	cmd_echo package       #dummy or provided by the sourced script
+	cmd_echo post_install  #dummy or provided by the sourced script
+	# everything should be installed now
+	#--
+	if [ "$PKGDIR_FILE" ] ; then
+		case ${PKGDIR_FILE} in *bin/*)
+			cmd_echo check_static_exe ${pkgdir}/${PKGDIR_FILE} ;;
+		esac
+	fi
+	if [ -d ${pkgdir} ] ; then
+		for zdir in bin sbin usr/bin usr/sbin usr/local/bin usr/local/sbin
+		do
+			if [ -d ${pkgdir}/${zdir} ] ; then
+				_strip ${pkgdir}/${zdir}/*
+			fi
+		done
+		pkgdir_move_devel_to_toolchain
+		if [ "$REMOVE_DOCS" = "yes" ] ; then
+			cmd_echo sysroot_remove_docs ${pkgdir}
+		fi
+		_dist_binary
+		# have finished processing the installed files
+		if [ -z "$PKGDIR_FILE" ] && [ "$TOOLCHAIN_ONLY" ] ; then
+			# remove pkgdir if there is no PKGDIR_FILE and it's TOOLCHAIN_ONLY
+			cmd_echo rm -rfv ${pkgdir}
+		else
+			# create file list
+			(
+			cd ${pkgdir}
+			xfilesx=$(find . -type f -or -type l | sed 's%^./%%' | sort)
+			mkdir -p var/wcross/
+			echo "$xfilesx" > var/wcross/${pkgname}-${pkgver}-r${pkgrel}
+			)
+			if [ "$PKGDIR_ALL" ] ; then
+				mkdir -p ${pkgdir_all}
+				cmd_echo cp -a --remove-destination ${pkgdir}/* ${pkgdir_all}/
+				cmd_echo rm -rf ${pkgdir}
+			fi
+		fi
+	else
+		mkdir -p ${TOOLCHAIN_ROOT}/var/wcross
+		echo -n > ${TOOLCHAIN_ROOT}/var/wcross/${pkgname}-${pkgver}-r${pkgrel}
+		# maybe should not remove on chroot?
+		if [ "$REMOVE_DOCS" = "yes" ] ; then
+			cmd_echo sysroot_remove_docs ${TOOLCHAIN_ROOT}
+		fi
+	fi
+	#--
+	cmd_echo standard_cleanup
+	#--
+	cmd_echo check_installed_file
+}
+
+
+download_src()
+{
+    process_dependencies download
+    if [ "$BUILD_TYPE" = "chroot" ] && [ -n "$ALPINE_PKGS" ] ; then
+        # chroot has special rules, downloads with package manager
+        build_sanity_check # !!
+        check_installed_file
+        cmd_echo apk add --allow-untrusted ${ALPINE_PKGS}
+        return
+    fi
+    if [ "$SRC_URL" = "ignore" ] ; then
+        return 0
+    fi
+    # override WDOWNLOAD_DIR if DL_SUBDIR is defined
+	if [ -n "$DL_SUBDIR" ] && [ -z "$WDOWNLOAD_DIR_PREVIOUS" ] ; then
+		WDOWNLOAD_DIR_PREVIOUS=${WDOWNLOAD_DIR}
+		WDOWNLOAD_DIR=${WDOWNLOAD_DIR}/${DL_SUBDIR}
+	fi
+    if [ -n "$pkgsource" ] ; then
+        for oneurl in ${pkgsource}
+        do
+            download_file ${oneurl//|/ } # url|file -> url file
+        done
+    else
+        # only do this if $pkgsource is not set (or empty)
+        download_file ${SRC_URL} ${SRC_FILE}
+    fi
+    # $LAST_RETRIEVED_FILE is set if download_file() actually downloaded something
+    if [ -z "$LAST_RETRIEVED_FILE" ] ; then
+        return 0 #empty, nothing has been downloaded
+    fi
+    apkbuild_check_sum
+}
+
+#===============================================================
+
+case $2 in
+    download) download_src ; exit $? ;;
+    build)    build_pkg    ; exit $? ;;
+esac
+
+#===============================================================
+# download & build
+
+download_src
+
+if [ "$DLD_ONLY" = 'yes' ] ; then
+    exit
+fi
+if [ -n "$WDOWNLOAD_DIR_PREVIOUS" ] ; then
+	# download_src has changed WDOWNLOAD_DIR, and build_pkg() is now broken
+	# reset WDOWNLOAD_DIR so that it can be changed again...
+	WDOWNLOAD_DIR=${WDOWNLOAD_DIR_PREVIOUS}
+	unset WDOWNLOAD_DIR_PREVIOUS
+fi
+build_pkg

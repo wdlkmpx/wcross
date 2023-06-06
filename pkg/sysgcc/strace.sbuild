@@ -1,0 +1,24 @@
+#!/bin/sh
+# https://github.com/archlinux/svntogit-packages/blob/packages/strace/trunk/PKGBUILD
+# https://github.com/strace/strace
+
+pkgname=strace
+pkgver=6.2
+pkgrel=0
+pkgdeps="libunwind"
+pkgdesc='A diagnostic, debugging and instructional userspace tracer'
+source=https://github.com/strace/strace/releases/download/v$pkgver/strace-$pkgver.tar.xz
+PKGDIR_FILE='usr/bin/strace'
+
+
+standard_autotools
+
+prepare() {
+	# proper libunwind detection is broken for static libs
+	sed -i -e 's%-lunwind %-lunwind -llzma -lz %' \
+			-e 's%-lunwind-generic %-lunwind-generic -llzma -lz %' \
+			-e 's%-lunwind-ptrace %-lunwind-ptrace -llzma -lz %' \
+			m4/st_libunwind.m4 configure
+}
+
+opts="--with-libunwind --enable-mpers=no"

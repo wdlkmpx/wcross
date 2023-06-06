@@ -1,0 +1,38 @@
+#!/bin/sh
+# basic lib
+# https://git.alpinelinux.org/aports/tree/main/libjpeg-turbo/APKBUILD
+
+pkgname=libjpeg-turbo
+pkgver=2.1.5.1
+pkgrel=0
+pkgdeps=''
+pkgdesc="Accelerated baseline JPEG compression and decompression library"
+source="https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libturbojpeg.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libjpeg-turbo-dev libjpeg-turbo-static'
+
+
+standard_cmake
+
+# tests take too long
+WCROSS_MAKE_CHECK=no
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DENABLE_SHARED=OFF
+-DENABLE_STATIC=ON
+-DCMAKE_BUILD_TYPE=None
+-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+-DREQUIRE_SIMD=OFF
+-DWITH_JPEG8=1
+"
+
+prepare() {
+	case "$XCOMPILER" in
+		*ppc64le*) export JSIMD_FORCENONE=1;;
+		*s390x*|riscv64*) opts="$opts -DFLOATTEST=fp-contract";;
+	esac
+}

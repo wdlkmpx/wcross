@@ -1,0 +1,4 @@
+TARGET=sh2eb-linux-muslfdpic
+
+GCC_CONFIG_FOR_TARGET+=' --enable-fdpic'
+GCC_CONFIG_FOR_TARGET+=' --with-cpu=mj2'

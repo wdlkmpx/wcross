@@ -1,0 +1,35 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/gawk
+# https://git.alpinelinux.org/aports/tree/main/gawk
+
+pkgname=gawk
+pkgver=5.2.1 # 2022-11-22
+pkgrel=0
+pkgdesc="GNU awk pattern-matching language"
+#pkgdeps='mpfr'
+source=http://ftp.gnu.org/gnu/gawk/gawk-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='bin/gawk'
+
+
+standard_autotools
+
+## tests fail, because of unavailable dynamic extensions I guess..
+WCROSS_MAKE_CHECK=no
+
+opts='
+--bindir=/bin
+--disable-extensions
+--disable-lint
+--without-readline
+--without-libsigsegv-prefix
+--without-mpfr
+'
+#--with-whiny-user-strftime
+
+post_install() {
+	# remove some fat
+	rm -rf ${pkgdir}/bin/gawk-* \
+			${pkgdir}/usr/share/info \
+			${pkgdir}/etc/profile.d/gawk.csh
+}

@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/musl-fts/APKBUILD
+
+pkgname=musl-fts
+pkgver=1.2.7
+pkgrel=0
+pkgdeps=
+pkgdesc="Provides the fts(3) functions, which are missing in musl libc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/void-linux/musl-fts/archive/refs/tags/v$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libfts.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='musl-fts-dev'
+
+
+standard_meson
+
+prepare() {
+	if [ -z "$MUSL_TOOLCHAIN" ] ; then
+		echo "musl-fts: only musl toolchains are supported"
+		exit 0
+	fi
+}

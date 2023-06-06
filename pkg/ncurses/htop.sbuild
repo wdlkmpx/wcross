@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://github.com/htop-dev/htop/releases
+# https://archlinux.org/packages/extra/x86_64/htop/
+
+pkgver=3.2.2
+pkgrel=0
+pkgname=htop
+pkgdeps='libcap ncursesw' #libnl
+pkgdesc=""
+source=https://github.com/htop-dev/htop/releases/download/${pkgver}/htop-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/htop'
+
+
+standard_autotools
+
+#opts='--enable-static'

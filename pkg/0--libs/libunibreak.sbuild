@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://github.com/archlinux/svntogit-community/blob/packages/libunibreak/trunk/PKGBUILD
+# https://github.com/adah1972/libunibreak
+
+pkgname=libunibreak
+pkgver=5.1
+pkgrel=0
+pkgdeps=
+pkgdesc="An implementation of the line breaking algorithm as described in Unicode 5.2.0 Standard Annex 14, Revision 24"
+source="https://github.com/adah1972/libunibreak/releases/download/libunibreak_${pkgver//./_}/libunibreak-${pkgver}.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libunibreak.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libunibreak-dev' #(no static lib)
+
+
+standard_autotools

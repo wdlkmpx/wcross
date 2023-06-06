@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://github.com/ib/xarchiver/tags
+
+pkgname=xarchiver
+pkgver=0.5.4.20
+pkgrel=0
+pkgdeps=
+pkgdesc=" GTK archiver "
+source=https://github.com/ib/xarchiver/archive/refs/tags/${pkgver}.tar.gz
+SRC_FILE=xarchiver-${pkgver}.tar.gz
+PKGDIR_FILE='usr/bin/xarchiver'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared (use defaults)
+IGNORE_LIBTOOL=1
+
+prepare() {
+	sed -i 's% po % %' Makefile.in
+}
+
+opts="
+--disable-doc
+--disable-plugin
+--enable-gtk2
+"

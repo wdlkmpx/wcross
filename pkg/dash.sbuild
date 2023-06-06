@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/dash/APKBUILD
+
+pkgname=dash
+pkgver=0.5.12
+pkgrel=0
+pkgdeps=
+pkgdesc="Small and fast POSIX-compliant shell"
+source="http://gondor.apana.org.au/~herbert/dash/files/dash-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='bin/dash'
+
+
+standard_autotools
+
+prepare() {
+	sed -i '/MANS = /d' src/Makefile.in
+	opts='--bindir=/bin'
+}
+
+check() { #override
+	./src/dash -c 'echo ok'
+}

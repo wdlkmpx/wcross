@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/flex/APKBUILD
+#
+# This compiles with musl (static), but the problem is libfl.a
+#  which is included in compiled apps, so this requires a system build
+
+
+pkgname=flex
+pkgver=2.6.4
+pkgrel=0
+pkgdeps=
+pkgdesc="A tool for generating text-scanning programs"
+source="https://github.com/westes/flex/releases/download/v$pkgver/flex-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/flex'
+if [ "$BUILD_TYPE" != "cross" ] ; then
+	# move libs to toolchain only if cross compiling (otherwise just copy)
+	DEV_IN_PKGDIR=1
+fi
+
+standard_autotools
+
+opts="
+--disable-bootstrap
+"

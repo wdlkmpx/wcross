@@ -1,0 +1,14 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/smartmontools/APKBUILD
+
+pkgname=smartmontools
+pkgver=7.3
+pkgrel=0
+pkgdeps=
+pkgdesc="Control and monitor S.M.A.R.T. enabled hard drives"
+source="https://downloads.sourceforge.net/sourceforge/smartmontools/smartmontools-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/smartctl'
+
+
+standard_autotools

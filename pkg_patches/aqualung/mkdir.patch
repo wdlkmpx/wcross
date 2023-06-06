@@ -1,0 +1,13 @@
+--- a/src/core.c	2023-02-26 11:43:07.000000000 +0800
++++ b/src/core.c	2023-02-26 11:18:20.000000000 +0800
+@@ -1908,9 +1908,7 @@
+         if (chdir(options.confdir) != 0) {
+                 if (errno == ENOENT) {
+                         fprintf(stderr, "Creating directory %s\n", options.confdir);
+-                        /* Try creating .config before .config/aqualung */
+-                        mkdir(dirname(options.confdir), S_IRUSR | S_IWUSR | S_IXUSR);
+-                        if (mkdir(options.confdir, S_IRUSR | S_IWUSR | S_IXUSR) < 0) {
++                        if (g_mkdir_with_parents(options.confdir, S_IRUSR | S_IWUSR | S_IXUSR) < 0) {
+ 				perror("cannot create config directory: mkdir");
+ 				exit(1);
+ 			}

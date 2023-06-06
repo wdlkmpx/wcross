@@ -1,0 +1,95 @@
+#!/bin/bash
+
+export TARGET=amd64-unknown-freebsd9.2
+export PREFIX=/usr/cross-build
+export PATH=${PATH}:${PREFIX}/bin
+
+mkdir -p ${PREFIX}/${TARGET}/lib
+mkdir -p ${PREFIX}/${TARGET}/include
+
+mkdir -p build-binutils
+mkdir -p build-gmp
+mkdir -p build-mpfr
+mkdir -p build-mpc
+mkdir -p build-gcc
+
+# Copy FreeBSD /usr/{include,lib} in ${PREFIX}/${TARGET}
+echo "Please copy FreeBSD's /usr/{include,lib} to ${PREFIX}/${TARGET}"
+
+# BINUTILS
+wget https://ftp.gnu.org/gnu/binutils/binutils-2.27.tar.gz
+tar zxvf binutils-2.27.tar.gz
+cd build-binutils
+../binutils-2.27/configure --target=${TARGET} --prefix=${PREFIX} -v
+make -j 4
+sudo make install
+
+# GMP
+wget https://ftp.gnu.org/gnu/gmp/gmp-6.1.1.tar.xz
+tar xvf gmp-6.1.1.tar.xz
+cd build-gmp
+../gmp-6.1.1/configure --prefix=${PREFIX} --host=${TARGET} \
+    --enable-shared \
+    --enable-static \
+    --enable-fft \
+    --enable-cxx
+make -j 4
+sudo make install
+
+# MPFR
+wget https://ftp.gnu.org/gnu/mpfr/mpfr-3.1.5.tar.xz
+tar xvf mpfr-3.1.5.tar.xz
+cd build-mpfr
+../mpfr-3.1.5/configure --prefix=${PREFIX} --host=${TARGET} \
+    --with-gnu-ld \
+    --with-gmp=${PREFIX} \
+    --enable-static \
+    --enable-shared
+make -j 4
+sudo make install
+
+# MPC
+wget https://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz
+tar zxvf mpc-1.0.3.tar.gz
+cd build-mpc
+../mpc-1.0.3/configure --prefix=${PREFIX} --host=${TARGET} \
+    --with-gnu-ld \
+    --with-gmp=${PREFIX} \
+    --with-mpfr=${PREFIX} \
+    --enable-static \
+    --enable-shared
+make -j 4
+sudo make install
+
+# GCC
+wget https://ftp.gnu.org/gnu/gcc/gcc-6.2.0/gcc-6.2.0.tar.gz
+tar zxvf gcc-6.2.0.tar.gz
+cd build-gcc
+../gcc-6.2.0/configure \
+    --prefix=${PREFIX} \
+    --target=${TARGET} \
+    --with-gmp=${PREFIX} \
+    --with-mpc=${PREFIX} \
+    --with-mpfr=${PREFIX} \
+    --without-headers \
+    --with-gnu-as \
+    --with-gnu-ld \
+    --enable-languages=c,c++ \
+    --disable-nls \
+    --enable-libssp \
+    --enable-gold \
+    --enable-ld \
+    --disable-libgomp
+LD_LIBRARY_PATH=${PREFIX}/lib make -j 4
+sudo make install
+
+# DONE!
+gcc helloworld.c -o helloworld-linux
+LD_LIBRARY_PATH=${PREFIX}/lib amd64-unknown-freebsd9.2-gcc helloworld.c -o helloworld-freebsd
+
+# GDB 
+wget https://ftp.gnu.org/gnu/gdb/gdb-7.11.tar.xz
+tar xvf gdb-7.11.tar.xz
+../gdb-7.11.1/configure --prefix=${PREFIX} --target=${TARGET}
+make -j 4
+sudo make install

@@ -1,0 +1,210 @@
+diff -Naur libburn-1.5.4/libburn/mmc.c libburn-1.5.4-patched/libburn/mmc.c
+--- libburn-1.5.4/libburn/mmc.c	2020-08-24 08:27:33.000000000 -0500
++++ libburn-1.5.4-patched/libburn/mmc.c	2022-01-15 23:37:26.000000000 -0500
+@@ -44,7 +44,7 @@
+ /* ts A70223 : in init.c */
+ extern int burn_support_untested_profiles;
+ 
+-static int mmc_get_configuration_al(struct burn_drive *d, int *alloc_len);
++static int libburn_mmc_get_configuration_al(struct burn_drive *d, int *alloc_len);
+ 
+ 
+ #ifdef Libburn_log_in_and_out_streaM
+@@ -697,7 +697,7 @@
+ 	case 1: /* Operational change */
+ 		if (((evt[6] << 8) | evt[7])) {
+ 			alloc_len = 8;
+-			mmc_get_configuration_al(d, &alloc_len);
++			libburn_mmc_get_configuration_al(d, &alloc_len);
+ 		}
+ 		break;
+ 	case 2: /* Power Management */
+@@ -713,7 +713,7 @@
+ 		if (evt_code == 2) {
+ 			d->start_unit(d);
+ 			alloc_len = 8;
+-			mmc_get_configuration_al(d, &alloc_len);
++			libburn_mmc_get_configuration_al(d, &alloc_len);
+ 		}
+ 		break;
+ 	case 5: /* Multiple Host Events */
+@@ -1967,7 +1967,7 @@
+ 	if (d->status == BURN_DISC_EMPTY)
+ 		{ret = 1; goto ex;}
+ 
+-	mmc_get_configuration(d);
++	libburn_mmc_get_configuration(d);
+ 
+ 	scsi_init_command(c, MMC_GET_DISC_INFO, sizeof(MMC_GET_DISC_INFO));
+ 	c->dxfer_len = *alloc_len;
+@@ -2546,7 +2546,7 @@
+ /* ts B21119 : Derived from older mmc_read_sectors() 
+    @param flag bit0= set DAP bit (also with o->dap_bit)
+ */
+-int mmc_read_cd_msf(struct burn_drive *d,
++int libburn_mmc_read_cd_msf(struct burn_drive *d,
+ 		int start_m, int start_s, int start_f,
+ 		int end_m, int end_s, int end_f,
+ 		int sec_type, int main_ch,
+@@ -2561,7 +2561,7 @@
+ 
+ 	c = &(d->casual_command);
+ 	mmc_start_if_needed(d, 0);
+-	if (mmc_function_spy(d, "mmc_read_cd_msf") <= 0)
++	if (mmc_function_spy(d, "libburn_mmc_read_cd_msf") <= 0)
+ 		return -1;
+ 
+ 	dap_bit = flag & 1;
+@@ -2631,7 +2631,7 @@
+ /* ts B21119 : Derived from older mmc_read_sectors() 
+    @param flag bit0= set DAP bit (also with o->dap_bit)
+ */
+-int mmc_read_cd(struct burn_drive *d, int start, int len,
++int libburn_mmc_read_cd(struct burn_drive *d, int start, int len,
+                 int sec_type, int main_ch,
+ 		const struct burn_read_opts *o, struct buffer *buf, int flag)
+ {
+@@ -2650,7 +2650,7 @@
+ 
+ 	burn_lba_to_msf(start, &start_m, &start_s, &start_f);
+ 	burn_lba_to_msf(start + len, &end_m, &end_s, &end_f);
+-	ret = mmc_read_cd_msf(d, start_m, start_s, start_f,
++	ret = libburn_mmc_read_cd_msf(d, start_m, start_s, start_f,
+ 	                      end_m, end_s, end_f,
+ 	                      sec_type, main_ch, o, buf, flag);
+ 	return ret;
+@@ -2659,7 +2659,7 @@
+ 
+ 	c = &(d->casual_command);
+ 	mmc_start_if_needed(d, 0);
+-	if (mmc_function_spy(d, "mmc_read_cd") <= 0)
++	if (mmc_function_spy(d, "libburn_mmc_read_cd") <= 0)
+ 		return -1;
+ 
+ 	dap_bit = flag & 1;
+@@ -2902,7 +2902,7 @@
+ }
+ 
+ 
+-void mmc_set_speed(struct burn_drive *d, int r, int w)
++void libburn_mmc_set_speed(struct burn_drive *d, int r, int w)
+ {
+ 	struct command *c;
+ 	int ret, end_lba = 0, get_max, get_min;
+@@ -2910,7 +2910,7 @@
+ 
+ 	c = &(d->casual_command);
+ 	mmc_start_if_needed(d, 1);
+-	if (mmc_function_spy(d, "mmc_set_speed") <= 0)
++	if (mmc_function_spy(d, "libburn_mmc_set_speed") <= 0)
+ 		return;
+ 
+ 	if (r <= 0 || w <= 0) {
+@@ -3001,7 +3001,7 @@
+ 
+ /* ts A61201 : found in unfunctional state
+  */
+-static int mmc_get_configuration_al(struct burn_drive *d, int *alloc_len)
++static int libburn_mmc_get_configuration_al(struct burn_drive *d, int *alloc_len)
+ {
+ 	struct buffer *buf = NULL;
+ 	int len, cp, descr_len = 0, feature_code, only_current = 1, i;
+@@ -3340,7 +3340,7 @@
+ }
+ 
+ 
+-void mmc_get_configuration(struct burn_drive *d)
++void libburn_mmc_get_configuration(struct burn_drive *d)
+ {
+ 	int alloc_len = 8, ret;
+ 
+@@ -3348,18 +3348,18 @@
+ 		return;
+ 
+ 	mmc_start_if_needed(d, 1);
+-	if (mmc_function_spy(d, "mmc_get_configuration") <= 0)
++	if (mmc_function_spy(d, "libburn_mmc_get_configuration") <= 0)
+ 		return;
+ 
+ 	/* first command execution to learn Allocation Length */
+-	ret = mmc_get_configuration_al(d, &alloc_len);
++	ret = libburn_mmc_get_configuration_al(d, &alloc_len);
+ /*
+ 	fprintf(stderr,"LIBBURN_DEBUG: 46h alloc_len = %d , ret = %d\n",
+ 			alloc_len, ret);
+ */
+ 	if (alloc_len > 8 && ret > 0) {
+ 		/* second execution with announced length */
+-		mmc_get_configuration_al(d, &alloc_len);
++		libburn_mmc_get_configuration_al(d, &alloc_len);
+ 	}
+ }
+ 
+@@ -4505,7 +4505,7 @@
+ 	BURN_ALLOC_MEM(c, struct command, 1);
+ 
+ 	if (d->current_profile < 0)
+-		mmc_get_configuration(d);
++		libburn_mmc_get_configuration(d);
+ 
+ 	if (*alloc_len < 8)
+ 		{ret = 0; goto ex;}
+@@ -5381,9 +5381,9 @@
+ 	d->read_toc = mmc_read_toc;
+ 	d->write = mmc_write;
+ 	d->erase = mmc_erase;
+-	d->read_cd = mmc_read_cd;
++	d->read_cd = libburn_mmc_read_cd;
+ 	d->perform_opc = mmc_perform_opc;
+-	d->set_speed = mmc_set_speed;
++	d->set_speed = libburn_mmc_set_speed;
+ 	d->send_cue_sheet = mmc_send_cue_sheet;
+ 	d->reserve_track = mmc_reserve_track;
+ 	d->sync_cache = mmc_sync_cache;
+diff -Naur libburn-1.5.4/libburn/mmc.h libburn-1.5.4-patched/libburn/mmc.h
+--- libburn-1.5.4/libburn/mmc.h	2020-07-08 05:33:16.000000000 -0500
++++ libburn-1.5.4-patched/libburn/mmc.h	2022-01-15 23:37:26.000000000 -0500
+@@ -36,13 +36,13 @@
+ void mmc_read_toc(struct burn_drive *);
+ void mmc_read_disc_info(struct burn_drive *);
+ void mmc_read_atip(struct burn_drive *);
+-int mmc_read_cd(struct burn_drive *d, int start, int len,
++int libburn_mmc_read_cd(struct burn_drive *d, int start, int len,
+                 int sec_type, int main_ch,
+                 const struct burn_read_opts *o, struct buffer *buf, int flag);
+-void mmc_set_speed(struct burn_drive *, int, int);
++void libburn_mmc_set_speed(struct burn_drive *, int, int);
+ void mmc_read_lead_in(struct burn_drive *, struct buffer *);
+ void mmc_perform_opc(struct burn_drive *);
+-void mmc_get_configuration(struct burn_drive *);
++void libburn_mmc_get_configuration(struct burn_drive *);
+ 
+ /* ts A61110 : added parameters trackno, lba, nwa. Redefined return value.
+    @return 1=nwa is valid , 0=nwa is not valid , -1=error */
+diff -Naur libburn-1.5.4/libburn/sg-freebsd.c libburn-1.5.4-patched/libburn/sg-freebsd.c
+--- libburn-1.5.4/libburn/sg-freebsd.c	2020-07-08 05:33:16.000000000 -0500
++++ libburn-1.5.4-patched/libburn/sg-freebsd.c	2022-01-15 23:37:26.000000000 -0500
+@@ -484,9 +484,9 @@
+ 	out.read_toc = mmc_read_toc;
+ 	out.write = mmc_write;
+ 	out.erase = mmc_erase;
+-	out.read_cd = mmc_read_cd;
++	out.read_cd = libburn_mmc_read_cd;
+ 	out.perform_opc = mmc_perform_opc;
+-	out.set_speed = mmc_set_speed;
++	out.set_speed = libburn_mmc_set_speed;
+ 	out.send_parameters = spc_select_error_params;
+ 	out.send_write_parameters = spc_select_write_params;
+ 	out.send_cue_sheet = mmc_send_cue_sheet;
+diff -Naur libburn-1.5.4/libburn/spc.c libburn-1.5.4-patched/libburn/spc.c
+--- libburn-1.5.4/libburn/spc.c	2020-09-30 13:53:30.000000000 -0500
++++ libburn-1.5.4-patched/libburn/spc.c	2022-01-15 23:37:26.000000000 -0500
+@@ -691,7 +691,7 @@
+ 	if (mmc_function_spy(d, "sense_caps") <= 0)
+ 		return;
+ 
+-	mmc_get_configuration(d);
++	libburn_mmc_get_configuration(d);
+ 
+ 	/* first command execution to learn Allocation Length */
+ 	alloc_len = start_len;

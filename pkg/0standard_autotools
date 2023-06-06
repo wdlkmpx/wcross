@@ -1,0 +1,102 @@
+#!/bin/sh
+# - this file is sourced by .sbuild pkgs that are known to build with autotools
+#   or a highly auto-tools compatible configure / build sys
+#
+# set WCROSS_MAKE_CHECK=no to not run tests (broken or missing deps)
+#
+# - override package() if you want to install files manually
+#
+# TIP: when adding or updating packages, add --help to opts
+#      see if something has changed in the configure options...
+
+build()
+{
+	# new opts are prepended, so they can be overriden
+	# by previously set opts
+	if [ -d po ] ; then
+		opts="--disable-nls $opts"
+	fi
+	#--
+	configure_ac=
+	if [ -f configure.ac ] ; then
+		configure_ac='configure.ac'
+	elif [ -f configure.in ] ; then #deprecated
+		configure_ac='configure.in'
+	else
+		echo "INFO: This is not an autotools project (may be autotools-compatible)"
+	fi
+	if [ "$IGNORE_LIBTOOL" ] ; then
+		# (00_pkg_build) copy dev to $TOOLCHAIN_ROOT but don't delete the dev stuff from the $pkgdir
+		DEV_IN_PKGDIR=1
+	else
+		# it's possible to add --enable-static, etc to $opts
+		case $opts in
+			*--disable-static*|*--enable-static*) IGNORE_LIBTOOL=1 ;;
+			*--disable-shared*|*--enable-shared*) IGNORE_LIBTOOL=1 ;;
+		esac
+		if [ ! "$configure_ac" ] ; then
+			 IGNORE_LIBTOOL=1
+		fi
+	fi
+	if [ -z "$IGNORE_LIBTOOL" ] && grep -E "^LT_INIT|^AC_PROG_LIBTOOL|^AM_PROG_LIBTOOL" ${configure_ac} ; then
+		# XC_LIBTOOL??
+		# https://www.gnu.org/software/libtool/manual/html_node/LT_005fINIT.html
+		opts="--enable-static --disable-shared $opts"
+		# The --with-pic and --without-pic configure flags can be used to
+		# specify whether or not libtool uses PIC objects. By default,
+		# libtool uses PIC objects for shared libraries
+		# and non-PIC objects for static libraries
+	fi
+	#--
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		# - use this to avoid possible issues when fixing .la files
+		#   just install directly to ${TOOLCHAIN_INSTALL_PREFIX}
+		# - if you don't need anything in PKGDIR, then you should use this
+		opts="
+--prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--libdir=${TOOLCHAIN_INSTALL_LIBDIR}
+$opts"
+	else
+		# detect if --prefix and --libdir have been specified
+		case $opts in
+			*--libdir*) specified=1 ;;
+			*) opts="--libdir=/usr/${WLIBDIR} $opts"
+		esac
+		case $opts in
+			*--prefix*) specified=1 ;;
+			*) opts="--prefix=/usr $opts" ;;
+		esac
+	fi
+	#--
+	case $opts in
+		*--sysconfdir=*) specified=1 ;;
+		*) opts="--sysconfdir=/etc $opts" ;;
+	esac
+	#--
+	_configure \
+		--localstatedir=/var
+	_make V=1
+}
+
+
+check() {
+	_make check
+}
+
+
+package()
+{
+	if [ "$INSTALL_TO_TOOLCHAIN" ] ; then
+		_make install
+	else
+		DESTDIR=
+		case $opts in *--prefix=/usr*)
+			 # shouldn't install to system, $pkgdir is the place
+			rm -rf ${pkgdir}
+			DESTDIR="DESTDIR=${pkgdir}" ;;
+		esac
+		_make ${DESTDIR} install
+		unset DESTDIR
+	fi
+}
+

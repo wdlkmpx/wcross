@@ -1,0 +1,26 @@
+#!/bin/sh
+# TODO
+# https://github.com/rui314/mold
+# https://git.alpinelinux.org/aports/tree/community/mold/APKBUILD
+
+pkgname=mold
+pkgver=1.11.0
+pkgrel=0
+pkgdeps='libtbb mimalloc2 zlib zstd openssl'
+pkgdesc="fast modern linker"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rui314/mold/archive/refs/tags/v$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/mold'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_cmake
+
+opts="
+-DCMAKE_BUILD_TYPE=Release
+-DMOLD_USE_SYSTEM_MIMALLOC=ON
+-DMOLD_USE_SYSTEM_TBB=ON
+-DBUILD_TESTING=ON
+"
+#-DMOLD_LTO=ON 
+

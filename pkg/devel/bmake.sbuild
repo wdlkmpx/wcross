@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/bmake/APKBUILD
+
+pkgname=bmake
+pkgver=20230208
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=https://www.crufty.net/ftp/pub/sjg/bmake-${pkgver}.tar.gz
+SRC_DIR=bmake
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/bmake'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_autotools
+
+#check() {
+#	_make op=test
+#}
+
+package() {
+	install_to_pkgdir
+	install -v -m 755 mkdep ${pkgdir}/usr/bin
+}

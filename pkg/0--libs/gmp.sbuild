@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/gmp/APKBUILD
+# https://github.com/archlinux/svntogit-packages/blob/packages/gmp/trunk/PKGBUILD
+
+pkgname=gmp
+pkgver=6.2.1
+pkgrel=0
+pkgdeps=''
+pkgdesc='A free library for arbitrary precision arithmetic'
+source=https://gmplib.org/download/gmp/gmp-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libgmp.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='gmp-dev' # static libs in -dev
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%tune doc%tune%' Makefile.in
+	if [ "$GLIBC_TOOLCHAIN" ] ; then
+		# proble with glibc i686
+		# configure: error: Oops, mp_limb_t is 32 bits, but the assembler code
+		if [ "${CPU_ARCH}" = "i686" ] ; then
+			opts="$opts ABI=32"
+		fi
+	fi
+}
+
+opts='--enable-cxx --enable-fat'
+# --disable-assembly 

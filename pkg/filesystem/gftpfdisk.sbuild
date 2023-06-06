@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://sourceforge.net/projects/gptfdisk/files/gptfdisk
+
+pkgname=gftpfdisk
+pkgver=1.0.8
+pkgrel=0
+pkgdeps='util-linux ncursesw popt'
+pkgdesc=""
+source=https://sourceforge.net/projects/gptfdisk/files/gptfdisk/${pkgver}/gptfdisk-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='sbin/cgdisk'
+PROJECT_TYPE='C++'
+
+
+build() {
+	_make
+}
+
+#no tests?
+
+package() {
+	install_exe cgdisk   ${pkgdir}/sbin
+	install_exe fixparts ${pkgdir}/sbin
+	install_exe gdisk    ${pkgdir}/sbin
+	install_exe sgdisk   ${pkgdir}/sbin
+}

@@ -1,0 +1,20 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/mpfr4/APKBUILD
+# https://github.com/archlinux/svntogit-packages/blob/packages/mpfr/trunk/PKGBUILD
+
+pkgname=mpfr
+pkgver=4.2.0
+pkgrel=0
+pkgdeps='gmp'
+pkgdesc='Multiple-precision floating-point library'
+source="https://www.mpfr.org/mpfr-$pkgver/mpfr-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libmpfr.a'
+ALPINE_PKGS='mpfr-dev' # static libs in -dev
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%= doc%=%' Makefile.in
+}

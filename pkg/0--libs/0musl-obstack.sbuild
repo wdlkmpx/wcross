@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/musl-obstack/APKBUILD
+
+pkgname=musl-obstack
+pkgver=1.2.3
+pkgrel=0
+pkgdeps=
+pkgdesc="Standalone library to implement GNU libc's obstack"
+source="$pkgname-$pkgver.tar.gz::https://github.com/void-linux/musl-obstack/archive/v$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libobstack.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='musl-obstack-dev'
+
+
+standard_meson
+
+prepare() {
+	if [ -z "$MUSL_TOOLCHAIN" ] && [ -z "$UCLIBC_TOOLCHAIN" ] ; then
+		echo "musl-obstack: only musl/uclibc toolchains are supported"
+		exit 0
+	fi
+}

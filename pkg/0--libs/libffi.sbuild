@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://github.com/libffi/libffi/releases
+# https://git.alpinelinux.org/aports/tree/main/libffi/APKBUILD
+
+pkgname=libffi
+pkgver=3.4.4
+pkgrel=0
+pkgdeps=
+pkgdesc="portable, high level programming interface to various calling conventions."
+source=https://github.com/libffi/libffi/releases/download/v${pkgver}/libffi-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libffi.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libffi-dev'
+checkdepends="dejagnu"
+
+
+standard_autotools
+
+opts='
+--disable-docs
+--enable-portable-binary'
+#--enable-pax_emutramp
+#--disable-exec-static-tramp
+

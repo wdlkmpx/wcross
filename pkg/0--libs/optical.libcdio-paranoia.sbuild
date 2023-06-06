@@ -1,0 +1,21 @@
+#!/bin/sh
+
+pkgname=libcdio-paranoia
+pkgver=10.2+2.0.1
+pkgrel=0
+pkgdeps='libcdio'
+pkgdesc=
+source=https://ftp.gnu.org/gnu/libcdio/libcdio-paranoia-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "cd-paranoia" ] ; then
+    PKGDIR_FILE='usr/bin/cd-paranoia'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libcdio_paranoia.a'
+fi
+#ALPINE_PKGS='libcdio-paranoia-dev' # no static libs
+
+
+#check_static_exe src/cd-paranoia
+standard_autotools

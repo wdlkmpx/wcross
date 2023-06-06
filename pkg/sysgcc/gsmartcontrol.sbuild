@@ -1,0 +1,18 @@
+#!/bin/sh
+# https://sourceforge.net/projects/gsmartcontrol/files
+
+pkgname=gsmartcontrol
+pkgver=1.1.4
+pkgver=0.9.0  #2017-05-11 -- last gtk2
+pkgrel=0
+pkgdeps='pcre gtkmm'
+pkgdesc=" A graphical user interface for the smartctl hard disk drive health inspection tool. "
+source=http://sourceforge.net/projects/gsmartcontrol/files/${pkgver}/gsmartcontrol-${pkgver}.tar.bz2
+PKGDIR_FILE='usr/bin/gsmartcontrol'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared
+IGNORE_LIBTOOL=1

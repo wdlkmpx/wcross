@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://github.com/dosfstools/dosfstools/releases
+
+pkgname=dosfstools
+pkgver=4.2  #2021-01-31
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=https://github.com/dosfstools/dosfstools/releases/download/v${pkgver}/dosfstools-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='sbin/fsck.fat'
+
+
+standard_autotools
+
+opts='--enable-compat-symlinks --disable-atari-check'

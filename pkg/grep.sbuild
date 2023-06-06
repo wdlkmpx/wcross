@@ -1,0 +1,34 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/grep
+
+pkgname=grep
+pkgver=3.10
+pkgrel=0
+pkgdesc=""
+pkgdeps='pcre2'
+source=http://ftp.gnu.org/gnu/grep/grep-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='bin/grep'
+
+# ====================================================
+
+standard_autotools
+
+opts='
+--bindir=/bin
+--enable-perl-regexp
+--enable-cross-guesses=conservative
+--with-included-regex
+'
+
+prepare()
+{
+	sed -i 's% po %%' Makefile.in
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		sed -i -e 's%tests gnulib-tests%%' Makefile.in
+	fi
+	# configure doesn't want GREP & EGREP to be set before calling the script
+	sed -i -e 's%test -n "$GREP"%test -n "$GREPO_o"%' \
+			-e 's%test -n "$EGREP"%test -n "$EGREPO_o"%' configure
+}
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+# basic lib
+# https://git.alpinelinux.org/aports/tree/main/libwebp/APKBUILD
+# https://developers.google.com/speed/webp
+
+pkgname=libwebp
+pkgver=1.3.0
+pkgrel=0
+pkgdeps=''  #libgif libpng libjpeg
+pkgdesc="Libraries for working with WebP images"
+source="https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libwebp.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libwebp-dev libwebp-static'
+
+
+standard_autotools
+
+# * png/gif/jpeg are required only by the apps (don't need them)
+# * libwebp only depends on libc:  https://packages.debian.org/sid/libwebp7
+# * --disable-tiff = avoid dependency-loop
+
+opts='
+--disable-silent-rules
+--disable-gl
+--disable-sdl
+--disable-wic
+--disable-sse4.1
+--disable-neon
+--enable-libwebpmux
+--enable-libwebpdemux
+--enable-libwebpdecoder
+--enable-libwebpextras
+--disable-png
+--disable-gif
+--disable-jpeg
+--disable-tiff
+'
+

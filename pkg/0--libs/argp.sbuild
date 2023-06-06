@@ -1,0 +1,28 @@
+#!/bin/sh
+# basic lib, musl needs it
+# https://github.com/argp-standalone/argp-standalone/tags
+
+pkgname=argp-standalone
+pkgver=1.5.0
+pkgrel=0
+pkgdeps=''
+pkgdesc="Hierarchial argument parsing library broken out from glibc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/argp-standalone/argp-standalone/archive/refs/tags/$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libargp.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='argp-standalone'
+
+
+
+standard_meson
+
+opts="-Ddefault_library=static"
+
+prepare() {
+	if [ "$GLIBC_TOOLCHAIN" ] || [ "$UCLIBC_TOOLCHAIN" ] ; then
+		echo "glibc & uclibc already implement argp.h"
+		exit 0
+	fi
+	sed -i '/deps +=.*intl/d' meson.build
+}

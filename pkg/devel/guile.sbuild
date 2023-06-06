@@ -1,0 +1,30 @@
+#!/bin/sh
+# http://ftp.gnu.org/gnu/guile
+# https://git.alpinelinux.org/aports/tree/main/guile/APKBUILD
+# https://gitlab.archlinux.org/archlinux/packaging/packages/guile
+
+pkgname=guile
+pkgver=3.0.9
+pkgrel=0
+pkgdeps='libgc gmp libunistring libffi'
+pkgdesc="Portable, embeddable Scheme implementation written in C"
+source=http://ftp.gnu.org/gnu/guile/guile-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/guile'
+
+
+standard_autotools
+
+# configure: error: GNU MP 4.1 or greater not found; either install it, or pass '--enable-mini-gmp' to use included less-optimal arbitrary-precision integer support.
+opts="
+--disable-error-on-warning
+--enable-year2038
+--disable-nls
+--enable-cross-guesses=conservative
+--enable-mini-gmp
+--disable-lto
+"
+
+## if LTO is enabled
+## https://embeddedartistry.com/blog/2020/04/13/prefer-gcc-ar-to-ar-in-your-buildsystems/
+#AR=$($AR --plugin=$($CC --print-file-name=liblto_plugin.so))

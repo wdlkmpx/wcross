@@ -1,0 +1,14 @@
+#!/bin/sh
+# https://sourceforge.net/projects/cdw/files/cdw/
+
+pkgname=cdw
+pkgver=0.8.1
+pkgrel=0
+pkgdeps='ncursesw libburn'
+pkgdesc="cd burning application"
+source=https://sourceforge.net/projects/cdw/files/cdw/cdw%20${pkgver}/cdw-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/cdw'
+
+
+standard_autotools

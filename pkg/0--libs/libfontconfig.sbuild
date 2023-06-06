@@ -1,0 +1,24 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/fontconfig
+pkgname=fontconfig
+pkgver=2.14.2
+pkgrel=0
+pkgdeps='libfreetype libexpat'
+pkgdesc="Library for configuring and customizing font access"
+source="https://www.freedesktop.org/software/fontconfig/release/fontconfig-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libfontconfig.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='fontconfig-dev fontconfig-static'
+
+
+standard_autotools
+
+# use libexpat instead of libxml2
+opts='
+--disable-libxml2
+--disable-docbook
+--disable-docs
+--disable-cache-build
+--disable-silent-rules
+'

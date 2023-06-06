@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://github.com/Mbed-TLS/mbedtls/releases
+
+pkgname=mbedtls
+pkgver=2.25.0
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+SRC_URL=https://github.com/ARMmbed/mbedtls/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libmbedtls.a'
+ALPINE_PKGS='mbedtls-static mbedtls-dev' # mbedtls-utils
+
+
+standard_cmake
+
+opts="
+-DENABLE_PROGRAMS=OFF
+-DMBEDTLS_FATAL_WARNINGS=OFF
+-DENABLE_TESTING=OFF
+"

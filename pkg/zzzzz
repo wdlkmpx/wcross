@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#find . -type f -name '*.sbuild*' | while read i ; do grep -q pkgdeps $i || echo $i ; done
+#find . -type f -name '*.sbuild*' | while read i ; do grep -q DL_SUBDIR $i || echo $i ; done
+#find . -type f -name '*.sbuild*' | while read i ; do grep -q pkgrel $i || echo $i ; done
+
+#sed -i 's%INSTALLED_FILE%PKGDIR_FILE%g' $(find . -type f -name '*.sbuild*' | sort)
+#sed -i 's%{INSTALL_DIR}%{pkgdir}%g' $(find . -type f -name '*.sbuild*' | sort)
+
+#sed -i 's%standard_make_install strip%standard_make_install%' $(find . -type f -name '*.sbuild*' | sort)
+#sed -i 's% install-strip%%' $(find . -type f -name '*.sbuild*' | sort)
+#sed -i '/move_libs_from_pkgdir_to_toolchain/d' $(find . -type f -name '*.sbuild*' | sort)
+
+## change { <emptyline> to {
+#sed -z -i "s|{\n\n|{\n|" $(find . -type f -name '*.sbuild*' | sort)
+
+## change <emptyline> } to }
+#sed -z -i "s|\n\n}|\n}|" $(find . -type f -name '*.sbuild*' | sort)
+
+#sed -i 's%DEPS%pkgdeps%g' $(find . -type f -name '*.sbuild*' | sort | less)
+#sed -i '/extract_pkg_and_cd/d' $(find . -type f -name '*.sbuild*' | sort)
+
+

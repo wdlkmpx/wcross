@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/zlib/APKBUILD
+# https://zlib.net/
+
+pkgname=zlib
+pkgver=1.2.13
+pkgrel=0
+pkgdeps=
+pkgdesc="A compression/decompression Library"
+source="https://zlib.net/zlib-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libz.a'
+ALPINE_PKGS='zlib-static zlib-dev'
+
+
+build()
+{
+	woptimize_flag -O2
+	CHOST=${XCOMPILER} \
+		_configure --prefix=${TOOLCHAIN_ROOT} --static
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	_make install
+}
+

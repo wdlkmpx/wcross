@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://gitlab.zapb.de/libjaylink/libjaylink/-/tags
+# https://git.alpinelinux.org/aports/tree/community/libjaylink/APKBUILD
+
+pkgname=libjaylink
+pkgver=0.3.1
+pkgrel=0
+pkgdeps='libusb'
+pkgdesc="C library to access SEGGER J-Link and other compatible devices"
+source="https://gitlab.zapb.de/libjaylink/libjaylink/-/archive/$pkgver/libjaylink-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libjaylink.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libjaylink-dev'
+
+
+standard_autotools

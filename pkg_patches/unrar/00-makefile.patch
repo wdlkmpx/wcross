@@ -1,0 +1,100 @@
+diff -Naur unrar/makefile unrar-patched/makefile
+--- unrar/makefile	2022-10-24 23:36:02.000000000 +0800
++++ unrar-patched/makefile	2023-02-08 10:39:22.000000000 +0800
+@@ -2,14 +2,24 @@
+ # Makefile for UNIX - unrar
+ 
+ # Linux using GCC
+-CXX=c++
+-CXXFLAGS=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
+-LIBFLAGS=-fPIC
+-DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
+-STRIP=strip
+-AR=ar
+-LDFLAGS=-pthread
+-DESTDIR=/usr
++CXX ?= c++
++CXXFLAGS += -O2 -Wno-switch -Wno-dangling-else
++LIBFLAGS = -fPIC
++DEFINES = -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
++STRIP ?= strip
++AR ?= ar
++LDFLAGS += -pthread
++DESTDIR = /usr
++
++ifeq ($(OS), Windows_NT)
++	EXEEXT=.exe
++	#LIBS += -lpowrprof -loleaut32 -lole32 -lwbemuuid
++	LIBS += -lshlwapi -lpowrprof -lwbemuuid
++else
++	EXEEXT=
++	DEFINES += -DRAR_SMP
++	CXXFLAGS += -Wno-logical-op-parentheses
++endif
+ 
+ # Linux using LCC
+ #CXX=lcc
+@@ -121,6 +131,7 @@
+ 
+ UNRAR_OBJ=filestr.o recvol.o rs.o scantree.o qopen.o
+ LIB_OBJ=filestr.o scantree.o dll.o qopen.o
++#LIB_OBJ=filestr.o recvol.o rs.o scantree.o dll.o qopen.o
+ 
+ OBJECTS=rar.o strlist.o strfn.o pathfn.o smallfn.o global.o file.o filefn.o filcreat.o \
+ 	archive.o arcread.o unicode.o system.o crypt.o crc.o rawread.o encname.o \
+@@ -128,6 +139,10 @@
+ 	rijndael.o getbits.o sha1.o sha256.o blake2s.o hash.o extinfo.o extract.o volume.o \
+ 	list.o find.o unpack.o headers.o threadpool.o rs16.o cmddata.o ui.o
+ 
++ifeq ($(OS), Windows_NT)
++OBJECTS+=isnt.o
++endif
++
+ .cpp.o:
+ 	$(COMPILE) -D$(WHAT) -c $<
+ 
+@@ -140,35 +155,32 @@
+ clean:
+ 	@rm -f *.bak *~
+ 	@rm -f $(OBJECTS) $(UNRAR_OBJ) $(LIB_OBJ)
+-	@rm -f unrar libunrar.*
++	@rm -f unrar$(EXEEXT) libunrar.*
+ 
+-unrar:	clean $(OBJECTS) $(UNRAR_OBJ)
+-	@rm -f unrar
+-	$(LINK) -o unrar $(LDFLAGS) $(OBJECTS) $(UNRAR_OBJ) $(LIBS)	
+-	$(STRIP) unrar
++unrar$(EXEEXT): $(OBJECTS) $(UNRAR_OBJ)
++	$(LINK) -o unrar$(EXEEXT) $(LDFLAGS) $(OBJECTS) $(UNRAR_OBJ) $(LIBS)	
++	$(STRIP) unrar$(EXEEXT)
+ 
+ sfx:	WHAT=SFX_MODULE
+-sfx:	clean $(OBJECTS)
++sfx:	$(OBJECTS)
+ 	@rm -f default.sfx
+ 	$(LINK) -o default.sfx $(LDFLAGS) $(OBJECTS)
+ 	$(STRIP) default.sfx
+ 
+ lib:	WHAT=RARDLL
+ lib:	CXXFLAGS+=$(LIBFLAGS)
+-lib:	clean $(OBJECTS) $(LIB_OBJ)
++lib:	$(OBJECTS) $(LIB_OBJ)
+ 	@rm -f libunrar.*
+-	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+ 	$(AR) rcs libunrar.a $(OBJECTS) $(LIB_OBJ)
+ 
+ install-unrar:
+-			install -D unrar $(DESTDIR)/bin/unrar
++		install -D unrar$(EXEEXT) $(DESTDIR)/bin/unrar$(EXEEXT)
+ 
+ uninstall-unrar:
+-			rm -f $(DESTDIR)/bin/unrar
++		rm -f $(DESTDIR)/bin/unrar$(EXEEXT)
+ 
+ install-lib:
+-		install libunrar.so $(DESTDIR)/lib
+ 		install libunrar.a $(DESTDIR)/lib
+ 
+ uninstall-lib:
+-		rm -f $(DESTDIR)/lib/libunrar.so
++		rm -f $(DESTDIR)/lib/libunrar.a

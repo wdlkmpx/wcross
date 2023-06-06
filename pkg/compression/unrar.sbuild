@@ -1,0 +1,50 @@
+#!/bin/sh
+# https://www.rarlab.com/rar_add.htm
+# https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-unrar
+
+pkgname=unrar
+pkgver=6.2.6
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+PROJECT_TYPE='C++'
+SRC_URL=https://www.rarlab.com/rar/unrarsrc-${pkgver}.tar.gz
+SRC_DIR=unrar
+DL_SUBDIR=''
+
+DIST_BINARY=unrar
+if [ "$BUILD_PACKAGE" = "unrar" ] ; then
+	PKGDIR_FILE='usr/bin/unrar'
+	unrar_target="unrar"
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libunrar.a'
+	unrar_target="lib"
+fi
+
+# ====================================================
+
+build()
+{
+	sed -i -e '/STRIP/d' makefile # we'll do that later
+	case "$TARGET_TRIPLET" in
+		*mingw*) _make ${unrar_target} OS=Windows_NT ;;
+		*)       _make ${unrar_target} ;;
+	esac
+}
+
+#no tests
+
+package()
+{
+	woptimize_flag -O2
+	if [ "$unrar_target" = "unrar" ] ; then
+		install_exe unrar ${pkgdir}/usr/bin
+	else # lib
+		install -m 644 libunrar.a ${TOOLCHAIN_INSTALL_PREFIX}/lib
+		mkdir -p ${TOOLCHAIN_INSTALL_PREFIX}/include/unrar
+		install -m 644 dll.hpp ${TOOLCHAIN_INSTALL_PREFIX}/include/unrar
+	fi
+}
+
+

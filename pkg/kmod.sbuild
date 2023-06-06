@@ -1,0 +1,40 @@
+#!/bin/sh
+# https://www.kernel.org/pub/linux/utils/kernel/kmod
+
+pkgname=kmod
+pkgver=29
+pkgrel=0
+pkgdeps='zlib'
+pkgdesc=""
+source=https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='bin/kmod'
+
+
+standard_autotools
+
+#make[3]: *** /lib/modules/4.1.48/build: No such file or directory.  Stop.
+WCROSS_MAKE_CHECK=no
+
+prepare() {
+	# stuff is wrong
+	sed -i \
+		-e 's%disable-static%%' \
+		-e 's%pic-only%%' \
+		-e '/enable-static is not supported/d' \
+		configure.ac
+	rm -fv configure
+}
+
+opts='
+--prefix=/
+--bindir=/bin
+--with-rootlibdir=/lib
+--disable-dependency-tracking
+--with-zlib
+'
+
+package() {
+	install_exe tools/kmod ${pkgdir}/bin
+}
+

@@ -1,0 +1,88 @@
+#!/bin/sh
+
+if [ "$1" = "symlinks" ] ; then
+    zcript=$(basename "$0")
+    for l in aarch64 arm i686 s390x x86_64 win32 win64
+    do
+        ln -snfv ${zcript} ${l}
+    done
+    exit 0
+fi
+
+#==================================================================
+#    musl-cross-make / mingw-cross-make - http://musl.cc
+#                 static i686 toolchains
+# always using the latest version, older toolchains are not archived
+#==================================================================
+
+AFTER_EXTRACT_FUNC='after_extract_gcc_musl_cc'
+SANITY_CHECK_FUNC='cross_toolchain_sanity_check_gcc_musl_cc'
+
+TARBALL_SPECS="
+GCC:      11.2.1 (Snapshot 11-20211120)
+binutils: 2.37
+GMP:      6.2.1
+MPFR:     4.1.0
+MPC:      1.2.1
+"
+
+case ${WTARGET} in
+    aarch64) CC_TARBALL='aarch64-linux-musl-cross.tgz' ;;
+    arm)     CC_TARBALL='armv6-linux-musleabihf-cross.tgz' ;;
+    i686)    CC_TARBALL='i686-linux-musl-cross.tgz'    ;;
+    s390x)   CC_TARBALL='s390x-linux-musl-cross.tgz'   ;;
+    x86_64)  CC_TARBALL='x86_64-linux-musl-cross.tgz'  ;;
+    win32)   CC_TARBALL='i686-w64-mingw32-cross.tgz'   ;;
+    win64)   CC_TARBALL='x86_64-w64-mingw32-cross.tgz' ;;
+    *) exit_error "targets/z_gcc_musl_cc: need a proper symlink" ;;
+esac
+
+SITE=http://musl.cc
+TARGET_TRIPLET=${CC_TARBALL%-cross*}
+
+# XXX_TOOLCHAIN is set in build.sh
+
+case ${TARGET_TRIPLET} in
+    *musl*)
+        MUSL_AFTER_EXTRACT_UPDATE=1
+        MUSL_NEED_NEWER_HEADERS=1
+        export MUSL_CC_VERSION=1.2.2
+        if [ -z "$STATIC_LINK" ] ; then
+            STATIC_LINK=yes #default if not specified
+        fi
+        TARBALL_SPECS="${TARBALL_SPECS}
+MinGW-w64: git-6cc9777 (2021-11-19)"
+        ;;
+    *mingw*)
+        # always enforce static link so that exe files don't depend on mingw libs
+        STATIC_LINK=yes
+        TARBALL_SPECS="${TARBALL_SPECS}
+musl:     git-b76f37f (2021-09-23)
+Linux:    5.15.2"
+        ;;
+esac
+
+#echo ${TARGET_TRIPLET} ; exit ; #debug
+
+#=========================================================================
+
+after_extract_gcc_musl_cc()
+{
+    echo "#### FIX MUSL-CROSS-MAKE ####"
+    if [ ! -L ${XPATH}/bin/${TARGET_TRIPLET}-ld ] && [ -f ${XPATH}/bin/${TARGET_TRIPLET}-ld.bfd ] ; then
+        ln -snfv ${TARGET_TRIPLET}-ld.bfd ${XPATH}/bin/${TARGET_TRIPLET}-ld
+    fi
+    rm -fv ${XPATH}/bin/${TARGET_TRIPLET}-gcc-[1-9]* # ex: aarch64-linux-musl-gcc-11.2.1
+    #rm -fv ${XPATH}/${TARGET_TRIPLET}/lib/*.so*
+    # musl-cross-make .la files are broken
+    rm -fv ${XPATH}/${TARGET_TRIPLET}/lib/*.la
+    return 0
+}
+
+#=========================================================================
+
+cross_toolchain_sanity_check_gcc_musl_cc()
+{
+    return 0
+}
+

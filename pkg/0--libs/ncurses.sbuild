@@ -1,0 +1,86 @@
+#!/bin/sh
+# https://ftp.gnu.org/pub/gnu/ncurses
+
+pkgname=ncurses
+pkgver=6.4
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://ftp.gnu.org/pub/gnu/ncurses/ncurses-${pkgver}.tar.gz
+DL_SUBDIR=''
+ALPINE_PKGS='ncurses-dev ncurses-static'
+
+case ${PKG_SCRIPT} in
+	*ncursesw*) TOOLCHAIN_FILE='usr/lib/libncursesw.a' ;;
+	*)          TOOLCHAIN_FILE='usr/lib/libncurses.a' ;;
+esac
+
+# ====================================================
+
+build()
+{
+	case ${PKG_SCRIPT} in
+		*ncursesw*) UTF8='--enable-widec' ;;
+		*)          UTF8='' ;;
+	esac
+
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		opts=" --without-tests"
+	fi
+	_configure \
+		--prefix=${TOOLCHAIN_INSTALL_PREFIX} \
+		--without-manpages \
+		--without-progs \
+		--disable-db-install \
+		--without-ada \
+		--without-gpm \
+		--without-shared \
+		--without-debug \
+		--without-develop \
+		--without-cxx \
+		--without-cxx-binding \
+		--enable-termcap ${UTF8} \
+		--enable-pc-files \
+		--with-pkg-config-libdir=${TOOLCHAIN_INSTALL_PREFIX}/lib/pkgconfig
+	_make
+}
+
+
+check() {
+	_make check
+}
+
+package() {
+	_make install
+	# packages may call ncurses5-config first
+	# - some pkgs might not be updated enough to call ncurses6-config
+	if [ -n $UTF8 ] && [ ! -e ${TOOLCHAIN_INSTALL_PREFIX}/bin/ncursesw5-config ] ; then
+		ln -sv ncursesw6-config ${TOOLCHAIN_INSTALL_PREFIX}/bin/ncursesw5-config
+	fi
+	if [ -z $UTF8 ] && [ ! -e ${TOOLCHAIN_INSTALL_PREFIX}/bin/ncurses5-config ] ; then
+		ln -sv ncurses6-config ${TOOLCHAIN_INSTALL_PREFIX}/bin/ncurses5-config
+	fi
+
+	# create symlinks to make compilation work in every possible way
+	# this is handy when trying to compile an ncurses-based app
+	#    with a generated make.sh script
+	if [ -z $UTF8 ] ; then
+		if [ ! -e ${TOOLCHAIN_INSTALL_PREFIX}/include/curses.h ] ; then
+			ln -sv ncurses/curses.h ${TOOLCHAIN_INSTALL_PREFIX}/include/curses.h
+		fi
+		if [ ! -e ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses.h ] ; then
+			ln -sv ncurses/curses.h ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses.h
+		fi
+	fi
+	# --
+
+	# some apps don't call *-config or pkg-config
+	# and are unable to locate ncurses.h. Help them
+	if [ ! -e ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses.h ] ; then
+		if [ -e ${TOOLCHAIN_INSTALL_PREFIX}/include/ncursesw/curses.h ] ; then
+			ln -sv ncursesw/curses.h ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses.h 
+		elif [ -e ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses/curses.h ] ; then
+			ln -sv ncurses/curses.h ${TOOLCHAIN_INSTALL_PREFIX}/include/ncurses.h 
+		fi
+	fi
+}

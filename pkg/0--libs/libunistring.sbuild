@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libunistring/APKBUILD
+# https://archlinux.org/packages/core/x86_64/libunistring/
+
+pkgname=libunistring
+pkgver=1.1
+pkgrel=0
+pkgdesc="Library for manipulating Unicode strings and C strings"
+options="!check"  # Tests fail with musl locale library
+source="https://ftp.gnu.org/gnu/libunistring/libunistring-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libunistring.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libunistring-dev libunistring-static'
+
+
+standard_autotools
+
+opts='
+--without-libiconv-prefix
+--enable-cross-guesses=conservative
+'

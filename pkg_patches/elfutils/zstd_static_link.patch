@@ -1,0 +1,51 @@
+# w patch
+# https://sourceware.org/pipermail/elfutils-devel/2023q1/006022.html
+
+diff -Naur elfutils-0.189/src/Makefile.am elfutils-0.189-patched/src/Makefile.am
+--- elfutils-0.189/src/Makefile.am	2023-03-03 10:42:27.000000000 -0500
++++ elfutils-0.189-patched/src/Makefile.am	2023-05-02 13:33:55.264551106 -0500
+@@ -42,7 +42,7 @@
+ if BUILD_STATIC
+ libasm = ../libasm/libasm.a
+ libdw = ../libdw/libdw.a -lz $(zip_LIBS) $(libelf) -ldl -lpthread
+-libelf = ../libelf/libelf.a -lz
++libelf = ../libelf/libelf.a -lz $(zstd_LIBS)
+ else
+ libasm = ../libasm/libasm.so
+ libdw = ../libdw/libdw.so
+diff -Naur elfutils-0.189/src/Makefile.in elfutils-0.189-patched/src/Makefile.in
+--- elfutils-0.189/src/Makefile.in	2023-03-03 10:42:30.000000000 -0500
++++ elfutils-0.189-patched/src/Makefile.in	2023-05-02 13:34:17.970436908 -0500
+@@ -539,7 +539,7 @@
+ @BUILD_STATIC_FALSE@libdw = ../libdw/libdw.so
+ @BUILD_STATIC_TRUE@libdw = ../libdw/libdw.a -lz $(zip_LIBS) $(libelf) -ldl -lpthread
+ @BUILD_STATIC_FALSE@libelf = ../libelf/libelf.so
+-@BUILD_STATIC_TRUE@libelf = ../libelf/libelf.a -lz
++@BUILD_STATIC_TRUE@libelf = ../libelf/libelf.a -lz $(zstd_LIBS)
+ libebl = ../libebl/libebl.a ../backends/libebl_backends.a ../libcpu/libcpu.a
+ libeu = ../lib/libeu.a
+ @DEMANGLE_TRUE@demanglelib = -lstdc++
+diff -Naur elfutils-0.189/tests/Makefile.am elfutils-0.189-patched/tests/Makefile.am
+--- elfutils-0.189/tests/Makefile.am	2023-03-03 10:42:27.000000000 -0500
++++ elfutils-0.189-patched/tests/Makefile.am	2023-05-02 13:34:52.321802790 -0500
+@@ -664,7 +664,7 @@
+ 
+ if BUILD_STATIC
+ libdw = ../libdw/libdw.a -lz $(zip_LIBS) $(libelf) $(libebl) -ldl -lpthread
+-libelf = ../libelf/libelf.a -lz
++libelf = ../libelf/libelf.a -lz $(zstd_LIBS)
+ libasm = ../libasm/libasm.a
+ else
+ libdw = ../libdw/libdw.so
+diff -Naur elfutils-0.189/tests/Makefile.in elfutils-0.189-patched/tests/Makefile.in
+--- elfutils-0.189/tests/Makefile.in	2023-03-03 10:42:30.000000000 -0500
++++ elfutils-0.189-patched/tests/Makefile.in	2023-05-02 13:35:01.118920858 -0500
+@@ -1754,7 +1754,7 @@
+ @BUILD_STATIC_FALSE@libdw = ../libdw/libdw.so
+ @BUILD_STATIC_TRUE@libdw = ../libdw/libdw.a -lz $(zip_LIBS) $(libelf) $(libebl) -ldl -lpthread
+ @BUILD_STATIC_FALSE@libelf = ../libelf/libelf.so
+-@BUILD_STATIC_TRUE@libelf = ../libelf/libelf.a -lz
++@BUILD_STATIC_TRUE@libelf = ../libelf/libelf.a -lz $(zstd_LIBS)
+ @BUILD_STATIC_FALSE@libasm = ../libasm/libasm.so
+ @BUILD_STATIC_TRUE@libasm = ../libasm/libasm.a
+ libebl = ../libebl/libebl.a ../backends/libebl_backends.a ../libcpu/libcpu.a

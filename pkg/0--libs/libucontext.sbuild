@@ -1,0 +1,38 @@
+#!/bin/sh
+# https://github.com/kaniini/libucontext
+# https://git.alpinelinux.org/aports/tree/main/libucontext/APKBUILD
+
+pkgname=libucontext
+pkgver=1.2
+pkgrel=0
+pkgdeps=
+pkgdesc="ucontext function implementations"
+source="https://distfiles.dereferenced.org/libucontext/libucontext-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libucontext.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libucontext-dev'
+LINUX_ONLY=1
+
+
+standard_meson
+
+#MUON_NO_TESTS=1
+
+prepare()
+{
+	if [ -z "$MUSL_TOOLCHAIN" ] ; then  #|| [ "$UCLIBC_TOOLCHAIN" ]
+		echo "** libucontext only makes sense with musl, ignoring this pkg"
+		exit 0
+	fi
+	CTARGET_ARCH=${OS_ARCH}
+	if [ -n "$XCOMPILER" ] ; then
+		CTARGET_ARCH=${XCOMPILER%%-*}
+	fi
+	case "$CTARGET_ARCH" in
+		i?86)		LIBUCONTEXT_ARCH="x86" ;;
+		ppc64le)	LIBUCONTEXT_ARCH="ppc64" ;;
+		*)			LIBUCONTEXT_ARCH="$CTARGET_ARCH" ;;
+	esac
+	opts="-Ddefault_library=static -Dcpu=$LIBUCONTEXT_ARCH"
+}

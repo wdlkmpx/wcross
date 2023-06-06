@@ -1,0 +1,163 @@
+#!/bin/sh
+
+if [ "$1" = "symlinks" ] ; then
+    zcript=$(basename "$0")
+    for l in freebsd10-i686 freebsd11-aarch64 freebsd11-i686 freebsd11-x86_64 \
+            aarch64clang netbsd64 openbsd64
+    do
+        ln -snfv ${zcript} ${l}
+    done
+    exit 0
+fi
+
+#==================================================================
+#  LINUX CLANG LLVM - https://github.com/llvm/llvm-project/releases
+#   (toolchain requires glibc+linux x86_64)
+#==================================================================
+
+if [ -z "$STATIC_LINK" ] ; then
+    STATIC_LINK=yes #default if not specified
+fi
+
+#CLANG_VER=14.0.0
+#CLANG_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+#CLANG_VER=15.0.6
+#CLANG_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.6/clang+llvm-15.0.6-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+CLANG_VER=16.0.0
+CLANG_URL=https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+
+AFTER_EXTRACT_FUNC='after_extract_clang_official'
+SANITY_CHECK_FUNC='cross_toolchain_sanity_check_clang_official'
+
+TARBALL_URL=${CLANG_URL}
+TARBALL_ARCH='x86_64'
+
+export CLANG_TOOLCHAIN='yes'
+
+TARBALL_SPECS="
+llvm   : ${CLANG_VER}
+clang  : ${CLANG_VER}
+"
+
+SYSROOT_SITE='https://sourceforge.net/projects/wdl/files/wcross/sysroot'
+
+case ${WTARGET} in
+    freebsd10-i686)
+        TARGET_TRIPLET='i686-pc-freebsd10'
+        SYSROOT_URL=${SYSROOT_SITE}/freebsd/sysroot-freebsd10-i686.tar.xz
+        ;;
+    freebsd11-aarch64)
+        TARGET_TRIPLET='aarch64-pc-freebsd11'
+        SYSROOT_URL=${SYSROOT_SITE}/freebsd/sysroot-freebsd11-aarch64.tar.xz
+        ;;
+    freebsd11-i686)
+        TARGET_TRIPLET='i686-pc-freebsd11'
+        SYSROOT_URL=${SYSROOT_SITE}/freebsd/sysroot-freebsd11-i686.tar.xz
+        ;;
+    freebsd11-x86_64)
+        TARGET_TRIPLET='x86_64-pc-freebsd11'
+        SYSROOT_URL=${SYSROOT_SITE}/freebsd/sysroot-freebsd11-x86_64.tar.xz
+        ;;
+    aarch64clang)
+        TARGET_TRIPLET='aarch64-pc-linux'
+        SYSROOT_URL=${SYSROOT_SITE}/linux/sysroot-aarch64-linux-musl1.2.3-gcc11.2-static.tar.gz
+        ;;
+    netbsd64)
+        TARGET_TRIPLET='x86_64-pc-netbsd9'
+        SYSROOT_URL=  #TODO
+        ;;
+    openbsd64)
+        TARGET_TRIPLET='x86_64-pc-openbsd7'
+        SYSROOT_URL=  #TODO
+        # for some reason static link always fails
+        STATIC_LINK=no
+        ;;
+    *) exit_error "targets/z_clang: need a proper symlink" ;;
+esac
+
+# XXX_TOOLCHAIN is set in build.sh
+
+#echo ${TARGET_TRIPLET} ; exit ; #debug
+
+#=========================================================================
+
+after_extract_clang_official()
+{
+    # the official llvm binaries are huge and not stripped
+    for i in $(ls ${XPATH}/bin/*) $(find ${XPATH}/lib -name '*.so*')
+    do
+        if [ -L $i ] ; then
+            continue
+        fi
+        echo "strip ${i##*/}"
+        strip $i
+    done
+    return 0
+}
+
+#=========================================================================
+
+cross_toolchain_sanity_check_clang_official()
+{
+    # setup big x86_64 clang toolchain (4GB+) downloaded from the git repo
+    # binaries x86_64 (not statically linked)
+    # tip: delete sysroot dir to setup it again
+    if [ ! -d "${XPATH}/${TARGET_TRIPLET}" ] ; then
+        return 0
+    fi
+    #--
+    # setup sysroot for target triplet...
+    if [ -z "$SYSROOT_URL" ] ; then
+        exit_error "\$SYSROOT_URL is empty"
+    fi
+    download_file ${SYSROOT_URL}
+    WTAR_OPTS="--strip=1 -C ${XPATH}/${TARGET_TRIPLET}" \
+        extract_archive $(basename "${SYSROOT_URL}")
+    #--
+    if [ ! -f ${XPATH}/bin/clang-target-wrapper.sh ] ; then
+        # some apps are symlinked to this script
+        echo '#!/bin/sh
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BASENAME="$(basename "$0")"
+TARGET="${BASENAME%-*}"
+FLAGS="$FLAGS --start-no-unused-arguments"
+case $BASENAME in
+  *-clang++|*-g++|*-c++) FLAGS="$FLAGS --driver-mode=g++" ;;
+esac
+FLAGS="$FLAGS -target $TARGET"
+if [ -f ${XPATH}/${TARGET_TRIPLET}/lib/libc++.a ] ; then
+  FLAGS="$FLAGS -stdlib=libc++ -rtlib=compiler-rt"
+  #FLAGS="$FLAGS -unwindlib=libunwind"
+elif [ -f ${XPATH}/${TARGET_TRIPLET}/lib/libstdc++.a ] ; then
+  FLAGS="$FLAGS -stdlib=libstdc++"
+fi
+FLAGS="$FLAGS -fuse-ld=lld --end-no-unused-arguments"
+
+if [ -d ${XPATH}/${TARGET_TRIPLET}/includec++ ] ; then
+  FLAGS="$FLAGS -isystem ${XPATH}/${TARGET_TRIPLET}/includec++"
+fi
+"$DIR/clang" $FLAGS "$@"
+' > ${XPATH}/bin/clang-target-wrapper.sh
+        chmod +x ${XPATH}/bin/clang-target-wrapper.sh
+    fi
+
+    if [ ! -e ${XPATH}/bin/llvm-addr2line ] ; then
+        ln -snfv llvm-symbolizer ${XPATH}/bin/llvm-addr2line
+    fi
+
+    WTRIPLET=${TARGET_TRIPLET}
+
+    for capp in addr2line ar nm objcopy objdump ranlib readelf size strings strip
+    do
+        ln -snfv llvm-${capp} ${XPATH}/bin/${WTRIPLET}-${capp}
+    done
+
+    for capp in as c++ clang clang++ g++ gcc cc
+    do
+        ln -snfv clang-target-wrapper.sh ${XPATH}/bin/${WTRIPLET}-${capp}
+    done
+
+    ln -snfv ld.lld ${XPATH}/bin/${WTRIPLET}-ld
+    return 0
+}
+

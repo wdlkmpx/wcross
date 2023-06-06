@@ -1,0 +1,4 @@
+TARGET=mips64el-linux-musl
+
+GCC_CONFIG_FOR_TARGET+=' --with-abi=64'
+

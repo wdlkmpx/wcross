@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/glib/APKBUILD
+
+pkgname=glib
+pkgver=2.76.2
+pkgrel=0
+pkgdeps='zlib libffi pcre2 util-linux'
+pkgdesc="Common C routines used by Gtk+ and other libs"
+source="https://download.gnome.org/sources/glib/${pkgver%.*}/glib-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libglib-2.0.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='glib-static glib-dev'
+
+
+standard_meson
+
+prepare() {
+	# muon is not ready
+	export W_MESON=meson
+	#woptimize_flag -O2
+}
+
+check() {
+	echo -n # don't like to be run without first being installed
+}
+
+opts="
+-Dman=false
+-Dlibelf=disabled
+-Dselinux=disabled
+-Dgtk_doc=false
+-Dnls=disabled
+-Dtests=false
+-Ddefault_library=static
+"

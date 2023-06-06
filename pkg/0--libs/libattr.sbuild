@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/attr/APKBUILD
+# https://download.savannah.nongnu.org/releases/attr
+
+pkgname=attr
+pkgver=2.5.1
+pkgrel=0
+pkgdeps=
+pkgdesc="utilities for managing filesystem extended attributes"
+source="https://download.savannah.nongnu.org/releases/attr/attr-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libattr.a'
+TOOLCHAIN_ONLY=1 #don't want a $pkgdir, remove it
+#PKGDIR_ALL=1    #move files from $pkgdir to $pkgdir_all and remove $pkgdir
+ALPINE_PKGS='attr-dev attr-static'
+
+
+standard_autotools
+
+prepare()
+{
+	sed -i \
+		-e "/dist_doc_DATA = /d" -e "/dist_sysconf_DATA = /d" \
+		-e '/^MANS = /d' -e '/^DATA = /d' Makefile.in
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		sed -i -e "/bin_PROGRAMS = /d" -e "/PROGRAMS = /d" Makefile.in
+	fi
+}
+

@@ -1,0 +1,52 @@
+#!/bin/sh
+# https://mkvtoolnix.download/debian/pool/
+#
+# currently not compiling this
+#
+# last known static mkvmerge build:
+#    https://github.com/Jesseatgao/MKVToolNix-static-builds
+#
+
+pkgname=mkvtoolnix
+pkgver=0.58.0
+pkgrel=0
+pkgdeps=''
+pkgdesc="tools to with matroska files"
+PKGDIR_FILE='usr/bin/mkvmerge'
+DL_SUBDIR='gui'
+
+XAPP_ARCH=${OS_ARCH}
+case ${PKG_SCRIPT_BASE} in
+	*32) XAPP_ARCH=i686 ;;
+	*64) XAPP_ARCH=x86_64 ;;
+esac
+
+
+case ${XAPP_ARCH} in
+	# 0.38.0 is the last for debian stretch (requires boost libs)
+	# 0.58.0 is a significant version
+	# - the last version before official binaries include dependency on QtCore libs
+	# - we'll be using that version (it has static boost libs, so easy to fix missing libs in all distros...)
+	i686)
+		source=https://mkvtoolnix.download/debian/pool/buster/main/m/mkvtoolnix/mkvtoolnix_58.0.0-0~bunkus01_i386.deb
+		PKGDIR_ARCH='i686-official'
+		;;
+	x86_64)
+		source=https://mkvtoolnix.download/debian/pool/buster/main/m/mkvtoolnix/mkvtoolnix_58.0.0-0~bunkus01_amd64.deb
+		PKGDIR_ARCH='x86_64-official'
+		;;
+	*)
+		echo "$OS_ARCH is not supported.. only i686/x86_64 binaries are downloaded packaged"
+		exit 1
+		;;
+esac
+
+
+build() {
+	echo -n
+}
+
+package() {
+	mkdir -p ${pkgdir}/usr/bin
+	cp -afv usr/bin/* ${pkgdir}/usr/bin
+}

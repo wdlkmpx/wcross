@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://sourceforge.net/projects/gparted/files/gparted
+
+pkgname=gparted
+#pkgver=1.5.0  # latest
+pkgver=0.33.0 # last gtk2
+pkgrel=0
+#if [ "${PKG_SCRIPT_BASE}" = "gparted_portable" ] ; then
+pkgdeps='gtkmm parted' #include static libparted that doesn't link to libdevmapper
+pkgdesc="partition editor for graphically managing your disk partitions"
+source=https://sourceforge.net/projects/gparted/files/gparted/gparted-${pkgver}/gparted-${pkgver}.tar.gz
+PKGDIR_FILE='usr/bin/gparted'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared (use defaults)
+IGNORE_LIBTOOL=1
+
+prepare() {
+	sed -i -e 's% po % %' -e 's% doc % %' Makefile.in
+	#cpan XML::Parser
+	export ac_cv_lib_parted_ped_device_read=yes
+	. /etc/os-release
+	if [ "$PRETTY_NAME" = "Slackware 14.0" ] ; then #aka Porteus 2.1
+		sed -i 's%sigc++-2\.0%sigc++-2.2%' configure
+	fi
+}
+
+#--disable-nls
+opts="--disable-doc --disable-scrollkeeper"

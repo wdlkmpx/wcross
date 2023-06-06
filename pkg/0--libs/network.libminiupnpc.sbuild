@@ -1,0 +1,28 @@
+#!/bin/sh
+# http://miniupnp.free.fr/files/
+
+pkgname=miniupnpc
+pkgver=2.2.4
+pkgrel=0
+pkgdeps=
+pkgdesc="Library and tool to control NAT in UPnP-enabled routers"
+source="http://miniupnp.free.fr/files/miniupnpc-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libminiupnpc.a'
+#TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libident-dev'
+
+
+build() {
+	export_make_wflags
+	export ${CROSS_MK_PARAMS}
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}

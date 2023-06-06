@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/bison/APKBUILD
+#
+# This compiles with musl (static), but the problem is liby.a
+#  which is included in compiled apps, so this requires a system build
+
+pkgname=bison
+pkgver=3.8.2
+pkgrel=0
+#makedepends="perl"
+#depends="m4"
+#checkdepends="bison flex"
+pkgdesc="The GNU general-purpose parser generator"
+source="https://ftp.gnu.org/gnu/bison/bison-$pkgver.tar.xz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/bison'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+DEV_IN_PKGDIR=1
+
+
+standard_autotools
+
+opts='
+--enable-cross-guesses=conservative
+'

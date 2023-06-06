@@ -1,0 +1,55 @@
+#!/bin/sh
+# 12.1 https://pkgs.alpinelinux.org/package/v3.17/main/x86_64/gdb
+# 11.2 https://pkgs.alpinelinux.org/package/v3.16/main/x86_64/gdb
+
+pkgname=gdb
+pkgver=11.2
+#pkgver=13.2
+pkgrel=0
+pkgdeps='zlib libreadline gmp ncursesw libexpat libxxhash xz mpfr'
+case $CPU_ARCH in
+	i686*|x86_64*) pkgdeps="$pkgdeps libipt2" ;;
+esac
+pkgdesc="The GNU Debugger"
+source=https://sourceware.org/pub/gdb/releases/gdb-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/gdb'
+
+
+standard_autotools
+
+prepare() {
+	sed -i '/CATALOGS = /d' gdb/Makefile.in
+}
+
+# babeltrace requires glib, this is not good news for static linking
+opts='
+--with-system-zlib
+--with-system-readline
+--disable-gdbtk
+--with-xxhash=yes
+--with-expat=yes
+--with-babeltrace=no
+--with-mpfr=yes
+--with-lzma=yes
+--disable-werror
+--disable-nls
+'
+case $CPU_ARCH in
+	i686*|x86_64*) opts="$opts --with-intel-pt=yes" ;;
+esac
+
+if [ "$STATIC_LINK" = "yes" ] ; then
+	opts="$opts --disable-inprocess-agent
+"
+fi
+
+if [ "$BUILD_TYPE" != "chroot" ] ; then
+	opts="$opts --with-libexpat-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--with-libgmp-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--with-libmpfr-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--with-libipt-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--with-liblzma-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+--with-libxxhash-prefix=${TOOLCHAIN_INSTALL_PREFIX}
+"
+fi

@@ -1,0 +1,38 @@
+#!/bin/sh
+# basic lib & app
+#
+# https://github.com/openresty/luajit2
+# aport is outdated
+#    https://git.alpinelinux.org/aports/tree/main/luajit/APKBUILD
+
+pkgname=luajit2
+pkgver=2.1-20230119
+pkgrel=0
+pkgdeps=
+pkgdesc="OpenResty's branch of LuaJIT"
+source="luajit2-${pkgver}.tar.gz::https://github.com/openresty/luajit2/archive/v${pkgver}/luajit2-${pkgver}.tar.gz"
+DL_SUBDIR=''
+if [ "$BUILD_PACKAGE" = "luajit" ] ; then
+    PKGDIR_FILE='usr/bin/luajit'
+else
+    # compiling as a dependency, the lib may already be there if using distro packages
+    TOOLCHAIN_FILE='usr/lib/libluajit-5.1.a'
+fi
+ALPINE_PKGS='luajit-dev'
+
+
+build()
+{
+	# These flags are recommended by OpenResty.
+	EXTRA_CFLAGS="-DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_NUMMODE=2"
+	woptimize_flag -O2
+	mk_opts="BUILDMODE=static PREFIX=/usr"
+	_make ${mk_opts}
+}
+
+# forget about tests.. too much complexity
+
+package() {
+	_make ${mk_opts} DESTDIR="$pkgdir" install
+}
+

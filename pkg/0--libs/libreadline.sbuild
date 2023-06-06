@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/readline/APKBUILD
+# https://readline.freedesktop.org/releases
+
+pkgname=readline
+pkgver=8.2
+pkgrel=0
+pkgdeps="ncursesw"
+pkgdesc="GNU readline library"
+source="https://ftp.gnu.org/gnu/readline/readline-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libreadline.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='readline-dev readline-static'
+
+
+standard_autotools
+
+patch_args="-p0" # patchlevel used by upstream patches
+
+opts='
+--with-curses
+--without-shared-termcap-library
+--enable-static
+--disable-shared
+--disable-install-examples
+'
+
+post_install() {
+	sed -i 's%-lreadline%-lreadline -lncursesw%' ${pkgdir}/usr/lib/pkgconfig/readline.pc
+}

@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libdvdnav/APKBUILD
+# https://download.videolan.org/pub/videolan/libdvdnav
+
+pkgname=libdvdnav
+pkgver=6.1.1
+pkgrel=0
+pkgdeps="libdvdread"
+pkgdesc="a library for sophisticated DVD navigation features"
+source="https://download.videolan.org/pub/videolan/libdvdnav/$pkgver/libdvdnav-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libdvdnav.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libdvdnav-dev'  #no static libs
+
+
+standard_autotools

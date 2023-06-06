@@ -1,0 +1,25 @@
+If a .sbuild is not prefixed by lib* then
+- it's the original package name
+- it provides tools that can go to PKGDIR (some symlinked sbuilds)
+
+If a package was renamed to libXXX it's because it only
+provides a lib and that way it's easier to identify as a package
+that only provides libs
+ (in most cases pkgname= still retains the original package name)
+
+
+#====================================================================
+
+ALPINE - static libs
+------
+
+command to identify which .sbuilds are misssing alpine static libs
+
+grep -r '#ALPINE_PKGS' . | less
+
+# CONFIRMED: update when alpine 3.18 is released
+  - libconfuse.sbuild
+  - libdvdread.sbuild
+  - libgif.sbuild
+  - popt.sbuild
+

@@ -1,0 +1,42 @@
+#!/bin/sh
+# https://sourceforge.net/projects/wdl/files/wcross/linux-headers/
+
+pkgname=linux
+pkgver=headers-5.15.112
+if [ "$BUILD_TYPE" = "system" ] ; then
+	. /etc/os-release
+	case ${PRETTY_NAME} in
+		"Slackware 14.0"|"Slackware 14.1"|"Porteus 4.0") pkgver=headers-5.4.243 ;;
+	esac
+fi
+pkgrel=0
+pkgdeps=
+pkgdesc="linux headers"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='include/linux'
+#ALPINE_PKGS='' #doesn't apply
+LINUX_ONLY=1
+
+set_linux_url ${pkgver}
+source=${LINUX_URL}
+
+
+prepare() {
+	if [ "$BUILD_TYPE" = "chroot" ] ; then
+		echo "Not installing linux headers in a chroot"
+		exit 0
+	fi
+	if [ "$BUILD_TYPE" = "cross" ] ; then
+		WLINUXARCH=${TARGET_TRIPLET}
+	else
+		WLINUXARCH=$(uname -m)
+	fi
+}
+
+build() {
+	echo -n
+}
+
+package() {
+	cmd_echo install_linux_headers ${WLINUXARCH} ${TOOLCHAIN_ROOT}
+}

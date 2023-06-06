@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/wgtkdesk
+
+pkgname=wgtkdesk
+#pkgver=    #haven't released anything yet
+_commit=5aee911
+_cdate=2023.03.09 #this is the date the commit was acknowledged... it may be old
+pkgrel=0
+pkgdeps=
+pkgdesc="A collection of small apps for the desktop"
+if [ -n "${_commit}" ] ; then
+	source="wgtkdesk-${_cdate}-${_commit}.tar.gz::https://github.com/wdlkmpx/wgtkdesk/tarball/${_commit}"
+	SRC_DIR=wdlkmpx-wgtkdesk-${_commit}
+	pkgver=${_cdate}
+else
+	source=wgtkdesk-${pkgver}.tar.gz::${need_url_here}
+fi
+PKGDIR_FILE='usr/bin/yad'
+DL_SUBDIR='gui'
+
+
+
+build()
+{
+	_configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-nls
+	_make
+}
+
+package() {
+	install_to_pkgdir
+}

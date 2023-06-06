@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://www.intra2net.com/en/developer/libftdi/download.php
+
+pkgname=libftdi1
+pkgver=1.5
+pkgrel=0
+pkgdeps='libusb'
+pkgdesc=
+source=https://www.intra2net.com/en/developer/libftdi/download/libftdi1-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libftdi1.a'
+#TOOLCHAIN_ONLY=1
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libftdi1-dev libftdi1-static'
+
+
+standard_cmake
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DEXAMPLES=OFF
+-DFTDI_EEPROM=OFF
+-DDOCUMENTATION=OFF
+-DPYTHON_BINDINGS=OFF
+-DLINK_PYTHON_LIBRARY=OFF
+"
+# -DFTDIPP=ON -DBUILD_TESTS=ON ... require boost

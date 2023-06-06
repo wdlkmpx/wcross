@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://archlinux.org/packages/extra/x86_64/gphoto2/
+#
+## https://aur.archlinux.org/packages/gtkam
+#pkgname=gtkam
+#pkgver=1.0
+#pkgrel=0
+#pkgdeps='libgphoto2'
+#pkgdesc='A GTK frontend for libgphoto2'
+#source=https://sourceforge.net/projects/gphoto/files/gtkam/${pkgver}/gtkam-${pkgver}.tar.bz2
+#PKGDIR_FILE='usr/bin/gtkam'
+
+pkgname=gphoto2
+pkgver=2.5.28
+pkgrel=0
+pkgdeps='libgphoto2 popt' #libreadline
+pkgdesc='A digital camera download and access program.'
+source=https://sourceforge.net/projects/gphoto/files/gphoto/${pkgver}/gphoto2-${pkgver}.tar.bz2
+PKGDIR_FILE='usr/bin/gphoto2'
+DL_SUBDIR=''
+
+
+standard_autotools

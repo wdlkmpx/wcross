@@ -1,0 +1,25 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/wdvdtools/tags
+
+pkgname=wdvdtools
+pkgver=1.0
+pkgrel=0
+pkgdeps='libdvdread'
+pkgdesc="utilities to deal with DVDs"
+PKGDIR_FILE='usr/bin/dvdbackup'
+SRC_URL=https://github.com/wdlkmpx/wdvdtools/archive/refs/tags/${pkgver}.tar.xz
+SRC_FILE=${pkgname}-${pkgver}.tar.xz
+DL_SUBDIR=''
+
+
+build()
+{
+	_configure --prefix=/usr
+	_make
+}
+
+# no tests
+
+package() {
+	install_to_pkgdir
+}

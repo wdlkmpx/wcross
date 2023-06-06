@@ -1,0 +1,66 @@
+diff -Naur unrar/isnt.cpp unrar-patched/isnt.cpp
+--- unrar/isnt.cpp	2023-01-25 00:25:31.000000000 +0800
++++ unrar-patched/isnt.cpp	2023-02-08 10:17:29.000000000 +0800
+@@ -25,9 +25,9 @@
+ 
+ // Replace it with documented Windows 11 check when available.
+ #include <comdef.h>
+-#include <Wbemidl.h>
+-#pragma comment(lib, "wbemuuid.lib")
++#include <wbemidl.h>
+ 
++/*
+ static bool WMI_IsWindows10()
+ {
+   IWbemLocator *pLoc = NULL;
+@@ -95,7 +95,7 @@
+ 
+   return Win10;
+ }
+-
++*/
+ 
+ // Replace it with actual check when available.
+ bool IsWindows11OrGreater()
+@@ -107,7 +107,7 @@
+     WinVer.dwOSVersionInfoSize=sizeof(WinVer);
+     GetVersionEx(&WinVer);
+     IsWin11=WinVer.dwMajorVersion>10 || 
+-          WinVer.dwMajorVersion==10 && WinVer.dwBuildNumber >= 22000 && !WMI_IsWindows10();
++          WinVer.dwMajorVersion==10 && WinVer.dwBuildNumber >= 22000; // && !WMI_IsWindows10();
+     IsSet=true;
+   }
+   return IsWin11;
+diff -Naur unrar/os.hpp unrar-patched/os.hpp
+--- unrar/os.hpp	2023-01-25 00:25:31.000000000 +0800
++++ unrar-patched/os.hpp	2023-02-08 10:17:29.000000000 +0800
+@@ -47,11 +47,17 @@
+ #define WINVER _WIN32_WINNT_VISTA
+ #define _WIN32_WINNT _WIN32_WINNT_VISTA
+ #else
++#undef WINVER
++#undef _WIN32_WINNT
++//#ifndef WINVER
+ #define WINVER _WIN32_WINNT_WINXP
++//#endif
++//#ifndef _WIN32_WINNT
+ #define _WIN32_WINNT _WIN32_WINNT_WINXP
++//#endif
+ #endif
+ 
+-#if !defined(ZIPSFX)
++#if !defined(ZIPSFX) && !defined(RAR_SMP)
+ #define RAR_SMP
+ #endif
+ 
+@@ -60,9 +66,7 @@
+ #include <windows.h>
+ #include <prsht.h>
+ #include <shlwapi.h>
+-#pragma comment(lib, "Shlwapi.lib")
+-#include <PowrProf.h>
+-#pragma comment(lib, "PowrProf.lib")
++#include <powrprof.h>
+ #include <shellapi.h>
+ #include <shlobj.h>
+ #include <winioctl.h>

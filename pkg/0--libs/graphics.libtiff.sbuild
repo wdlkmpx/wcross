@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://gitlab.com/libtiff/libtiff/-/tags
+# 
+
+pkgname=tiff
+pkgver=4.5.0
+pkgrel=0
+pkgdeps="zlib libjpeg libwebp" # xz zstd
+pkgdesc="Provides support for the Tag Image File Format or TIFF"
+source="https://download.osgeo.org/libtiff/tiff-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libtiff.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libtiff-dev libtiff-static'
+
+
+standard_autotools
+
+# lerc = liblerc
+# jbig = libjbig
+opts='
+--disable-contrib
+--disable-docs
+--disable-tools
+--disable-tests
+--disable-zstd
+--disable-lzma
+--disable-lerc
+--disable-jbig
+--disable-opengl
+--disable-mdi
+--enable-jpeg
+--enable-cxx
+'

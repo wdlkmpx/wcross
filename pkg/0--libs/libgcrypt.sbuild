@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://www.gnupg.org/ftp/gcrypt/libgcrypt
+
+pkgname=libgcrypt
+pkgver=1.10.1
+pkgrel=0
+pkgdeps='libgpg-error'
+pkgdesc=
+source=https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libgcrypt.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libgcrypt-dev libgcrypt-static' # may contain ASM stuff
+
+
+standard_autotools
+
+opts='
+--disable-doc
+--disable-asm
+--disable-padlock-support
+--disable-aesni-support
+--disable-pclmul-support
+--disable-sse41-support
+--disable-drng-support
+--disable-avx-support
+--disable-avx2-support
+--disable-arm-crypto-support
+--disable-ppc-crypto-support
+'
+
+# --enable-ciphers=arcfour,blowfish,cast5,des,aes,twofish,serpent,rfc2268,seed,camellia,idea,chacha20,salsa20

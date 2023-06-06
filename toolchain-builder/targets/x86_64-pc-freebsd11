@@ -1,0 +1,4 @@
+TARGET=x86_64-pc-freebsd11
+
+SYSROOT_URL=https://sourceforge.net/projects/wdl/files/wcross/sysroot/freebsd/sysroot-freebsd11-x86_64.tar.xz
+

@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://www.geany.org/download/releases/
+# https://github.com/geany/geany/tags
+
+pkgname=geany
+#pkgver=1.38   # current (gtk3 only)
+pkgver=1.37.1  # last gtk2... requires at least gcc 4.8 to compile
+pkgrel=0
+pkgdeps=
+pkgdesc="Fast and lightweight GTK IDE"
+source=https://download.geany.org/geany-${pkgver}.tar.gz
+PKGDIR_FILE='usr/bin/geany'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared (use defaults)
+IGNORE_LIBTOOL=1
+
+prepare() {
+	sed -i 's% po % %' Makefile.in
+}
+
+opts="
+--disable-vte
+--enable-gtk2
+--disable-html-docs
+--disable-pdf-docs
+--disable-api-docs
+--disable-gtkdoc-header
+"

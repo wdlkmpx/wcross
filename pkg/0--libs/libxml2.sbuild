@@ -1,0 +1,24 @@
+#!/bin/sh
+
+pkgname=libxml2
+pkgver=2.9.14
+#pkgver=2.10.3
+pkgrel=0
+pkgdeps='zlib xz'
+pkgdesc=
+source=https://download.gnome.org/sources/libxml2/2.9/libxml2-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libxml2.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libxml2-dev libxml2-static'
+
+
+standard_autotools
+
+prepare() {
+    sed -i 's%doc example fuzz xstc%%' Makefile.in
+    opts='--with-minimal
+--with-zlib
+--with-lzma
+--without-python'
+}

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+pkgname=dislocker
+pkgver=0.7.3
+pkgrel=0
+pkgdeps='libfuse mbedtls'
+SRC_URL=https://github.com/Aorimn/dislocker/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/dislocker'
+
+
+standard_cmake

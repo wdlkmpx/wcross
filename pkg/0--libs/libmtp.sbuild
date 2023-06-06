@@ -1,0 +1,41 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libmtp/APKBUILD
+#
+# NOTE: linking simple-mtpfs, it looks like libgcrypt is not needed?
+
+pkgname=libmtp
+pkgver=1.1.21
+pkgrel=0
+pkgdeps="libusb libgcrypt"
+pkgdesc="Software library for MTP media players"
+source="https://download.sourceforge.net/libmtp/libmtp-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libmtp.a'
+ALPINE_PKGS='libmtp-dev'
+
+
+standard_autotools
+
+opts="
+--disable-shared
+--enable-static
+--disable-doxygen
+--enable-mtpz
+--with-udev=/lib/udev
+"
+
+prepare() {
+	# needs libgcrypt for static linking
+	sed -i 's%Requires.private: %Requires.private: libgcrypt %' libmtp.pc
+}
+
+post_install() {
+	# TODO: fork libmtp and create mtp-tools
+	#       a single app and all the other apps are symlinks
+	#       (many static tiny apps make the package a little big)
+	rm -rfv ${pkgdir}/usr/bin
+	# needs libgcrypt for static linking
+	if [ -f ${TOOLCHAIN_INSTALL_LIBDIR}/libgcrypt.la ] ; then
+		sed -i "s%libusb-1\.0\.la%libusb-1.0.la ${TOOLCHAIN_INSTALL_LIBDIR}/libgcrypt.la%" ${pkgdir}/usr/${WLIBDIR}/libmtp.la
+	fi
+}

@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libuv/APKBUILD
+
+pkgname=libuv
+pkgver=1.45.0
+pkgrel=0
+pkgdeps=""
+pkgdesc="Cross-platform asychronous I/O"
+source="https://dist.libuv.org/dist/v$pkgver/libuv-v$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libuv.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libuv-dev libuv-static'
+
+
+USE_CMAKE=1
+
+if [ "$USE_CMAKE" ] ; then
+	standard_cmake
+	opts="
+-DLIBUV_BUILD_SHARED=OFF
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DLIBUV_BUILD_TESTS=$(want_tests && echo ON || echo OFF)
+"
+else
+	standard_autotools
+fi
+
+prepare() {
+	EXTRA_CFLAGS="-D__USE_MISC"
+}

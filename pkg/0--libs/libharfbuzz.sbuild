@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://github.com/harfbuzz/harfbuzz/releases
+# https://git.alpinelinux.org/aports/tree/main/harfbuzz/APKBUILD
+
+pkgname=harfbuzz
+pkgver=7.3.0
+pkgrel=0
+pkgdeps=""
+pkgdesc="Text shaping engine "
+source="https://github.com/harfbuzz/harfbuzz/releases/download/${pkgver}/harfbuzz-${pkgver}.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libharfbuzz.a'
+TOOLCHAIN_ONLY=1
+# problem in chroot: glib, cairo, icu    [may need to recompile]
+#WARNING: probably not suitable
+ALPINE_PKGS='harfbuzz-dev harfbuzz-static'
+
+
+standard_autotools
+
+# cairo and chafa are for cli uitilities
+opts='
+--disable-gtk-doc
+--disable-introspection
+--with-glib=no
+--with-cairo=no
+--with-gobject=no
+--with-chafa=no
+--with-icu=no
+--with-freetype=no
+--with-uniscribe=no
+--with-gdi=no
+--with-directwrite=no
+--with-coretext=no
+'

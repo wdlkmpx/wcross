@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://github.com/AltraMayor/f3/tags
+
+pkgname=f3
+pkgver=8.0
+pkgrel=0
+if [ "$GLIBC_TOOLCHAIN" ] || [ "$UCLIBC_TOOLCHAIN" ] ; then
+	# ok, no deps
+	pkgdeps=
+else
+	pkgdeps='argp'
+	EXTRA_LDFLAGS='-largp'
+fi
+pkgdesc=" F3 - Fight Flash Fraud "
+source=f3-${pkgver}.tar.gz::https://github.com/AltraMayor/f3/archive/refs/tags/v${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/f3read'
+
+
+build()
+{
+	sed -i 's%/usr/local%/usr%' Makefile
+	_make
+	if [ "$BUILD_TYPE" != "cross" ] ; then
+		_make extra
+	fi
+}
+
+#no test
+
+post_install() {
+	if [ "$BUILD_TYPE" != "cross" ] ; then
+		_make DESTDIR=${pkgdir} install-extra
+	fi
+}
+

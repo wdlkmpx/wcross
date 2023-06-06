@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/ddrescue/APKBUILD
+
+pkgname=ddrescue
+pkgver=1.27
+pkgrel=0
+pkgdeps=
+pkgdesc="Data recovery tool for block devices with errors"
+source="https://ftp.gnu.org/gnu/ddrescue/ddrescue-$pkgver.tar.lz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/ddrescue'
+PROJECT_TYPE='C++'
+
+
+build()
+{
+	# configure doesn't recognize *FLAGS env variables or --host
+	# but everything can specified as configure params
+	_configure \
+		--prefix=/usr \
+		${CROSS_MK_PARAMS} \
+		CFLAGS="$WMK_CFLAGS" \
+		CXXFLAGS="$WMK_CXXFLAGS" \
+		LDFLAGS="$WMK_LDFLAGS"
+}
+
+#no tests
+
+package() {
+	install_to_pkgdir
+}

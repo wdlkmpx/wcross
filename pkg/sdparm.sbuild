@@ -1,0 +1,14 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/testing/sdparm/APKBUILD
+
+pkgname=sdparm
+pkgver=1.12
+pkgrel=0
+pkgdeps=
+pkgdesc="SCSI device parameter modification tool"
+source="http://sg.danny.cz/sg/p/sdparm-$pkgver.tgz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/sdparm'
+
+
+standard_autotools

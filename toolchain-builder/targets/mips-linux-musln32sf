@@ -1,0 +1,3 @@
+TARGET=mips-linux-musln32sf
+
+GCC_CONFIG_FOR_TARGET+=' --with-float=soft'

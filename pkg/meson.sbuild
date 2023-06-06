@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://github.com/mesonbuild/meson/releases
+#
+# this is noarch, requires python3
+
+pkgname=meson
+pkgver=1.0.2  #keep this version to test against muon
+pkgrel=0
+pkgdeps=
+pkgdesc="GNU tool for automatically configuring source code"
+source="https://github.com/mesonbuild/meson/releases/download/$pkgver/meson-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='opt/python3/meson.py'
+DEV_IN_pkgdir=1
+
+
+build() {
+	echo -n
+}
+
+package() {
+	mkdir -p ${pkgdir}/opt/python3/meson-${pkgver}
+	mkdir -p ${pkgdir}/usr/bin
+	cp -af meson.py ${pkgdir}/opt/python3/meson-${pkgver}
+	cp -af mesonbuild ${pkgdir}/opt/python3/meson-${pkgver}
+	ln -snfv meson-${pkgver}/meson.py ${pkgdir}/opt/python3/meson.py
+	ln -snfv ${pkgdir}/opt/python3/meson.py ${pkgdir}/usr/bin/meson
+}

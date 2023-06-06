@@ -1,0 +1,17 @@
+0sources
+0wsys*
+cross-compiler*
+out_static
+out_w
+.fatal
+*.gz
+*.xz
+*.bz2
+*.zip
+build
+make.sh
+musl-cross-make*
+z_compile_cc.log
+make.sh
+make_*.sh
+build_tmp

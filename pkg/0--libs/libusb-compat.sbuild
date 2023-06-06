@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libusb-compat
+# https://github.com/libusb/libusb-compat-0.1
+
+pkgname=libusb-compat
+pkgver=0.1.8
+pkgrel=0
+pkgdeps='libusb'
+pkgdesc="Compatility for older libusb"
+source="https://github.com/libusb/libusb-compat-0.1/releases/download/v$pkgver/libusb-compat-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libusb.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libusb-compat-dev'
+
+
+standard_autotools

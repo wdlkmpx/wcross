@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/isl25/APKBUILD
+# https://github.com/archlinux/svntogit-packages/blob/packages/libisl/trunk/PKGBUILD
+
+pkgname=isl
+
+max_iso_cxx=$(cc_get_max_iso_cxx_properly_supported ${CXX})
+if [ ${max_iso_cxx} -ge 17 ] ; then
+	# 0.25 uses C++17
+	pkgver=0.26
+else
+	pkgver=0.24
+fi
+
+pkgrel=0
+pkgdeps='gmp'
+pkgdesc='An Ingeter Set Library for the Polyhedral Model'
+source="https://libisl.sourceforge.io/isl-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libisl.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='isl-dev' # static libs in -dev
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%) doc%)%' Makefile.in
+}

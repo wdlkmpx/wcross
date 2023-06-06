@@ -1,0 +1,41 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/pcre/APKBUILD
+
+pkgname=pcre
+pkgver=8.45
+pkgrel=0
+pkgdeps=''
+pkgdesc="Perl-compatible regular expression library"
+source="https://downloads.sourceforge.net/project/pcre/pcre/$pkgver/pcre-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libpcrecpp.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='pcre-dev'
+
+
+standard_autotools
+
+opts='
+--enable-utf8
+--enable-unicode-properties
+--enable-pcre8
+--enable-pcre16
+--enable-pcre32
+--enable-jit
+--disable-pcregrep-libz
+--disable-pcregrep-libbz2
+--disable-pcretest-libedit
+--disable-pcretest-libreadline
+'
+
+check() {
+	_make check
+}
+
+post_install() {
+	if [ "$BUILD_TYPE" != "chroot" ] ; then
+		# only remove /bin stuff if not in a chroot
+		rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/pcregrep
+		rm -fv ${TOOLCHAIN_INSTALL_PREFIX}/bin/pcretest
+	fi
+}

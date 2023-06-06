@@ -1,0 +1,30 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libdvdcss/APKBUILD
+# http://download.videolan.org/pub/videolan/libdvdcss
+
+pkgname=libdvdcss
+pkgver=1.4.3
+pkgrel=0
+pkgdeps=
+pkgdesc="Library for accessing DVDs like a block device without having to bother about the decryption"
+source="https://download.videolan.org/pub/videolan/libdvdcss/$pkgver/libdvdcss-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libdvdcss.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libdvdcss-dev'
+
+
+standard_autotools
+
+opts='--disable-doc'
+
+if [ "$BUILD_TYPE" = "system" ] && [ "$BUILD_PACKAGE" = "libdvdcss" ] ; then
+	# building explicitly for system (not a dep).. want the latest shared the lib
+	PKGDIR_FILE='usr/lib/libdvdcss.so.2'
+	#IGNORE_LIBTOOL=1
+	DEV_IN_PKGDIR=1
+	opts="$opts --enable-shared --disable-static"
+	post_install() {
+		cmd_echo remove_dev_from_dir ${pkgdir}
+	}
+fi

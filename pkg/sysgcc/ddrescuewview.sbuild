@@ -1,0 +1,44 @@
+#!/bin/sh
+# https://sourceforge.net/projects/ddrescueview/files
+#
+# don't have lazarus IDE... not compilig this
+# will download i686/x86_64 binaries
+
+pkgname=ddrescueview
+pkgver=0.4.5
+pkgrel=0
+pkgdeps=''
+pkgdesc="Graphical viewer for GNU ddrescue log files"
+PKGDIR_FILE='usr/bin/ddrescueview'
+DL_SUBDIR='gui'
+
+XAPP_ARCH=${OS_ARCH}
+case ${PKG_SCRIPT_BASE} in
+	*32) XAPP_ARCH=i686 ;;
+	*64) XAPP_ARCH=x86_64 ;;
+esac
+
+
+case ${XAPP_ARCH} in
+	i686)
+		source=https://sourceforge.net/projects/ddrescueview/files/Test%20builds/v${pkgver}/Linux-i386/ddrescueview-linux-i386-${pkgver}.tar.xz
+		PKGDIR_ARCH='i686-official'
+		;;
+	x86_64)
+		source=https://sourceforge.net/projects/ddrescueview/files/Test%20builds/v${pkgver}/Linux-x86_64/ddrescueview-linux-x86_64-${pkgver}.tar.xz
+		PKGDIR_ARCH='x86_64-official'
+		;;
+	*)
+		echo "$OS_ARCH is not supported.. only i686/x86_64 binaries are downloaded packaged"
+		exit 1
+		;;
+esac
+
+
+build() {
+	echo -n
+}
+
+package() {
+	install_exe ddrescueview ${pkgdir}/usr/bin
+}

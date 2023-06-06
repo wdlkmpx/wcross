@@ -1,0 +1,28 @@
+#!/bin/sh
+# https://github.com/json-c/json-c/tags
+# https://git.alpinelinux.org/aports/tree/main/json-c/APKBUILD
+
+pkgname=json-c
+pkgver=0.16
+pkgrel=0
+pkgdeps=''
+pkgdesc="A JSON implementation in C"
+source="https://s3.amazonaws.com/json-c_releases/releases/json-c-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libjson-c.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='json-c-dev'
+
+
+standard_cmake
+
+prepare() {
+	sed -i '/find_package/d' doc/CMakeLists.txt
+}
+
+opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DDISABLE_WERROR=ON
+-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+"

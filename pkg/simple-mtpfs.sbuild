@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/simple-mtpfs/APKBUILD
+# C++
+
+pkgname=simple-mtpfs
+pkgver=0.4.0
+pkgrel=0
+pkgdeps='libfuse libmtp' #libmtp pulls libusb
+pkgdesc="fuse filesystem driver and CLI utility for MTP based devices"
+source="$pkgname-$pkgver.tar.gz::https://github.com/phatina/simple-mtpfs/archive/v$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/simple-mtpfs'
+
+
+standard_autotools
+
+#opts='--help'
+
+prepare() {
+	# test fails
+	export ac_cv_lib_mtp_LIBMTP_Init=yes
+}

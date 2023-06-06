@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://github.com/fdupoux/fsarchiver/releases
+
+pkgname=fsarchiver
+pkgver=0.8.7
+pkgrel=0
+pkgdesc=""
+source=https://github.com/fdupoux/fsarchiver/releases/download/${pkgver}/fsarchiver-${pkgver}.tar.gz
+pkgdeps='util-linux lz4 xz zstd liblzo libbz2 e2fsprogs libgcrypt'
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/fsarchiver'
+
+
+standard_autotools
+
+export ac_cv_lib_gcrypt_gcry_cipher_encrypt=yes
+opts='--enable-static'

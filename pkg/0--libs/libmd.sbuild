@@ -1,0 +1,17 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libmd/APKBUILD
+# https://libbsd.freedesktop.org/releases
+
+pkgname=libmd
+pkgver=1.0.4
+pkgrel=0
+pkgdeps=
+pkgdesc="Message Digest functions from BSD systems"
+source="https://archive.hadrons.org/software/libmd/libmd-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libmd.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libmd-dev'
+
+
+standard_autotools

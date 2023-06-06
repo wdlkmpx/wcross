@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libtool/APKBUILD
+
+pkgname=libtool
+pkgver=2.4.7
+pkgrel=0
+pkgdesc="A generic library support script"
+source="https://ftp.gnu.org/gnu/libtool/libtool-$pkgver.tar.gz"
+TOOLCHAIN_FILE='usr/lib/libltdl.a'
+
+
+standard_autotools
+
+opts="
+--enable-cross-guesses=conservative
+--enable-ltdl-install
+--enable-static
+--disable-shared
+"
+
+prepare() {
+	sed -i '/ = doc/d' Makefile.in
+	# command not found: help2man
+	sed -i 's/$(HELP2MAN)/echo a/'  Makefile.in
+	W_ACLOCAL_DIR=' ' # don't move aclocal to toolchain
+}

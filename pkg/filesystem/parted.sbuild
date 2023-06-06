@@ -1,0 +1,38 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/parted
+
+pkgname=parted
+pkgver=3.6
+pkgrel=0
+# requires libblkid libuuid
+pkgdeps='util-linux' #readline
+pkgdesc="Utility to create, destroy, resize, check and copy partitions"
+source="https://ftp.gnu.org/gnu/parted/parted-$pkgver.tar.xz"
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "parted" ] ; then
+	PKGDIR_FILE='usr/sbin/parted'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libparted.a'
+fi
+#ALPINE_PKGS='parted-dev' # (no static lib, the source needs patching to avoid multiple definitions anyway)
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%doc debug%%' Makefile.in
+	# libparted.pc must explicitly add liblkid and libuuid
+	if ! grep -q lblkid libparted.pc.in ; then
+		sed -i 's%-lparted%-lparted -lblkid -luuid%' libparted.pc.in
+	fi
+
+}
+
+opts='
+--disable-device-mapper
+--enable-cross-guesses=conservative
+--without-readline
+--disable-nls
+'

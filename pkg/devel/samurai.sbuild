@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://github.com/michaelforney/samurai/releases
+# https://git.alpinelinux.org/aports/tree/main/samurai
+
+pkgname=samurai
+#pkgver=1.2    #this version is too old
+_commit=2d05a9a
+_cdate=20230219 #this is the date the commit was acknowledged... it may be old
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+if [ -n "${_commit}" ] ; then
+	source="samurai-${_cdate}-${_commit}.tar.gz::https://github.com/michaelforney/samurai/tarball/${_commit}"
+	SRC_DIR=michaelforney-samurai-${_commit}
+	pkgver=${_cdate}
+else
+	source=https://github.com/michaelforney/samurai/releases/download/${pkgver}/samurai-${pkgver}.tar.gz
+fi
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/samu'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+build()
+{
+	_make
+}
+
+# no test suite
+
+package() {
+	install_exe samu ${pkgdir}/usr/bin
+	install_system_app_if_missing samu
+}
+

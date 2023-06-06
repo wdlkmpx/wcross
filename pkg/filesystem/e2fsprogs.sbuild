@@ -1,0 +1,80 @@
+#!/bin/sh
+# https://sourceforge.net/projects/e2fsprogs/files/e2fsprogs
+
+pkgver=1.47.0
+pkgrel=0
+pkgname=e2fsprogs
+pkgdesc=""
+pkgdeps='util-linux'
+source=https://sourceforge.net/projects/e2fsprogs/files/e2fsprogs/v${pkgver}/e2fsprogs-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "e2fsprogs" ] ; then
+	PKGDIR_FILE='sbin/e2fsck'
+else
+	# .a file may exist in a chroot and need it quickly to build another app
+	TOOLCHAIN_FILE='usr/lib/libext2fs.a'
+fi
+ALPINE_PKGS='e2fsprogs-dev e2fsprogs-static'
+
+# ====================================================
+
+prepare()
+{
+	sed -i 's/64bit,//g' ./misc/mke2fs.conf.in
+	# change all .so to .a
+	# remove -pthread (-musl-ld error)
+	sed -i -e 's|.so$|.a|' -e 's|.so |.a |' -e 's%-pthread%%' $(find . -type f -name Makefile.in)
+	# profiling: -pg
+	#  https://github.com/esnet/iperf/issues/235
+	#	../lib/gcc/i686-linux-musl/10.2.1/../../../../i686-linux-musl/bin/ld: cannot find gcrt1.o: No such file or directory
+	sed -i -e 's|-pg||' $(find . -type f -name Makefile.in)
+	# don't want some stuff
+	sed -i -e 's% po %%' -e '/$(MAKE) docs/d' -e '/ cd doc /d' Makefile.in
+    # tests/progs tests/fuzz
+}
+
+build()
+{
+	export ac_cv_lib_uuid_uuid_generate=yes
+	export ac_cv_lib_blkid_blkid_get_cache=yes
+	_configure \
+		--prefix=/usr \
+		--sbindir=/sbin \
+		--bindir=/bin \
+		--localstatedir=/var \
+		--sysconfdir=/etc \
+		--with-root-prefix="" \
+		--enable-symlink-install \
+		--enable-relative-symlinks \
+		--enable-symlink-build \
+		--disable-elf-shlibs \
+		--disable-bsd-shlibs \
+		--disable-libblkid \
+		--disable-libuuid \
+		--disable-uuidd \
+		--disable-fsck \
+		--disable-nls \
+		--disable-testio-debug \
+		--disable-bmap-stats \
+		--disable-e2initrd-helper \
+		--disable-fuse2fs \
+		--disable-rpath
+	# problem with util/subst.c .. it's called by the build system
+	# need to compile a working exe
+	#   Error relocating ./util/subst: __gettimeofday_time64: symbol not found
+	gcc -o util/subst util/subst.c
+	# --
+	_make all-static
+	check_static_exe e2fsck/e2fsck.static
+}
+
+## TODO
+#check() {
+#	_make all-static check
+#}
+
+package()
+{
+	_make all-static DESTDIR=${pkgdir}  install
+}

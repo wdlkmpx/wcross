@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/lcms2/APKBUILD
+# https://www.littlecms.com
+
+pkgname=lcms2
+pkgver=2.15
+pkgrel=0
+pkgdeps=""  #libjpeg libtiff zlib
+pkgdesc="Color Management Engine"
+source="https://github.com/mm2/Little-CMS/releases/download/lcms$pkgver/lcms2-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/liblcms2.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='lcms2-dev' #(no static lib)
+
+
+USE_MESON=1
+
+# - liblcms2 only depends on libc: https://packages.debian.org/sid/liblcms2-2
+# - jpeg and tiff are only used by the apps.. disable (might them for tests?)
+
+if [ "$USE_MESON" ] ; then
+	standard_meson
+	# TODO: problems with TIFF dep [libs / pkg-config]
+	# tests pass with meson
+	# tests fail with muon
+	opts="-Ddefault_library=static
+-Djpeg=disabled
+-Dtiff=disabled"
+else
+	standard_autotools
+
+	opts='--without-jpeg --without-tiff --without-zlib'
+fi

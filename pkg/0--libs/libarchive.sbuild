@@ -1,0 +1,39 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/libarchive/APKBUILD
+# https://github.com/archlinux/svntogit-packages/blob/packages/libarchive/trunk/PKGBUILD
+
+pkgname=libarchive
+pkgver=3.6.2
+pkgrel=0
+pkgdeps="libacl zlib libbz2 libexpat xz" # lz4 zstd liblzo openssl libb2
+pkgdesc="library that can create and read several streaming archive formats"
+source="https://libarchive.org/downloads/libarchive-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE="usr/lib/libarchive.a"
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libarchive-dev libarchive-static'
+
+
+standard_autotools
+
+#prepare() {
+#}
+
+# --without-xml2 = use libexpat
+opts="
+--disable-bsdtar
+--disable-bsdcat
+--disable-bsdcpio
+--without-xml2
+--without-libb2
+--without-lz4
+--without-zstd
+--without-lzo2
+--without-mbedtls
+--without-nettle
+--without-openssl
+"
+
+post_install() {
+	sed -i "s/iconv//" "$pkgdir"/usr/lib/pkgconfig/libarchive.pc
+}

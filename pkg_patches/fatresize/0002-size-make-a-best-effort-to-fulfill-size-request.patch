@@ -1,0 +1,39 @@
+From fee184f6c8a94628939fdca9b172cb711dbc2b41 Mon Sep 17 00:00:00 2001
+From: Joe MacDonald <joe_macdonald@mentor.com>
+Date: Thu, 24 Sep 2020 22:11:47 -0400
+Subject: [PATCH 2/2] size: make a best effort to fulfill size request
+
+Under certain circumstances we cannot accommodate the size request:  the
+specified size is either greater than or exactly equal to the available
+length.  This is very likely to happen if the user is specifying less
+precise size values such as MiB, where the number argument is multiplied
+by a factor or three.  Limit this to the actual partition length.
+
+It also happens that if you specify the precise number of bytes free, you
+also, you'll hit an assertion in ped_geometry_test_sector_inside() so
+we'll bump the request down by one sector and run with that.
+
+Signed-off-by: Joe MacDonald <joe_macdonald@mentor.com>
+---
+ fatresize.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/fatresize.c b/fatresize.c
+index d85d03a..af66fd6 100644
+--- a/fatresize.c
++++ b/fatresize.c
+@@ -621,6 +621,11 @@ int main(int argc, char **argv) {
+     opts.size = constraint->max_size * dev->sector_size;
+     ped_constraint_destroy(constraint);
+   }
++  if (opts.size >= dev->sector_size * part_geom.length) {
++     printf("Specified size (%llu) equals or exceeds partition size (%llu)\n",
++            opts.size, dev->sector_size * part_geom.length);
++     opts.size = (dev->sector_size * (part_geom.length - 1));
++  }
+ 
+   start = part_geom.start;
+   printd(3, "ped_geometry_new(%llu)\n", start);
+-- 
+2.17.0
+

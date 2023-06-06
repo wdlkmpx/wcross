@@ -1,0 +1,38 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/jimtcl
+
+pkgname=jimtcl
+pkgver=0.81
+pkgrel=0
+pkgdeps=''
+pkgdesc="An open-source, small footprint implementation of Tcl"
+source="https://github.com/msteveb/jimtcl/archive/$pkgver/jimtcl-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/jimsh'
+#TOOLCHAIN_FILE='usr/lib/libjim.a'
+
+# this is not autotools, fake configure.ac
+# uses autosetup: http://msteveb.github.io/autosetup/user/
+
+build() {
+	export_make_wflags
+	cmd_echo ./configure \
+		--prefix=/usr \
+		--utf8 \
+		--math \
+		--ipv6 \
+		--compat \
+		--disable-docs \
+		--host=${XCOMPILER} \
+		--build=$(gcc -dumpmachine)
+	# --extinfo is like --help
+	cmd_echo make
+}
+
+check() {
+	cmd_echo make check
+}
+
+package() {
+	cmd_echo install_to_pkgdir
+}

@@ -1,0 +1,4 @@
+Possible new apps:
+
+- sudo 1.8.21p2 (--disable-pam-session --without-pam --libexecdir=/usr/${WLIBDIR})
+- apulse        (sysgcc)

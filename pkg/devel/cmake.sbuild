@@ -1,0 +1,71 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/cmake/
+# https://github.com/archlinux/svntogit-packages/blob/packages/cmake/trunk/PKGBUILD
+#
+## Minimun required CMake to build:
+# 3.26.1: VERSION 3.13...3.25
+# 3.23.5: VERSION 3.1... 3.21
+
+pkgname=cmake
+pkgver=3.26.4
+pkgrel=0
+if [ "$STATIC_LINK" = "yes" ] ; then
+	# - compile static deps
+	# - this requires patching CMakeLists.txt to get the proper behavior
+	#   otherwise there will be lots of unresolved symbols
+	# - libarchive requires: zlib libbz2 xz
+	pkgdeps="libarchive libexpat libjsoncpp libuv librhash curl" # ncurses
+else
+	# compile everything (cmake includes all deps inside the source tree)
+	# this should be fairly generic
+	pkgdeps=""
+fi
+pkgdesc="Cross-platform, open-source make system"
+case $pkgver in
+	*.*.*.*) _v=v${pkgver%.*.*};;
+	*.*.*)   _v=v${pkgver%.*}  ;;
+esac
+source="https://www.cmake.org/files/$_v/cmake-$pkgver.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/cmake'
+CHROOT_ALREADY_INSTALLED=1 #ALPINE
+
+
+standard_cmake
+
+# -DBUILD_CursesDialog=OFF = don't build ccmake (ncurses ui)
+if [ "$STATIC_LINK" = "yes" ] ; then
+	opts="
+-DBUILD_CursesDialog=OFF
+-DBUILD_QtDialog=OFF
+-DCMAKE_USE_SYSTEM_ZLIB=ON
+-DCMAKE_USE_SYSTEM_LIBARCHIVE=ON
+-DCMAKE_USE_SYSTEM_CURL=ON
+-DCMAKE_USE_SYSTEM_EXPAT=ON
+-DCMAKE_USE_SYSTEM_FORM=ON
+-DCMAKE_USE_SYSTEM_JSONCPP=ON
+-DCMAKE_USE_SYSTEM_LIBRHASH=ON
+-DCMAKE_USE_SYSTEM_LIBUV=ON
+-DCMAKE_USE_SYSTEM_KWIML=OFF
+"
+	# these take effect if -DCMAKE_USE_SYSTEM_LIBARCHIVE=OFF
+	#-DCMAKE_USE_SYSTEM_BZIP2=ON
+	#-DCMAKE_USE_SYSTEM_LIBLZMA=ON
+	#-DCMAKE_USE_SYSTEM_ZSTD=ON
+	#--
+	# this takes effect if -DCMAKE_USE_SYSTEM_CURL=OFF
+	#-DCMAKE_USE_SYSTEM_NGHTTP2=ON
+else
+	opts="
+-DBUILD_CursesDialog=OFF
+-DBUILD_QtDialog=OFF
+-DCMAKE_USE_SYSTEM_LIBRARIES=OFF
+"
+fi
+
+post_install() {
+	rm -rf \
+		${pkgdir}/usr/share/bash-completion \
+		${pkgdir}/usr/share/emacs \
+		${pkgdir}/usr/share/vim
+}

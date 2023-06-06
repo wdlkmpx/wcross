@@ -1,0 +1,22 @@
+#!/bin/sh
+# https://github.com/libfuse/libfuse/releases
+# https://git.alpinelinux.org/aports/tree/main/fuse
+
+pkgname=fuse
+pkgver=2.9.9 #2019-jan-04 
+pkgrel=0
+pkgdeps=''
+pkgdesc="A library that makes it possible to implement a filesystem in a userspace program"
+source=https://github.com/libfuse/libfuse/releases/download/fuse-${pkgver}/fuse-${pkgver}.tar.gz
+DL_SUBDIR=''
+ALPINE_PKGS='fuse-dev fuse-static'
+TOOLCHAIN_FILE='usr/lib/libfuse.a'
+TOOLCHAIN_ONLY=1
+
+
+standard_autotools
+
+opts='
+--disable-example
+--disable-util
+'

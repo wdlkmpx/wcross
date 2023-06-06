@@ -1,0 +1,135 @@
+diff --git a/src/cpio.c b/src/cpio.c
+index f719d4b7..88342b59 100644
+--- a/src/cpio.c
++++ b/src/cpio.c
+@@ -26,6 +26,9 @@
+ #include "support.h"
+ #include "window.h"
+ 
++static char *busybox_cpio = NULL;
++
++
+ static void relative_path (char *filename, gpointer user_data)
+ {
+ 	if (*filename == '/')
+@@ -42,6 +45,7 @@ void xa_cpio_ask (XArchive *archive)
+ 	archive->can_overwrite = TRUE;
+ }
+ 
++
+ void xa_cpio_parse_output (gchar *line, XArchive *archive)
+ {
+ 	XEntry *entry;
+@@ -58,41 +62,63 @@ void xa_cpio_parse_output (gchar *line, XArchive *archive)
+ 	dir = (*(char *) item[4] == 'd');
+ 	link = (*(char *) item[4] == 'l');
+ 
+-	/* number of links */
+-	SKIP_ITEM;
+-
+-	/* owner */
++	/* GNU cpio: number of links    */
++	//SKIP_ITEM;
++	/* BUSYBOX cpio: owner/group    */
+ 	NEXT_ITEM(item[5]);
+ 
+-	/* group */
+-	NEXT_ITEM(item[6]);
++	busybox_cpio = strchr((char*)item[5],'/');
+ 
+-	/* size */
+-	if (dev)
+-	{
+-		SKIP_ITEM;
+-		SKIP_ITEM;
+-		item[1] = "0";
++	if (busybox_cpio) {
++		/// BUSYBOX cpio
++		///drwxr-xr-x 0/0         0 2022-05-09 08:31:34 memory/changes
++		/* owner/group */
++		*busybox_cpio = '\0';
++		item[6] = (busybox_cpio+1);
++		/* size */
++		NEXT_ITEM(item[1]);
++		/* date */
++		NEXT_ITEM(item[2]);
++		/* time */
++		NEXT_ITEM(item[3]);
+ 	}
+ 	else
+-		NEXT_ITEM(item[1]);
++	{
++		/// GNU cpio
++		///drwxr-xr-x   2 root     root            0 May  9  2022 memory/changes
++		/* owner */
++		NEXT_ITEM(item[5]);
++
++		/* group */
++		NEXT_ITEM(item[6]);
+ 
+-	LINE_PEEK(9);
++		/* size */
++		if (dev)
++		{
++			SKIP_ITEM;
++			SKIP_ITEM;
++			item[1] = "0";
++		}
++		else
++			NEXT_ITEM(item[1]);
+ 
+-	/* date and time */
+-	NEXT_ITEMS(3, item[2]);
++		LINE_PEEK(9);
+ 
+-	/* time */
+-	if (((char *) item[2])[peek] == ':')
+-	{
+-		memcpy(time, item[2] + 7, 5);
+-		time[5] = 0;
+-	}
+-	else
+-		strcpy(time, "-----");
++		/* date and time */
++		NEXT_ITEMS(3, item[2]);
+ 
+-	item[2] = date_MMM_dD_HourYear(item[2]);
+-	item[3] = time;
++		/* time */
++		if (((char *) item[2])[peek] == ':')
++		{
++			memcpy(time, item[2] + 7, 5);
++			time[5] = 0;
++		}
++		else
++			strcpy(time, "-----");
++
++		item[2] = date_MMM_dD_HourYear(item[2]);
++		item[3] = time;
++	}
+ 
+ 	/* name */
+ 	LAST_ITEM(filename);
+@@ -134,7 +160,7 @@ void xa_cpio_list (XArchive *archive)
+ 	archive->files = 0;
+ 	archive->files_size = 0;
+ 
+-	command = g_strconcat(archiver[archive->type].program[0], " -tv -I ", archive->path[1], NULL);
++	command = g_strconcat(archiver[archive->type].program[0], " -tv -F ", archive->path[1], NULL);
+ 	archive->parse_output = xa_cpio_parse_output;
+ 	xa_spawn_async_process(archive, command);
+ 	g_free(command);
+@@ -177,8 +203,11 @@ gboolean xa_cpio_extract (XArchive *archive, GSList *file_list)
+ 	command = g_strconcat(archiver[archive->type].program[0], " -id",
+ 	                      archive->do_touch ? "" : " -m",
+ 	                      archive->do_overwrite ? " -u" : "",
+-	                      " --no-absolute-filenames -I ", archive->path[1],
+-	                      " --", files->str, NULL);
++	                      busybox_cpio == NULL ? " --no-absolute-filenames" : "",
++	                      " -F ", archive->path[1],
++	                      busybox_cpio == NULL ? " --" : "",
++	                      files->str,
++	                      NULL);
+ 	result = xa_run_command(archive, command);
+ 	g_free(command);
+ 

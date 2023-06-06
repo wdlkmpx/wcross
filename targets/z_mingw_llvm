@@ -1,0 +1,74 @@
+#!/bin/sh
+
+if [ "$1" = "symlinks" ] ; then
+    zcript=$(basename "$0")
+    for l in win32ucrt win64ucrt winarm winarm64
+    do
+        ln -snfv ${zcript} ${l}
+    done
+    exit 0
+fi
+
+#==================================================================
+#   MINGW LLVM - https://github.com/mstorsjo/llvm-mingw/releases
+#   (toolchain requires glibc+linux x86_64)
+#==================================================================
+
+AFTER_EXTRACT_FUNC='after_extract_llvm_mingw'
+
+#llvm_mingw_version='20220323' ; llvm_version='llvm_14.0.0'
+#llvm_mingw_version='20220906'  ; llvm_version='llvm_15.0.0'
+llvm_mingw_version='20230320'  ; llvm_version='llvm_16.0.0'
+BASE_URL=https://github.com/mstorsjo/llvm-mingw/releases/download/${llvm_mingw_version}
+case ${WTARGET} in
+    *msvcrt*) TARBALL_URL=${BASE_URL}/llvm-mingw-${llvm_mingw_version}-msvcrt-ubuntu-18.04-x86_64.tar.xz ;;
+    *)        TARBALL_URL=${BASE_URL}/llvm-mingw-${llvm_mingw_version}-ucrt-ubuntu-18.04-x86_64.tar.xz   ;;
+esac
+TARBALL_ARCH='x86_64'
+
+TARBALL_SPECS="
+llvm   : ${llvm_version}
+mingw  : ??
+tarball: ${llvm_mingw_version}
+"
+
+case ${WTARGET} in
+    *win32*) TARGET_TRIPLET='i686-w64-mingw32'       ;;
+    *win64*) TARGET_TRIPLET='x86_64-w64-mingw32'     ;;
+    *winarm*) TARGET_TRIPLET='armv7-w64-mingw32'     ;;
+    *winarm64*) TARGET_TRIPLET='aarch64-w64-mingw32' ;;
+    *) exit_error "targets/z_mingw_llvm: need a proper symlink" ;;
+esac
+
+# XXX_TOOLCHAIN is set in build.sh
+# always enforce static link so that exe files don't depend on mingw libs
+STATIC_LINK=yes
+
+#echo ${TARGET_TRIPLET} ; exit ; #debug
+
+#=========================================================================
+
+after_extract_llvm_mingw()
+{
+    if [ ! -d ${XPATH}/generic-w64-mingw32 ] ; then
+        return 0
+    fi
+    # - the cross compiler is basically ready to use as is.. works as expected
+    # - generic-w64-mingw32 only contains 'include'
+    #   and all the targets contain symlinks to that include dir
+    # - fix sysroot: a proper include dir must be present in each target
+    for mtarget in aarch64-w64-mingw32 armv7-w64-mingw32 \
+                      i686-w64-mingw32 x86_64-w64-mingw32
+    do
+        rm -fv ${XPATH}/${mtarget}/include # symlink
+        sync
+        cp -a ${XPATH}/generic-w64-mingw32/include ${XPATH}/${mtarget}/
+        ln -sv ./ ${XPATH}/${mtarget}/usr
+        mkdir -p ${XPATH}/${mtarget}/lib/pkgconfig
+    done
+    sync
+    #--
+    rm -rf ${XPATH}/generic-w64-mingw32
+    return 0
+}
+

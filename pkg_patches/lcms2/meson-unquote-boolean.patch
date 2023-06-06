@@ -1,0 +1,12 @@
+--- a/meson_options.txt	2023-06-04 13:04:05.000000000 -0500
++++ b/meson_options.txt	2023-06-04 13:14:37.997574398 -0500
+@@ -1,6 +1,6 @@
+ option('jpeg', type: 'feature', value: 'auto', description: 'Use JPEG')
+ option('tiff', type: 'feature', value: 'auto', description: 'Use LibTiff')
+ 
+-option('samples', type: 'boolean', value: 'false', description: 'Build the samples')
+-option('fastfloat', type: 'boolean', value: 'false', description: 'Build and install the fast float plugin, use only if GPL 3.0 is acceptable')
+-option('threaded', type: 'boolean', value: 'false', description: 'Build and install the multi threaded plugin, use only if GPL 3.0 is acceptable')
++option('samples', type: 'boolean', value: false, description: 'Build the samples')
++option('fastfloat', type: 'boolean', value: false, description: 'Build and install the fast float plugin, use only if GPL 3.0 is acceptable')
++option('threaded', type: 'boolean', value: false, description: 'Build and install the multi threaded plugin, use only if GPL 3.0 is acceptable')

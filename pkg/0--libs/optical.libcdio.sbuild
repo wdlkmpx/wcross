@@ -1,0 +1,34 @@
+#!/bin/sh
+# https://ftp.gnu.org/gnu/libcdio
+
+pkgname=libcdio
+pkgver=2.1.0
+pkgrel=0
+pkgdeps='libcddb'
+pkgdesc=""
+source=https://ftp.gnu.org/gnu/libcdio/libcdio-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libcdio.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libcdio-dev'  # doesn't include .a files
+
+
+standard_autotools
+
+prepare() {
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		sed -i 's%src test example%%' Makefile.in
+	fi
+	opts='
+--without-cd-drive
+--without-cd-info
+--without-cd-read
+--without-iso-info
+--without-iso-read
+--without-cdda-player
+--disable-cpp-progs
+--disable-example-progs
+--enable-cxx
+'
+}
+

@@ -1,0 +1,143 @@
+#!/bin/sh
+# https://ffmpeg.org/releases
+# Audio only
+#	https://github.com/acoustid/ffmpeg-build/blob/main/common.sh
+
+pkgname=ffmpeg
+pkgver=5.1.2
+pkgrel=0
+pkgdeps='
+  zlib
+  libbz2
+  xz
+  lame
+  libass
+  libbluray
+  libbz2
+  libfreetype
+  libvorbis
+  libopus
+  libx264
+  libvpx
+  mbedtls
+  libxvid
+'
+pkgdesc=""
+source=https://ffmpeg.org/releases/ffmpeg-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/ffmpeg'
+DIST_BINARY=ffmpeg
+
+#=================================================================
+
+build()
+{
+	# standard opts
+	opts="
+--prefix=/usr
+--enable-static
+--disable-shared
+--enable-gpl
+--enable-version3
+--enable-nonfree
+--enable-pic
+--disable-doc
+--disable-manpages
+--disable-programs
+--enable-ffmpeg
+--enable-ffprobe
+--enable-cross-compile
+"
+
+	# Xorg
+	opts="$opts
+--disable-libxcb
+--disable-libxcb-shm
+--disable-libxcb-xfixes
+--disable-libxcb-shape
+--disable-xlib
+"
+
+	# libs
+	opts="$opts
+--enable-libass
+--enable-libbluray
+--enable-libfreetype
+--enable-libmp3lame
+--enable-libvorbis
+--enable-libopus
+--enable-libxvid
+--enable-libx264
+--enable-mbedtls
+--enable-libvpx
+--disable-sdl2
+--disable-alsa
+"
+	#--enable-openssl
+
+	# encoders
+	opts="$opts
+--disable-encoder=a64*
+--disable-encoder=amv
+--disable-encoder=asv*
+--disable-encoder=h263*
+--disable-encoder=msmpeg4*
+--disable-encoder=msvideo*
+--disable-encoder=prores*
+--disable-encoder=rv*
+--disable-encoder=wmv*
+--disable-encoder=mp2*
+--disable-encoder=nellymoser
+--disable-encoder=vorbis
+--disable-encoder=wma*
+--disable-filter=yadif*
+"
+	# libavfilter/libavfilter.a(yadif-10.o): warning: relocation in read-only section `.text'
+
+	# must not alter LDFLAGS (includes lib dirs) and other variables
+	# --host-ldflags=-Wl,-z,notext
+	DONT_OVERRIDE_FLAGS=1
+
+	if [ "$BUILD_TYPE" = "cross" ] ; then
+		case $CPU_ARCH in
+			x86|i?86) ffarch=i686   ;;
+			arm)      ffarch=armv6  ;; # armv8
+			*)	ffarch=${CPU_ARCH} ;;
+		esac
+		case $XCOMPILER in
+			*mingw*) target_os="windows"
+			*) target_os="linux"
+		esac
+		_configure \
+			--target-os=${target_os} \
+			--arch=${ffarch} \
+			--cross-prefix=${XCOMPILER}- \
+			--sysroot=${TOOLCHAIN_ROOT} \
+			--sysinclude=${TOOLCHAIN_ROOT}/include \
+			--host-cflags="$WMK_CFLAGS" \
+			--host-ldflags="$WMK_LDFLAGS" \
+			--pkg-config='pkg-config' \
+			--pkg-config-flags='--static'
+	else
+		_configure \
+			--extra-cflags="$WMK_CFLAGS" \
+			--extra-cxxflags="$WMK_CXXFLAGS" \
+			--extra-ldflags="$WMK_LDFLAGS" \
+			--pkg-config='pkg-config' \
+			--pkg-config-flags='--static'
+	fi
+
+	#NOTES:
+	# rv	 = real video
+	# ra_144 = real audio
+
+	# musl-ld doesn't recognize '-pthread'
+	sed -i -e 's%-pthread%%' $(find -name '*.mak' -o -name Makefile -o -name '*.pc')
+
+	_make
+	check_static_exe ffmpeg
+}
+
+package() {
+	install_to_pkgdir
+}

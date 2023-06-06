@@ -1,0 +1,128 @@
+diff -Naur chntpw-140201/edlib.c chntpw-140201-patched/edlib.c
+--- chntpw-140201/edlib.c	2014-02-01 11:54:37.000000000 -0500
++++ chntpw-140201-patched/edlib.c	2022-01-29 02:20:39.000000000 -0500
+@@ -47,6 +47,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <ctype.h>
++#include <inttypes.h>
+ 
+ #include "ntreg.h"
+ 
+diff -Naur chntpw-140201/Makefile chntpw-140201-patched/Makefile
+--- chntpw-140201/Makefile	2014-02-01 11:54:37.000000000 -0500
++++ chntpw-140201-patched/Makefile	2022-01-29 02:29:44.000000000 -0500
+@@ -2,69 +2,32 @@
+ # Makefile for the Offline NT Password Editor
+ #
+ #
+-# Change here to point to the needed OpenSSL libraries & .h files
+-# See INSTALL for more info.
+-#
+-
+-#SSLPATH=/usr/local/ssl
+-OSSLPATH=/usr
+-OSSLINC=$(OSSLPATH)/include
+-
+-CC=gcc
+-
+-# Force 32 bit
+-CFLAGS= -DUSEOPENSSL -g -I. -I$(OSSLINC) -Wall -m32 
+-OSSLLIB=$(OSSLPATH)/lib
+ 
+-# 64 bit if default for compiler setup
+-#CFLAGS= -DUSEOPENSSL -g -I. -I$(OSSLINC) -Wall
+-#OSSLLIB=$(OSSLPATH)/lib64
++CC ?= gcc
+ 
++CFLAGS ?=
++LDFLAGS ?=
+ 
+-# This is to link with whatever we have, SSL crypto lib we put in static
+-#LIBS=-L$(OSSLLIB) $(OSSLLIB)/libcrypto.a
+-LIBS=-L$(OSSLLIB)
+-
+-
+-all: chntpw chntpw.static cpnt reged reged.static samusrgrp samusrgrp.static sampasswd sampasswd.static
++all: chntpw cpnt reged samusrgrp sampasswd
+ 
+ chntpw: chntpw.o ntreg.o edlib.o libsam.o
+-	$(CC) $(CFLAGS) -o chntpw chntpw.o ntreg.o edlib.o libsam.o $(LIBS)
+-
+-chntpw.static: chntpw.o ntreg.o edlib.o libsam.o
+-	$(CC) -static $(CFLAGS) -o chntpw.static chntpw.o ntreg.o edlib.o libsam.o $(LIBS)
++	$(CC) $(CFLAGS) -o chntpw chntpw.o ntreg.o edlib.o libsam.o $(LDFLAGS)
+ 
+ cpnt: cpnt.o
+-	$(CC) $(CFLAGS) -o cpnt cpnt.o $(LIBS)
++	$(CC) $(CFLAGS) -o cpnt cpnt.o $(LDFLAGS)
+ 
+ reged: reged.o ntreg.o edlib.o
+-	$(CC) $(CFLAGS) -o reged reged.o ntreg.o edlib.o
+-
+-reged.static: reged.o ntreg.o edlib.o
+-	$(CC) -static $(CFLAGS) -o reged.static reged.o ntreg.o edlib.o
+-
+-samusrgrp.static: samusrgrp.o ntreg.o libsam.o
+-	$(CC) -static $(CFLAGS) -o samusrgrp.static samusrgrp.o ntreg.o libsam.o 
++	$(CC) $(CFLAGS) -o reged reged.o ntreg.o edlib.o $(LDFLAGS)
+ 
+ samusrgrp: samusrgrp.o ntreg.o libsam.o
+-	$(CC) $(CFLAGS) -o samusrgrp samusrgrp.o ntreg.o libsam.o 
++	$(CC) $(CFLAGS) -o samusrgrp samusrgrp.o ntreg.o libsam.o  $(LDFLAGS)
+ 
+ sampasswd: sampasswd.o ntreg.o libsam.o
+-	$(CC) $(CFLAGS) -o sampasswd sampasswd.o ntreg.o libsam.o 
+-
+-sampasswd.static: sampasswd.o ntreg.o libsam.o
+-	$(CC) -static $(CFLAGS) -o sampasswd.static sampasswd.o ntreg.o libsam.o 
+-
+-
+-
+-#ts: ts.o ntreg.o
+-#	$(CC) $(CFLAGS) -nostdlib -o ts ts.o ntreg.o $(LIBS)
+-
+-# -Wl,-t
++	$(CC) $(CFLAGS) -o sampasswd sampasswd.o ntreg.o libsam.o  $(LDFLAGS)
+ 
+ .c.o:
+ 	$(CC) -c $(CFLAGS) $<
+ 
+ clean:
+-	rm -f *.o chntpw chntpw.static cpnt reged reged.static samusrgrp samusrgrp.static sampasswd sampasswd.static *~
++	rm -f *.o chntpw cpnt reged samusrgrp sampasswd *~
+ 
+diff -Naur chntpw-140201/reged.c chntpw-140201-patched/reged.c
+--- chntpw-140201/reged.c	2014-02-01 11:54:37.000000000 -0500
++++ chntpw-140201-patched/reged.c	2022-01-29 02:20:39.000000000 -0500
+@@ -33,7 +33,7 @@
+ #include <stdio.h>
+ #include <unistd.h>
+ #include <stdlib.h>
+-
++#include <inttypes.h>
+ 
+ #include "ntreg.h"
+ 
+diff -Naur chntpw-140201/sampasswd.c chntpw-140201-patched/sampasswd.c
+--- chntpw-140201/sampasswd.c	2014-02-01 11:54:37.000000000 -0500
++++ chntpw-140201-patched/sampasswd.c	2022-01-29 02:20:39.000000000 -0500
+@@ -32,6 +32,7 @@
+ #include <unistd.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <inttypes.h>
+ 
+ #include "ntreg.h"
+ #include "sam.h"
+diff -Naur chntpw-140201/samusrgrp.c chntpw-140201-patched/samusrgrp.c
+--- chntpw-140201/samusrgrp.c	2014-02-01 11:54:37.000000000 -0500
++++ chntpw-140201-patched/samusrgrp.c	2022-01-29 02:20:39.000000000 -0500
+@@ -37,6 +37,7 @@
+ #include <unistd.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <inttypes.h>
+ 
+ #include "ntreg.h"
+ #include "sam.h"

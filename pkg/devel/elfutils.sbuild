@@ -1,0 +1,68 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/elfutils/APKBUILD
+
+pkgname=elfutils
+pkgver=0.189
+pkgrel=0
+pkgdeps='zlib xz zstd libbz2'
+if [ "$MUSL_TOOLCHAIN" ] ; then
+	pkgdeps="$pkgdeps 0musl-fts 0musl-obstack argp"
+fi
+pkgdesc="Utilities and DSOs to handle ELF files and DWARF data - runtime libraries"
+source="https://sourceware.org/elfutils/ftp/$pkgver/elfutils-$pkgver.tar.bz2"
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "elfutils" ] ; then
+	PKGDIR_FILE='usr/bin/eu-elfclassify'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libelf.a'
+fi
+ALPINE_PKGS='elfutils-dev libelf-static'
+
+#=====================================================================================
+
+standard_autotools
+
+prepare() {
+	sed -i -e "s%BUILD_STATIC_TRUE=.*%BUILD_STATIC_TRUE=%" \
+			-e "s%BUILD_STATIC_FALSE=.*%BUILD_STATIC_FALSE='#'%" \
+			configure
+	EXTRA_CFLAGS="-Wno-error -Wno-null-dereference"
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		#EXTRA_LDFLAGS="-lfts -lobstack" # this is addded before -o app ....
+		#export LIBS="-lfts -lobstack"   # doesn't work, breaks fts_LIBS & obstack_LIBS (empty)
+		## undefined reference to `fts_open'
+		sed -i -e 's%^LIBS = %LIBS = -lfts -lobstack %' src/Makefile.in
+	fi
+}
+
+#--program-prefix=eu-
+opts="
+--enable-deterministic-archives
+--disable-nls
+--disable-libdebuginfod
+--disable-debuginfod
+--disable-nls
+--with-zlib
+--with-bzlib
+--with-lzma
+--with-zstd
+--without-libiconv-prefix
+--without-libintl-prefix
+"
+
+post_install() {
+	# only want a few apps, remove binutils apps
+	for i in addr2line ar nm objdump ranlib readelf size strings strip
+	do
+		rm -fv ${pkgdir}/usr/bin/eu-${i}
+	done
+	(
+		for app in $(command ls ${pkgdir}/usr/bin) ; do
+			ln -sv ${app} ${pkgdir}/usr/bin/${app#eu-}
+		done
+	)
+	sed -i 's%eu-%%' ${pkgdir}/usr/bin/make-debug-archive
+	rm -fv ${pkgdir}/usr/lib/*.so
+}

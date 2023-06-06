@@ -1,0 +1,26 @@
+# https://groups.google.com/g/linux.debian.bugs.dist/c/nN1R4Kvj49o
+
+diff -Naur bash-5.2.15/configure bash-5.2.15-patched/configure
+--- bash-5.2.15/configure	2022-09-23 22:13:22.000000000 +0800
++++ bash-5.2.15-patched/configure	2023-02-19 11:16:24.000000000 +0800
+@@ -20443,7 +20443,7 @@
+ 
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $bash_cv_func_strtoimax" >&5
+ printf "%s\n" "$bash_cv_func_strtoimax" >&6; }
+-if test $bash_cv_func_strtoimax = yes; then
++if test $bash_cv_func_strtoimax = no; then
+ case " $LIBOBJS " in
+   *" strtoimax.$ac_objext "* ) ;;
+   *) LIBOBJS="$LIBOBJS strtoimax.$ac_objext"
+diff -Naur bash-5.2.15/m4/strtoimax.m4 bash-5.2.15-patched/m4/strtoimax.m4
+--- bash-5.2.15/m4/strtoimax.m4	2022-04-12 04:31:52.000000000 +0800
++++ bash-5.2.15-patched/m4/strtoimax.m4	2023-02-19 11:16:02.000000000 +0800
+@@ -29,7 +29,7 @@
+   fi
+ ])
+ AC_MSG_RESULT($bash_cv_func_strtoimax)
+-if test $bash_cv_func_strtoimax = yes; then
++if test $bash_cv_func_strtoimax = no; then
+ AC_LIBOBJ(strtoimax)
+ fi
+ ])

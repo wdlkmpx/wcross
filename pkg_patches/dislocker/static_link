@@ -1,0 +1,130 @@
+diff -Naur dislocker-0.7.3/CMakeLists.txt dislocker-0.7.3-patched/CMakeLists.txt
+--- dislocker-0.7.3/CMakeLists.txt	2020-11-17 15:29:35.000000000 -0500
++++ dislocker-0.7.3-patched/CMakeLists.txt	2022-01-26 17:54:52.000000000 -0500
+@@ -20,6 +20,10 @@
+ cmake_minimum_required (VERSION 2.6)
+ project (dislocker C)
+ 
++#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
++#set(BUILD_SHARED_LIBS OFF)
++#set(CMAKE_EXE_LINKER_FLAGS "-static")
++
+ set (AUTHOR "Romain Coltel")
+ 
+ find_program (GIT_EXE NAMES git PATHS /usr/bin /usr/local/bin)
+diff -Naur dislocker-0.7.3/src/CMakeLists.txt dislocker-0.7.3-patched/src/CMakeLists.txt
+--- dislocker-0.7.3/src/CMakeLists.txt	2020-11-17 15:29:35.000000000 -0500
++++ dislocker-0.7.3-patched/src/CMakeLists.txt	2022-01-27 01:30:27.000000000 -0500
+@@ -70,20 +70,11 @@
+ if(NOT DEFINED WARN_FLAGS)
+ 	set (WARN_FLAGS "-Wall -Wextra" CACHE STRING "" FORCE)
+ endif()
+-if(NOT DEFINED HARDEN_FLAGS)
+-	set (HARDEN_FLAGS "-fstack-protector -fstrict-aliasing -D_FORTIFY_SOURCE=2 -O1" CACHE STRING "" FORCE)
+-endif()
+-
+-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARN_FLAGS}")
+-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${HARDEN_FLAGS}")
+ 
+ if(DEFINED CFLAGS)
+ 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CFLAGS}")
+ endif()
+-if(DEFINED RPM_OPT_FLAGS)
+-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${RPM_OPT_FLAGS}")
+-endif()
+ 
+ set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D DEBUG=${DEBUG} -D__DIS_CORE_DUMPS")
+ 
+@@ -102,20 +93,9 @@
+ 	endif()
+ endif()
+ 
+-if(${CMAKE_COMPILER_IS_GNUCC})
+-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,-z,now -Wl,-z,relro")
+-elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments")
+-else()
+-	message ("*** WARNING *** You're compiling with an untested compiler (${CMAKE_C_COMPILER_ID}), this mays result in unwanted behaviours.\n")
+-endif()
+ if(DEFINED LDFLAGS)
+ 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LDFLAGS}")
+ endif()
+-if(DEFINED RPM_LD_FLAGS)
+-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${RPM_LD_FLAGS}")
+-endif()
+-
+ 
+ # Libraries
+ set (CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+@@ -129,14 +109,6 @@
+ 	return ()
+ endif()
+ 
+-find_package (Ruby)
+-if(RUBY_FOUND  AND  RUBY_INCLUDE_DIRS  AND  RUBY_LIBRARY)
+-	include_directories (${RUBY_INCLUDE_DIRS})
+-	set (LIB ${LIB} ${RUBY_LIBRARY})
+-	add_definitions (-D_HAVE_RUBY=${RUBY_VERSION_STRING})
+-	set (SOURCES ${SOURCES} ruby.c)
+-endif()
+-
+ find_package (FUSE)
+ if(FUSE_FOUND  AND  FUSE_INCLUDE_DIRS  AND  FUSE_LIBRARIES)
+ 	include_directories (${FUSE_INCLUDE_DIRS})
+@@ -184,10 +156,10 @@
+ endif()
+ 
+ # Targets
+-add_library (${PROJECT_NAME} SHARED ${SOURCES})
++add_library (${PROJECT_NAME} STATIC ${SOURCES})
+ target_link_libraries (${PROJECT_NAME} ${LIB})
+-set_target_properties (${PROJECT_NAME} PROPERTIES VERSION "${VERSION}" SOVERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
+-install (TARGETS ${PROJECT_NAME} LIBRARY DESTINATION "${libdir}")
++#set_target_properties (${PROJECT_NAME} PROPERTIES VERSION "${VERSION}" SOVERSION "${VERSION_MAJOR}.${VERSION_MINOR}")
++#install (TARGETS ${PROJECT_NAME} LIBRARY DESTINATION "${libdir}")
+ 
+ if (${APPLE})
+ 	set (BUNDLE_NAME ${PROJECT_NAME}_bundle)
+@@ -203,7 +175,9 @@
+ add_executable (${BIN_FUSE} ${BIN_FUSE}.c)
+ target_link_libraries (${BIN_FUSE} ${FUSE_LIB} ${PROJECT_NAME})
+ set_target_properties (${BIN_FUSE} PROPERTIES COMPILE_DEFINITIONS FUSE_USE_VERSION=26)
+-set_target_properties (${BIN_FUSE} PROPERTIES LINK_FLAGS "-pie -fPIE")
++#set_target_properties (${BIN_FUSE} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++ -static")
++#set_target_properties (${BIN_FUSE} PROPERTIES LINK_SEARCH_START_STATIC ON)
++#set_target_properties (${BIN_FUSE} PROPERTIES LINK_SEARCH_END_STATIC ON)
+ add_custom_command (TARGET ${BIN_FUSE} POST_BUILD
+ 	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/man/
+ 	COMMAND gzip -c ${DIS_MAN}/${BIN_FUSE}.1 > ${CMAKE_BINARY_DIR}/man/${BIN_FUSE}.1.gz
+@@ -215,7 +189,9 @@
+ set (BIN_FILE ${PROJECT_NAME}-file)
+ add_executable (${BIN_FILE} ${BIN_FILE}.c)
+ target_link_libraries (${BIN_FILE} ${PROJECT_NAME})
+-set_target_properties (${BIN_FILE} PROPERTIES LINK_FLAGS "-pie -fPIE")
++#set_target_properties (${BIN_FILE} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++ -static")
++#set_target_properties (${BIN_FILE} PROPERTIES LINK_SEARCH_START_STATIC ON)
++#set_target_properties (${BIN_FILE} PROPERTIES LINK_SEARCH_END_STATIC ON)
+ add_custom_command (TARGET ${BIN_FILE} POST_BUILD
+ 	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/man/
+ 	COMMAND gzip -c ${DIS_MAN}/${BIN_FILE}.1 > ${CMAKE_BINARY_DIR}/man/${BIN_FILE}.1.gz
+@@ -227,13 +203,17 @@
+ set (BIN_METADATA ${PROJECT_NAME}-metadata)
+ add_executable (${BIN_METADATA} ${BIN_METADATA}.c)
+ target_link_libraries (${BIN_METADATA} ${PROJECT_NAME})
+-set_target_properties (${BIN_METADATA} PROPERTIES LINK_FLAGS "-pie -fPIE")
++#set_target_properties (${BIN_METADATA} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++ -static")
++#set_target_properties (${BIN_METADATA} PROPERTIES LINK_SEARCH_START_STATIC ON)
++#set_target_properties (${BIN_METADATA} PROPERTIES LINK_SEARCH_END_STATIC ON)
+ install (TARGETS ${BIN_METADATA} RUNTIME DESTINATION "${bindir}")
+ 
+ set (BIN_BEK ${PROJECT_NAME}-bek)
+ add_executable (${BIN_BEK} ${BIN_BEK}.c)
+ target_link_libraries (${BIN_BEK} ${PROJECT_NAME})
+-set_target_properties (${BIN_BEK} PROPERTIES LINK_FLAGS "-pie -fPIE")
++#set_target_properties (${BIN_BEK} PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++ -static")
++#set_target_properties (${BIN_BEK} PROPERTIES LINK_SEARCH_START_STATIC ON)
++#set_target_properties (${BIN_BEK} PROPERTIES LINK_SEARCH_END_STATIC ON)
+ install (TARGETS ${BIN_BEK} RUNTIME DESTINATION "${bindir}")
+ 
+ if(RUBY_FOUND)

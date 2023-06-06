@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/mimalloc2
+# https://github.com/microsoft/mimalloc
+
+pkgname=mimalloc2
+pkgver=2.0.6
+pkgrel=0
+pkgdeps=''
+pkgdesc="A compact general purpose allocator with excellent performance"
+#makedepends="cmake samurai"
+source="https://github.com/microsoft/mimalloc/archive/v$pkgver/mimalloc-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libmimalloc.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='mimalloc2-dev'
+
+
+standard_cmake
+
+prepare() {
+	# https://github.com/microsoft/mimalloc/issues/597
+	EXTRA_CFLAGS="-D__USE_ISOC11"
+	EXTRA_CXXFLAGS="-D__USE_ISOC11"
+}
+
+opts="
+-DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_INSTALL_PREFIX}
+-DCMAKE_INSTALL_FULL_LIBDIR=${TOOLCHAIN_INSTALL_LIBDIR}
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+-DMI_BUILD_SHARED=OFF
+-DMI_BUILD_STATIC=ON
+-DMI_BUILD_OBJECT=OFF
+-DMI_BUILD_TESTS=OFF
+-DMI_INSTALL_TOPLEVEL=ON
+"

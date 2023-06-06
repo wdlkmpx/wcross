@@ -1,0 +1,15 @@
+#!/bin/sh
+# https://www.cgsecurity.org/wiki/TestDisk_Download
+
+pkgname=testdisk
+pkgver=7.1 # 2019-07-07
+pkgrel=0
+pkgdeps='util-linux zlib ncursesw ntfs-3g e2fsprogs'
+pkgdesc=""
+source=https://www.cgsecurity.org/testdisk-${pkgver}.tar.bz2
+DL_SUBDIR=''
+PKGDIR_FILE=usr/bin/${pkgname}
+DIST_BINARY=testdisk
+
+
+standard_autotools

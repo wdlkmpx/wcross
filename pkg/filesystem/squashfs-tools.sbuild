@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://sourceforge.net/projects/squashfs/files/squashfs
+
+pkgname=squashfs-tools
+pkgver=4.6.1
+pkgrel=0
+pkgdeps='libattr zlib lz4 xz liblzo zstd'
+pkgdesc=""
+source=https://sourceforge.net/projects/squashfs/files/squashfs/squashfs${pkgver}/squashfs${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/mksquashfs'
+LINUX_ONLY=1
+
+
+
+build()
+{
+	woptimize_flag -O2
+	cd squashfs-tools
+	_make XZ_SUPPORT=1 LZO_SUPPORT=1 LZ4_SUPPORT=1 ZSTD_SUPPORT=1
+}
+
+package() {
+	install_exe mksquashfs ${pkgdir}/usr/bin
+	install_exe unsquashfs ${pkgdir}/usr/bin
+}

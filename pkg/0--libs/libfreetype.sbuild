@@ -1,0 +1,27 @@
+#!/bin/sh
+# basic lib
+# https://git.alpinelinux.org/aports/tree/main/freetype/APKBUILD
+
+pkgname=freetype
+pkgver=2.13.0
+pkgrel=0
+pkgdeps='libbz2 libpng zlib' # brotli harfbuzz libx11
+required_by='libass'
+pkgdesc="TrueType font rendering library"
+source="https://download.savannah.gnu.org/releases/freetype/freetype-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libfreetype.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='freetype-dev freetype-static'
+
+
+standard_meson
+
+opts="
+-Ddefault_library=static
+-Dbrotli=disabled
+-Dharfbuzz=disabled
+-Dbzip2=enabled
+-Dpng=enabled
+-Dzlib=enabled
+-Dtests=disabled"

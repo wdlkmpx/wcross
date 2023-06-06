@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/gc/APKBUILD
+# https://gitlab.archlinux.org/archlinux/packaging/packages/gc/-/blob/main/PKGBUILD
+# https://hboehm.info/gc/
+
+pkgname=gc
+pkgver=8.2.2
+pkgrel=0
+pkgdeps=''
+if [ "$BUILD_TYPE" = "cross" ] ; then
+	# configure: error: libatomic_ops is required.  You can either install it on
+	pkgdeps="$pkgdeps libatomic_ops"
+fi
+pkgdesc="garbage collector for C and C++"
+source="https://github.com/ivmai/bdwgc/releases/download/v$pkgver/gc-$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libgc.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='gc-dev'  #includes .a files
+
+
+
+standard_autotools
+
+prepare() {
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		EXTRA_CFLAGS="$CFLAGS -D_GNU_SOURCE -DNO_GETCONTEXT -DUSE_MMAP -DHAVE_DL_ITERATE_PHDR"
+	fi
+}
+
+opts="--enable-static 
+--enable-cplusplus
+--disable-docs
+"
+

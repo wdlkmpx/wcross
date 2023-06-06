@@ -1,0 +1,15 @@
+# musl outputs a different string for ENOTSUP
+# see: https://savannah.nongnu.org/bugs/?62370
+
+diff -Naur attr-2.5.1/test/attr.test attr-2.5.1-patched/test/attr.test
+--- attr-2.5.1/test/attr.test	2018-07-03 16:30:26.000000000 +0800
++++ attr-2.5.1-patched/test/attr.test	2023-02-15 21:47:28.000000000 +0800
+@@ -11,7 +11,7 @@
+ 
+ 	$ touch f
+ 	$ setfattr -n user -v value f
+-	> setfattr: f: Operation not supported
++	> setfattr: f: Not supported
+ 	
+ 	$ setfattr -n user. -v value f
+ 	> setfattr: f: Invalid argument

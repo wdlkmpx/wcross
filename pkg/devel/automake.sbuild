@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/automake/APKBUILD
+# https://ftp.gnu.org/gnu/automake
+#
+# this is noarch
+
+pkgname=automake
+pkgver=1.16.5
+pkgrel=0
+pkgdeps=
+pkgdesc="GNU tool for automatically creating Makefiles"
+source="https://ftp.gnu.org/gnu/automake/automake-$pkgver.tar.xz"
+DL_SUBDIR=''
+PKGDIR_FILE="usr/share/aclocal-${pkgver%.*}/ar-lib.m4"
+DEV_IN_PKGDIR=1
+
+
+standard_autotools
+
+# too many deps to check
+WCROSS_MAKE_CHECK=no

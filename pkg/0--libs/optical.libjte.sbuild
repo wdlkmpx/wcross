@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://www.einval.com/~steve/software/JTE/download
+# basically useless... might be removed
+
+pkgname=jigit
+pkgver=1.22 # 2019-11-21
+pkgrel=0
+pkgdeps='zlib libbz2'
+pkgdesc="libjte is a library providing support for creating jigdo files, to be used by ISO image creation tools such as xorriso. "
+source=https://www.einval.com/~steve/software/JTE/download/jigit-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libjte.a'
+#ALPINE_PKGS='' # -- missing in alpine --
+
+
+standard_autotools

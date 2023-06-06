@@ -1,0 +1,35 @@
+#!/bin/sh
+# https://archlinux.org/packages/extra/x86_64/libgphoto2/
+
+pkgname=libgphoto2
+pkgver=2.5.30
+pkgrel=0
+pkgdeps='libexif libltdl libjpeg libusb' #libgd autoconf-archive
+pkgdesc="Digital camera access library"
+source=https://sourceforge.net/projects/gphoto/files/libgphoto/${pkgver}/libgphoto2-${pkgver}.tar.xz
+TOOLCHAIN_FILE='usr/lib/libgphoto2.a'
+
+
+standard_autotools
+
+prepare() {
+	# libghoto2 has a custom and buggy logic to find libltdl
+	# provide libltdl libs and cflags to avoid issues
+	export LTDLINCL="-I$TOOLCHAIN_INSTALL_PREFIX/include"
+	export LIBLTDL="$TOOLCHAIN_INSTALL_LIBDIR/libltdl.a -ldl"
+}
+
+opts="
+--disable-internal-docs
+--disable-docs
+--without-libcurl
+--without-gdlib
+--without-libiconv-prefix
+--without-libintl-prefix
+--enable-static
+--disable-shared
+"
+# let configure determine this
+# --with-jpeg
+# --with-libexif=auto
+# --without-libxml-2.0

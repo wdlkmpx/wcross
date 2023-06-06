@@ -1,0 +1,53 @@
+#!/bin/sh
+# https://github.com/lz4/lz4/releases
+# https://git.alpinelinux.org/aports/tree/main/lz4
+
+pkgname=lz4
+pkgver=1.9.4 # 2022-08-16
+pkgrel=0
+pkgdesc="lossless compression algorithm with fast decoder @ multiple GB/s per core."
+pkgdeps=''
+source="${pkgname}-${pkgver}.tar.gz::https://github.com/lz4/lz4/archive/refs/tags/v${pkgver}.tar.gz"
+DL_SUBDIR=''
+
+DIST_BINARY=lz4
+if [ "$BUILD_PACKAGE" = "lz4" ] ; then
+	PKGDIR_FILE='usr/bin/lz4'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/liblz4.a'
+fi
+ALPINE_PKGS='lz4-dev lz4-static'
+
+#======================================================================================
+
+USE_MESON=1
+
+if [ "$USE_MESON" ] ; then
+	standard_meson
+	opts="
+-Dtests=$(want_tests && echo true || echo false)
+-Dprograms=true
+-Ddefault_library=static
+-Dexamples=false"
+else
+	# no tests
+	standard_cmake
+	opts="
+-DBUILD_SHARED_LIBS=OFF
+-DBUILD_STATIC_LIBS=ON
+"
+fi
+
+prepare() {
+	# this compiles with -O3 by default
+	if [ "$USE_MESON" ] ; then
+		if [ "$MESON_IS_MUON" ] ; then
+			patch_pkg muon_patch
+		fi
+		cd contrib/meson || exit_error
+		#cd build/meson # next version
+	else
+		cd build/cmake
+	fi
+}

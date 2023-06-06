@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://aur.archlinux.org/packages/gphotofs
+#
+# static musl              : binary segfaults
+# static glibc             : ok
+# sys glibc                : ok
+# sys glibc + static glib2 : ok
+
+pkgname=gphotofs
+pkgver=0.5
+pkgrel=0
+pkgdeps='libfuse libgphoto2'
+#if [ "$STATIC_LINK" = "yes" ] ; then
+#	# compile glib2 only if producing fully static binaries
+#	pkgdeps="$pkgdeps libglib2"
+#fi
+pkgdesc="FUSE filesystem module to mount your camera as a filesystem on Linux."
+source=https://sourceforge.net/projects/gphoto/files/gphotofs/${pkgver}.0/gphotofs-${pkgver}.tar.bz2
+PKGDIR_FILE='usr/bin/gphotofs'
+DL_SUBDIR=''
+
+
+standard_autotools
+
+prepare() {
+	update_config_sub
+	## I didn't encounter this issue with the static musl build
+	## need to explicitly link libltdl (libtool)
+	sed -i 's%-lgphoto2 -lm%-lgphoto2 -lltdl -lm%' \
+		${TOOLCHAIN_INSTALL_PREFIX}/lib/pkgconfig/libgphoto2.pc
+	sed -i "s% -lm'% -lm -lltdl'%" \
+		${TOOLCHAIN_INSTALL_PREFIX}/lib/libgphoto2.la
+}
+
+opts="
+"

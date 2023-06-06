@@ -1,0 +1,42 @@
+From 0df7010ce6ff72f80cdf8f8a3ce9bc58fb0225c4 Mon Sep 17 00:00:00 2001
+From: Joe MacDonald <joe_macdonald@mentor.com>
+Date: Thu, 24 Sep 2020 22:04:25 -0400
+Subject: [PATCH 1/2] get_device: call get_partnum with dev, not devname
+
+By the time get_partnum() is called here, devname may have been modified
+to it no longer ends with the partition number but instead is a
+null-terminated device name.  That is, dev may still be '/dev/sda3' but
+devname is now '/dev/sda'.
+
+Additionally, the '-n' parameter hasn't been respected, with get_partnum()
+consistently returning '1' regardless of the actual partition specified on
+the command line.
+
+Only attempt to deduce the partition number if it wasn't already
+explicitly stated on the command line.  This would also be essential if
+mmc devices should be supported in the future as they're frequently named
+mmcblk0p1 where a partition name isn't an int but a string.
+
+Signed-off-by: Joe MacDonald <joe_macdonald@mentor.com>
+---
+ fatresize.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fatresize.c b/fatresize.c
+index fe72c17..d85d03a 100644
+--- a/fatresize.c
++++ b/fatresize.c
+@@ -207,8 +207,8 @@ static int get_device(char *dev) {
+       free(devname);
+       return 0;
+     }
+-  } else {
+-    opts.pnum = get_partnum(devname);
++  } else if (opts.pnum < 0) {
++    opts.pnum = get_partnum(dev);
+   }
+   ped_device_destroy(peddev);
+   opts.device = devname;
+-- 
+2.17.0
+

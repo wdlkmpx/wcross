@@ -1,0 +1,45 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/pciutils
+# https://mj.ucw.cz/download/linux/pci
+# https://github.com/pciutils/pciutils/blob/master/ChangeLog
+#
+# make sure /usr/share/pci.ids exists (file or symlink)
+# for this static lib to work as expected
+
+pkgname=pciutils
+pkgver=3.10.0
+pkgrel=0
+pkgdeps='zlib'
+pkdesc=0
+source=https://mj.ucw.cz/download/linux/pci/${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libpci.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='pciutils-dev'  # doesn't include libpcia.a (only .so)
+
+
+build()
+{
+	# CPU-X: names-parse.c:(.text+0x52): undefined reference to `gzgets'
+	sed -i 's%-lpci%-lpci -lz%' lib/libpci.pc.in
+
+	sed -i -e "s%CFLAGS=%CFLAGS+=%" Makefile
+	# just use make (not _make)
+	export_make_wflags
+	mk_opts="PREFIX=/usr
+CROSS_COMPILE=${WCROSS_PREFIX}
+SHARED=no
+HWDB=no
+LIBKMOD=no" # !! might want to enable libkmod
+	cmd_echo make ${mk_opts}
+}
+
+
+check() {
+	# no tests, only check if apps were linked properly
+	./setpci --help 2>/dev/null 1>/dev/null
+}
+
+package() {
+	cmd_echo make ${mk_opts} DESTDIR=${pkgdir} install install-lib
+}

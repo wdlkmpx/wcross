@@ -1,0 +1,37 @@
+#!/bin/sh
+# libuuid, libblkid, libfdisk, etc
+
+pkgname=util-linux
+pkgver=2.38.1 # 04-Aug-2022
+pkgver2=$(echo $pkgver | cut -f 1,2 -d '.')
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v${pkgver2}/util-linux-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libblkid.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='util-linux-dev'
+DL_SUBDIR=''
+
+
+standard_autotools
+
+#not needed?
+WCROSS_MAKE_CHECK=no
+
+opts='
+--disable-all-programs
+--disable-symvers
+--enable-libblkid
+--enable-libuuid
+--enable-libmount
+--enable-libsmartcols
+--enable-libfdisk
+--without-python
+--without-systemd
+--without-btrfs
+--without-user
+--without-udev
+--without-ncursesw
+'

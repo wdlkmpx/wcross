@@ -1,0 +1,21 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/jsoncpp/APKBUILD
+# https://github.com/open-source-parsers/jsoncpp/tags
+
+pkgname=libjsoncpp
+pkgver=1.9.5
+pkgrel=0
+pkgdeps=''
+pkgdesc="JSON C++ library"
+source="jsoncpp-$pkgver.tar.gz::https://github.com/open-source-parsers/jsoncpp/archive/$pkgver.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libjsoncpp.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='jsoncpp-dev jsoncpp-static'
+
+
+standard_meson
+
+opts="
+-Ddefault_library=static
+"

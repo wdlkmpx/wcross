@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://github.com/ivmai/libatomic_ops/releases
+
+pkgname=libatomic_ops
+pkgver=7.8.0
+pkgrel=0
+pkgdeps=''
+pkgdesc="Atomic memory update operations portable implementation"
+source="https://github.com/ivmai/libatomic_ops/releases/download/v${pkgver}/libatomic_ops-${pkgver}.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libatomic_ops.a'
+INSTALL_TO_TOOLCHAIN=1
+#ALPINE_PKGS=''  
+
+
+standard_autotools

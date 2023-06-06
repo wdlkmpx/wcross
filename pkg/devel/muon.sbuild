@@ -1,0 +1,46 @@
+#!/bin/sh
+# https://github.com/annacrombie/muon
+
+pkgname=muon
+#pkgver=0.2.0
+
+### github
+_commit=fa0cd00
+_cdate=20230.05.28     #this is the date the commit was acknowledged... it may be old
+### sr.ht
+_commitht=6cdf084804fb8262a7f29ac9e9b614472b62b8a3
+_cdateht=20230.06.03   #this is the date the commit was acknowledged... it may be old
+
+pkgrel=0
+pkgdeps='libpkgconf' # curl-dev libarchive-dev
+pkgdesc="A meson-compatible build system."
+
+if [ -n "${_commitht}" ] ; then
+	# sr.ht
+	source="muon-${_cdateht}-${_commitht}.tar.gz::https://git.sr.ht/~lattis/muon/archive/${_commitht}.tar.gz"
+	SRC_DIR=muon-${_commitht}
+	pkgver=${_cdateht}
+elif [ -n "${_commit}" ] ; then
+	# github
+	source="muon-${_cdate}-${_commit}.tar.gz::https://github.com/annacrombie/muon/tarball/${_commit}"
+	SRC_DIR=annacrombie-muon-${_commit}
+	pkgver=${_cdate}
+else
+	source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~lattis/muon/archive/$pkgver.tar.gz"
+fi
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/muon'
+
+
+standard_meson
+
+opts="
+-Dbuildtype=plain
+-Dauto_features=disabled
+-Dwrap_mode=nodownload
+-Dlibcurl=disabled
+-Dlibarchive=disabled
+-Dlibpkgconf=enabled
+-Ddocs=disabled
+"
+# what is tracy? -Dtracy=enabled

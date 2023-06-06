@@ -1,0 +1,25 @@
+#!/bin/sh
+
+pkgname=chntpw
+pkgver=140201
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=https://sourceforge.net/projects/wdl/files/src/${pkgname}-${pkgver}.tar.xz
+DL_SUBDIR=''
+PKGDIR_FILE=usr/bin/sampasswd
+
+
+build()
+{
+	# wrong compiler, cflags and libs
+	patch -p1 < ${PKG_SCRIPT_DIR}/chntpw.patch
+	_make
+}
+
+#no tests
+
+package() {
+	mkdir -p ${pkgdir}/usr/bin
+	install chntpw cpnt reged sampasswd samusrgrp ${pkgdir}/usr/bin
+}

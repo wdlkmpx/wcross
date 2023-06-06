@@ -1,0 +1,3 @@
+TARGET=armel-linux-musleabihf
+
+GCC_CONFIG_FOR_TARGET+=' --with-float=hard'

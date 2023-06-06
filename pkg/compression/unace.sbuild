@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://github.com/wdlkmpx/unace/tags
+
+pkgname=unace
+pkgver=2.6w
+pkgrel=0
+pkgdeps=
+pkgdesc="Tool for extracting archives created with the ACE archiver"
+source="unace-${pkgver}.tar.gz::https://github.com/wdlkmpx/unace/archive/refs/tags/${pkgver}.tar.gz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/unace'
+DIST_BINARY=unace
+
+
+build()
+{
+	woptimize_flag -O2
+	_configure --prefix=/usr
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	install_exe src/unace ${pkgdir}/usr/bin
+}
+

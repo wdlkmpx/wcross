@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/confuse/APKBUILD
+# https://github.com/libconfuse/libconfuse/releases
+
+pkgname=confuse
+pkgver=3.3
+pkgrel=0
+pkgdeps=
+pkgdesc="C library for parsing configuration files"
+source="https://github.com/libconfuse/libconfuse/releases/download/v$pkgver/confuse-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libconfuse.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='confuse-dev' # confuse-static (alpine 3.18)
+
+
+standard_autotools
+
+prepare() {
+	# LDFLAGS is broken in tests/Makefile.in
+	sed -i "s%^LDFLAGS =.*%LDFLAGS = @LDFLAGS@%" tests/Makefile.in
+}
+
+opts='
+--disable-silent-rules
+--without-libintl-prefix
+--without-libiconv-prefix
+--disable-examples
+'

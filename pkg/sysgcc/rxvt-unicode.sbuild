@@ -1,0 +1,33 @@
+#!/bin/sh
+# http://dist.schmorp.de/rxvt-unicode/Attic/
+
+pkgname=rxvt-unicode
+pkgver=9.31
+pkgrel=0
+pkgdeps='libptytty'
+pkgdesc=" terminal emulator "
+source=http://dist.schmorp.de/rxvt-unicode/Attic/rxvt-unicode-${pkgver}.tar.bz2
+PKGDIR_FILE='usr/bin/urxvt'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+opts='
+--disable-perl
+--disable-pixbuf
+--disable-transparency
+--disable-fading
+--disable-frills
+--disable-text-blink
+--disable-pointer-blank
+--disable-startup-notification
+--with-x
+'
+
+prepare() {
+	# libptytty requires urxvt to be compiled in C++11 mode
+	EXTRA_CFLAGS='-std=gnu++11'
+	EXTRA_CXXFLAGS='-std=gnu++11'
+}
+

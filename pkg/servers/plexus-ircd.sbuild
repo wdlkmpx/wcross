@@ -1,0 +1,64 @@
+#!/bin/sh
+# https://github.com/ngircd/ngircd/releases
+
+pkgname=ngircd
+pkgver=26.1
+pkgrel=0
+pkgdeps='zlib openssl libident'
+pkgdesc="Next Generation IRC Daemon"
+source="https://ngircd.barton.de/pub/ngircd/ngircd-$pkgver.tar.xz"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/sbin/ngircd'
+
+
+standard_autotools
+
+opts="
+--enable-ircplus
+--with-ident
+--with-openssl
+--without-pam
+--with-zlib
+--enable-ipv6
+--sysconfdir=/etc/ngircd
+"
+
+post_install()
+{
+	mkdir -p  ${pkgdir}/etc/ngircd/conf.d
+	if [ -f /etc/openssl.passwd ] ; then
+		. /etc/openssl.passwd
+	elif [ -n "$OPENSSL_PASS" ] ; then
+		wpass=${OPENSSL_PASS}
+	else
+		wpass='secret'
+	fi
+	# the doc dir is deleted
+	cp -fv ${pkgdir}/usr/share/doc/ngircd/Commands.txt ${pkgdir}/etc/ngircd/Commands.txt
+	# https://wiki.ircnow.org/index.php?n=Ngircd.Ssl
+	openssl req -newkey rsa:2048 -x509 \
+		-passout pass:${wpass} \
+		-subj "/C=/ST=/L=/O=/OU=/CN=/" \
+		-keyout ${pkgdir}/etc/ngircd/server-key.pem \
+		-out    ${pkgdir}/etc/ngircd/server-cert.pem \
+		-days 1461
+	#--
+	## this is too slow
+	#openssl dhparam -2 -out ${pkgdir}/etc/ngircd/server-dhparams.pem 4096
+	## this is somewhat slow
+	#openssl dhparam -dsaparam -out ${pkgdir}/etc/ngircd/server-dhparams.pem 4096
+	openssl dhparam  -dsaparam -out ${pkgdir}/etc/ngircd/server-dhparams.pem 2048
+	#--
+	sed -i \
+		-e 's%;\[SSL%[SSL%' \
+		-e 's%;CertFile = .*%CertFile = /etc/ngircd/server-cert.pem%' \
+		-e 's%;DHFile = .*%DHFile = /etc/ngircd/server-dhparams.pem%' \
+		-e 's%;KeyFile = /etc/ngircd/ssl/server-key.pem%KeyFile = /etc/ngircd/server-key.pem%' \
+		-e "s%;KeyFilePassword = .*%KeyFilePassword = ${wpass}%" \
+		-e 's%;HelpFile = .*%HelpFile = /etc/ngircd/Commands.txt%' \
+		-e 's%;IncludeDir = %IncludeDir = %' \
+		-e 's%;Ports = 6697, 9999%Ports = 6697, 9999%' \
+		${pkgdir}/etc/ngircd/ngircd.conf
+	#--
+	touch ${pkgdir}/etc/ngircd/ngircd.mtod
+}

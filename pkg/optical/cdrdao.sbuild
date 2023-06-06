@@ -1,0 +1,26 @@
+#!/bin/sh
+# https://github.com/cdrdao/cdrdao/releases
+
+pkgname=cdrdao
+pkgver=1.2.5
+pkgrel=0
+pkgdeps= #'lame libvorbis'
+pkgdesc=""
+source=https://github.com/cdrdao/cdrdao/releases/download/rel_${pkgver//./_}/cdrdao-${pkgver}.tar.bz2
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/cdrdao'
+
+
+standard_autotools
+
+#   These require libao!
+#--with-lame
+#--with-ogg-support
+#--with-mp3-support
+opts='
+--without-xdao
+--without-gcdmaster
+--without-lame
+--without-ogg-support
+--without-mp3-support
+'

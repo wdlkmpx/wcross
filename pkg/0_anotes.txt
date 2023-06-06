@@ -1,0 +1,20 @@
+Discarded apps
+==============
+ - cmus (too much work to make it work)
+ - file (libmagic)
+     * compatibility issues with older libmagic databases
+     * so basically file is unusable in old distros
+     * libmagic requires a database that is not linked statically
+ - opencl (libopencl)
+     * this is about dynamically loading opencl implementations
+
+ncurses apps
+============
+ - optical/cdw
+
+Known C++ projects
+==================
+ - 7z
+ - ddrescue
+ - gftpfdisk
+ - unrar

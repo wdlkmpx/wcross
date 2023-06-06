@@ -1,0 +1,61 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/gettext/APKBUILD
+
+pkgname=gettext
+pkgver=0.21.1
+pkgrel=4
+pkgdeps=""
+pkgdesc="GNU locale utilities"
+source="https://ftp.gnu.org/gnu/gettext/gettext-${pkgver}.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libgettextpo.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='gettext-dev gettext-static'
+
+
+standard_autotools
+
+prepare() {
+	sed -i -e 's% po % %' -e 's% doc % %' -e 's% man % %' \
+		-e 's% intl-java % %' -e 's% intl-csharp % %' -e 's% examples % %' \
+		gettext-runtime/Makefile.in gettext-tools/Makefile.in
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		# HACK: custom error.h with static functions causes the build to fail
+		if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h ] ; then
+			mv -fv ${TOOLCHAIN_INSTALL_PREFIX}/include/error.h \
+				${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw
+		fi
+	fi
+}
+
+check() {
+	echo -n #forget about tests
+}
+
+post_install() {
+	if [ -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw ] ; then
+		mv -f ${TOOLCHAIN_INSTALL_PREFIX}/include/error.hw \
+			${TOOLCHAIN_INSTALL_PREFIX}/include/error.h
+	fi
+}
+
+opts="
+--disable-java
+--disable-csharp
+--disable-nls
+--enable-cross-guesses=convervative
+--disable-curses
+--disable-openmp
+--disable-acl
+--without-libiconv-prefix
+--without-libintl-prefix
+--without-libncurses-prefix
+--without-libtermcap-prefix
+--without-libxcurses-prefix
+--without-libcurses-prefix
+--without-emacs
+--without-git
+--without-cvs
+--without-bzip2
+--without-xz
+"

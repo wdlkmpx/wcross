@@ -1,0 +1,40 @@
+#!/bin/sh
+# http://tuxera.com/opensource
+
+pkgname=ntfs-3g
+pkgver=2022.10.3
+pkgrel=0
+pkgdesc=""
+pkgdeps=
+source=http://tuxera.com/opensource/ntfs-3g_ntfsprogs-${pkgver}.tgz
+DL_SUBDIR=''
+if [ "$BUILD_PACKAGE" = "ntfs-3g" ] ; then
+	PKGDIR_FILE='bin/ntfs-3g'
+else
+	# .a file may exist in a chroot and need it quickly to build another app
+	TOOLCHAIN_FILE='usr/lib/libntfs-3g.a'
+fi
+ALPINE_PKGS='ntfs-3g-dev ntfs-3g-static'
+
+# ====================================================
+
+standard_autotools
+
+prepare()
+{
+	echo "** Note: build system is wrong, need to generate again"
+	patch -p1 < ${PKG_SCRIPT_DIR}/ntfs-3g.patch || exit_error
+	find . -name Makefile.in -delete
+	rm -fv configure
+}
+
+opts='
+--bindir=/bin
+--sbindir=/sbin
+--enable-really-static
+--enable-mount-helper
+'
+#--disable-library
+
+#check_static_exe src/ntfs-3g
+

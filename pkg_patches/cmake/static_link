@@ -1,0 +1,52 @@
+diff -Naur cmake/CMakeLists.txt cmake-static/CMakeLists.txt
+--- cmake/CMakeLists.txt	2023-03-23 08:12:04.000000000 -0500
++++ cmake-static/CMakeLists.txt	2023-03-23 20:16:45.843168451 -0500
+@@ -9,6 +9,8 @@
+ unset(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX)
+ unset(CMAKE_USER_MAKE_RULES_OVERRIDE_C)
+ 
++include(FindPkgConfig)
++
+ # FIXME: This block should go away after a transition period.
+ if(MSVC AND NOT CMAKE_VERSION VERSION_LESS 3.15)
+   # Filter out MSVC runtime library flags that may have come from
+diff -Naur cmake/Source/CMakeLists.txt cmake-static/Source/CMakeLists.txt
+--- cmake/Source/CMakeLists.txt	2023-03-23 19:20:54.000000000 -0500
++++ cmake-static/Source/CMakeLists.txt	2023-03-23 20:15:04.778431934 -0500
+@@ -756,11 +756,11 @@
+   PUBLIC
+     cmstd
+     cmsys
+-    CURL::libcurl
++    ${CURL_STATIC_LIBRARIES}
+     EXPAT::EXPAT
+     JsonCpp::JsonCpp
+     $<TARGET_NAME_IF_EXISTS:kwiml::kwiml>
+-    LibArchive::LibArchive
++    ${LibArchive_STATIC_LIBRARIES}
+     LibRHash::LibRHash
+     LibUV::LibUV
+     Threads::Threads
+diff -Naur cmake/Source/Modules/CMakeBuildUtilities.cmake cmake-static/Source/Modules/CMakeBuildUtilities.cmake
+--- cmake/Source/Modules/CMakeBuildUtilities.cmake	2023-03-23 08:12:04.000000000 -0500
++++ cmake-static/Source/Modules/CMakeBuildUtilities.cmake	2023-03-23 20:11:29.658121308 -0500
+@@ -140,7 +140,8 @@
+ #---------------------------------------------------------------------
+ # Build Curl library for CTest.
+ if(CMAKE_USE_SYSTEM_CURL)
+-  find_package(CURL)
++  #find_package(CURL)
++  pkg_check_modules(CURL IMPORTED_TARGET libcurl)
+   if(NOT CURL_FOUND)
+     message(FATAL_ERROR
+       "CMAKE_USE_SYSTEM_CURL is ON but a curl is not found!")
+@@ -249,7 +250,8 @@
+ #---------------------------------------------------------------------
+ # Build or use system libarchive for CMake and CTest.
+ if(CMAKE_USE_SYSTEM_LIBARCHIVE)
+-  find_package(LibArchive 3.3.3)
++  #find_package(LibArchive 3.3.3)
++  pkg_check_modules(LibArchive IMPORTED_TARGET libarchive>=3.3.3)
+   if(NOT LibArchive_FOUND)
+     message(FATAL_ERROR "CMAKE_USE_SYSTEM_LIBARCHIVE is ON but LibArchive is not found!")
+   endif()

@@ -1,0 +1,12 @@
+diff -Naur lz4-1.9.4/contrib/meson/meson/meson.build lz4-1.9.4-patched/contrib/meson/meson/meson.build
+--- lz4-1.9.4/contrib/meson/meson/meson.build	2022-08-15 17:45:31.000000000 -0500
++++ lz4-1.9.4-patched/contrib/meson/meson/meson.build	2023-05-28 18:14:30.473578176 -0500
+@@ -12,7 +12,7 @@
+ 
+ pkgconfig = import('pkgconfig')
+ 
+-lz4_source_root = '../../..'
++lz4_source_root = '../..'
+ 
+ lz4_version = meson.project_version()
+ 

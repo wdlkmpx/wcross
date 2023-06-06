@@ -1,0 +1,234 @@
+#!/bin/sh
+
+bootlin_targets="
+    i686gnu
+    i686gnu-gcc11
+    i686gnu-gcc12
+    i686musl
+    i686musl-gcc10
+    i686musl-gcc11
+    i686musl-gcc12
+    i686uclibc
+    x86_64gnu
+    x86_64gnu-gcc11
+    x86_64musl
+    x86_64musl-gcc11
+    x86_64uclibc
+"
+
+if [ "$1" = "symlinks" ] ; then
+    zcript=$(basename "$0")
+    for l in ${bootlin_targets}
+    do
+        ln -snfv ${zcript} ${l}
+    done
+    exit 0
+fi
+
+#==================================================================
+#      LINUX BUILDROOT --- https://toolchains.bootlin.com
+#          (toolchain requires glibc+linux x86_64)
+#==================================================================
+
+if [ -z "$STATIC_LINK" ] ; then
+    STATIC_LINK=yes #default if not specified
+fi
+
+AFTER_EXTRACT_FUNC='after_extract_gcc_bootlin'
+SANITY_CHECK_FUNC='cross_toolchain_sanity_check_gcc_bootlin'
+
+TARBALL_ARCH='x86_64'
+BOOTLIN_SITE='https://toolchains.bootlin.com/downloads/releases/toolchains'
+
+GCC10_STABLE='-stable-2021.11-1'
+GCC11_STABLE='-stable-2022.08-1'
+#GCC12_STABLE='-stable-'
+
+BR_GCC_VER=11 # current stable
+
+
+case ${WTARGET} in
+	#-- i686
+    i686gnu|i686gnu-gcc11) #current-stable: 11
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--glibc-${GCC11_STABLE}.tar.bz2
+        TARGET_TRIPLET='i686-buildroot-linux-gnu'
+        export GLIBC_VERSION="2.35-134-gb6aad"
+        ;;
+    i686gnu-gcc12)
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--glibc--bleeding-edge-2022.08-1.tar.bz2
+        TARGET_TRIPLET='i686-buildroot-linux-gnu'
+        export GLIBC_VERSION="2.35-134-gb6aad"
+        ;;
+    i686musl-gcc10)
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--musl-${GCC10_STABLE}.tar.bz2
+        TARGET_TRIPLET='i686-buildroot-linux-musl'
+        MUSL_NEED_NEWER_HEADERS=1
+        MUSL_AFTER_EXTRACT_UPDATE=1
+        export MUSL_CC_VERSION=1.2.2
+        ;;
+    i686musl|i686musl-gcc11) #current-stable: 11
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--musl-${GCC11_STABLE}.tar.bz2
+        TARGET_TRIPLET='i686-buildroot-linux-musl'
+        MUSL_NEED_NEWER_HEADERS=1
+        MUSL_AFTER_EXTRACT_UPDATE=1
+        export MUSL_CC_VERSION=1.2.3
+        ;;
+    i686musl-gcc12) # unstable
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--musl--bleeding-edge-2022.08-1.tar.bz2
+        TARGET_TRIPLET=i686-buildroot-linux-musl
+        MUSL_AFTER_EXTRACT_UPDATE=1
+        #unset MUSL_AFTER_EXTRACT_UPDATE
+        export MUSL_CC_VERSION=1.2.3
+        ;;
+    i686uclibc)  #current-stable
+        TARBALL_URL=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--uclibc-${GCC11_STABLE}.tar.bz2
+        TARBALL_CHK=${BOOTLIN_SITE}/x86-i686/tarballs/x86-i686--uclibc-${GCC11_STABLE}.sha256
+        TARGET_TRIPLET='i686-buildroot-linux-uclibc'
+        UCLIBC_VERSION=1.0.42
+        ;;
+    #-- x86_64
+    x86_64gnu|x86_64gnu-gcc11)
+        TARBALL_URL=${BOOTLIN_SITE}/x86-64/tarballs/x86-64--glibc-${GCC11_STABLE}.tar.bz2
+        TARGET_TRIPLET='x86_64-buildroot-linux-gnu'
+        export GLIBC_VERSION="2.35-134-gb6aad"
+        ;;
+    x86_64musl|x86_64musl-gcc11)
+        TARBALL_URL=${BOOTLIN_SITE}/x86_64/tarballs/x86-x86_64--musl-${GCC11_STABLE}.tar.bz2
+        TARGET_TRIPLET='x86_64-buildroot-linux-musl'
+        MUSL_NEED_NEWER_HEADERS=1
+        export MUSL_CC_VERSION=1.2.3
+        ;;
+    x86_64uclibc)  #current-stable
+        TARBALL_URL=${BOOTLIN_SITE}/x86_64/tarballs/x86-x86_64--uclibc-${GCC11_STABLE}.tar.bz2
+        TARBALL_CHK=${BOOTLIN_SITE}/x86_64/tarballs/x86-x86_64--uclibc-${GCC11_STABLE}.sha256
+        TARGET_TRIPLET='x86_64-buildroot-linux-uclibc'
+        UCLIBC_VERSION=1.0.42
+        ;;
+    *) exit_error "targets/z_gcc_buildroot: need a proper symlink" ;;
+esac
+
+case ${WTARGET} in
+    *gcc10*) BR_GCC_VER=10 ;;
+    *gcc11*) BR_GCC_VER=11 ;;
+    *gcc12*) BR_GCC_VER=12 ;;
+esac
+
+xCC_TARBALL=${TARBALL_URL##*/} # basename
+xCC_DIR=${xCC_TARBALL%.tar.*}
+
+case ${BR_GCC_VER} in
+    10)
+        ### `./i686-buildroot-linux-musl-gcc -print-prog-name=cc1` -v
+        COMPILER_SYMLINK=/builds/bootlin/toolchains-builder/build/${xCC_DIR}
+        TARBALL_SPECS="
+binutils : 2.36.1
+gcc      : 10.3.0
+gdb      : 10.2
+lheaders : 4.9.291"
+        ;;
+    11)
+        ### `./i686-buildroot-linux-musl-gcc -print-prog-name=cc1` -v
+        COMPILER_SYMLINK=/builds/buildroot.org/toolchains-builder/build/${xCC_DIR}
+        TARBALL_SPECS="
+binutils : 2.38
+gcc      : 11.3.0
+gdb      : 11.2
+lheaders : 4.9.327"
+        ;;
+    12) # current bleeding-edge #TODO: update when stable version is released
+        COMPILER_SYMLINK=/builds/buildroot.org/toolchains-builder/build/${xCC_DIR}
+        TARBALL_SPECS="
+binutils : 2.39
+gcc      : 12.2.0
+gdb      : 12.1
+lheaders : 5.4.212"
+        ADD_MOLD=1
+        ;;
+esac
+
+if [ "$GLIBC_VERSION" ] ; then
+    TARBALL_SPECS="${TARBALL_SPECS}
+glibc    : $GLIBC_VERSION"
+elif [ "$MUSL_CC_VERSION" ] ; then
+    TARBALL_SPECS="${TARBALL_SPECS}
+musl     : $MUSL_CC_VERSION"
+elif [ "$UCLIBC_VERSION" ] ; then
+    TARBALL_SPECS="${TARBALL_SPECS}
+uclibc   : $UCLIBC_VERSION"
+fi
+
+#echo ${TARGET_TRIPLET} ; exit ; #debug
+
+#=========================================================================
+
+after_extract_gcc_bootlin()
+{
+    echo "#### FIX BUILDROOT ####"
+    rm -fv ${XPATH}/bin/python-freeze-importlib
+    if [ ! -L ${XPATH}/bin/${TARGET_TRIPLET}-ld ] && [ -f ${XPATH}/bin/${TARGET_TRIPLET}-ld.bfd ] ; then
+        ln -snfv ${TARGET_TRIPLET}-ld.bfd ${XPATH}/bin/${TARGET_TRIPLET}-ld
+    fi
+    rm -fv ${XPATH}/bin/${TARGET_TRIPLET}-gcc-[1-9]* # ex: aarch64-linux-musl-gcc-11.2.1
+
+    TT=${XPATH}/${TARGET_TRIPLET}
+    #setup_mold
+    if [ -d ${TT}/sysroot ] && [ ! -L ${TT}/sysroot ] ; then
+        rm -fv ${TT}/sysroot/usr/lib/*.so*
+        rm -rf ${TT}/sysroot/usr/bin
+        rm -rf ${TT}/sysroot/usr/sbin
+        sync
+        #--
+        cp -a --remove-destination ${TT}/sysroot/usr/* ${TT}/sysroot/
+        if [ -d ${TT}/sysroot/lib32 ] ; then
+			cp -a --remove-destination ${TT}/sysroot/usr/lib32/* ${TT}/sysroot/lib
+		fi
+		if [ -d ${TT}/sysroot/lib64 ] ; then
+			cp -a --remove-destination ${TT}/sysroot/usr/lib64/* ${TT}/sysroot/lib
+		fi
+		sync
+        rm -rf ${TT}/sysroot/usr/
+        for i in $(ls -d ${TT}/sysroot/*)
+        do
+            rmdir ${i} 2>/dev/null
+        done
+        rm -rf ${TT}/sysroot/bin
+        rm -rf ${TT}/sysroot/debug-root
+        rm -rf ${TT}/sysroot/sbin
+        rm -rf ${TT}/sysroot/dev
+        rm -rf ${TT}/sysroot/etc
+        rm -rf ${TT}/sysroot/var
+        rm -rf ${TT}/sysroot/sbin
+        rm -rf ${TT}/sysroot/lib32
+        rm -rf ${TT}/sysroot/lib64
+        rm -rf ${TT}/sysroot/share
+        rm -rf ${TT}/sysroot/run
+        sync
+        cp -a --remove-destination ${TT}/sysroot/* ${TT}
+        rm -rf ${TT}/sysroot
+        ln -sv ./ ${TT}/sysroot
+    fi
+    if [ -e ${TT}/lib32 ] && [ ! -L ${TT}/lib32  ] ; then
+		cp -a --remove-destination ${TT}/lib32/* ${TT}/sysroot/lib
+		rm -rf ${TT}/lib32
+		ln -sv lib ${TT}/lib32
+    fi
+    if [ -e ${TT}/lib64 ] && [ ! -L ${TT}/lib64  ] ; then
+		cp -a --remove-destination ${TT}/lib64/* ${TT}/sysroot/lib
+		rm -rf ${TT}/lib64
+		ln -sv lib ${TT}/lib64
+    fi
+    if [ ! -e ${TT}/usr ] ; then
+        ln -sv ./ ${TT}/usr
+        #mkdir -p ${TT}/sbin ${TT}/share
+    fi
+    #rm -fv ${TT}/lib/*.so*
+    return 0
+}
+
+#=========================================================================
+
+cross_toolchain_sanity_check_gcc_bootlin()
+{
+    return 0
+}
+

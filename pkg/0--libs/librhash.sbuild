@@ -1,0 +1,48 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/main/rhash/APKBUILD
+# https://github.com/rhash/RHash
+
+pkgname=rhash
+pkgver=1.4.3
+pkgrel=0
+pkgdeps="" #openssl
+pkgdesc="Utility for calculation and verification of hash sums and magnet links"
+source="https://downloads.sourceforge.net/rhash/rhash-$pkgver-src.tar.gz"
+SRC_DIR=RHash-${pkgver}
+DL_SUBDIR=''
+#PKGDIR_FILE='usr/bin/rhash'
+TOOLCHAIN_FILE='usr/lib/librhash.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='rhash-dev' # no .a file
+
+
+build() {
+	## --build and --host are not recognized... this is not an autotools project
+	## doesn't recognize FLAGS env variables..., must specify everything here
+	export ${CROSS_MK_PARAMS}
+	./configure \
+		--prefix=${TOOLCHAIN_INSTALL_PREFIX} \
+		--libdir=${TOOLCHAIN_INSTALL_LIBDIR} \
+		--sysconfdir=/etc \
+		--enable-lib-static \
+		--disable-lib-shared \
+		--disable-gettext \
+		--extra-cflags="$WMK_CFLAGS" \
+		--extra-ldflags="$WMK_LDFLAGS" \
+		--disable-openssl
+	# -- fix config.mak
+	echo "BUILD_TYPE  = static" >> config.mak
+	sed -i '/RHASH_SHARED /d' config.mak
+	# --
+	make
+}
+
+#check() {
+#	make test-shared
+#}
+
+package() {
+	cmd_echo make install-lib-headers
+	cmd_echo make install-lib-static
+	cmd_echo make install-pkg-config
+}

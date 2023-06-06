@@ -1,0 +1,56 @@
+#!/bin/sh
+#https://github.com/archlinux/svntogit-packages/blob/packages/syslinux/trunk/PKGBUILD
+# https://git.alpinelinux.org/aports/tree/main/syslinux/APKBUILD
+#
+# this is only for linux x86 compilers
+# it's a mess, it requires too much fixes to cross-compile, only use system compiler
+#
+
+pkgname=syslinux
+#pkgver=6.04-pre1
+_commit=458a54133ecdf1685c02294d812cb562fe7bf4c3
+_commit_short=458a541
+_cdate=2023.04.18 #this is the date the commit was acknowledged... it may be old
+pkgrel=3
+pkgdesc='Collection of boot loaders that boot from FAT, ext2/3/4 and btrfs filesystems, from CDs and via PXE'
+if [ -n "${_commit}" ] ; then
+	source=https://repo.or.cz/syslinux.git/snapshot/${_commit}.tar.gz
+	SRC_FILE=syslinux-${_cdate}-${_commit}.tar.gz
+	SRC_DIR=syslinux-${_commit_short}
+	pkgver=${_cdate}
+else
+	source=https://mirrors.edge.kernel.org/pub/linux/utils/boot/syslinux/Testing/6.04/syslinux-${pkgver}.tar.xz
+fi
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/syslinux'
+DEV_IN_PKGDIR_ONLY=1
+
+
+_targets='bios'
+
+prepare() {
+	# do not swallow efi compilation output to make debugging easier
+	sed 's|> /dev/null 2>&1||' -i efi/check-gnu-efi.sh
+	# disable debug and development flags to reduce bootloader size
+	truncate --size 0 mk/devel.mk
+	#txt/Makefile:83: html/syslinux.html] Error 1
+	sed -i -e 's%efi txt%efi%' -e 's%dosutil txt%dosutil%' Makefile
+}
+
+build() {
+	EXTRA_LDFLAGS='--no-dynamic-linker' # workaround for binutils 2.28 http://www.syslinux.org/wiki/index.php?title=Building
+	make ${_targets}
+}
+
+check() {
+	make -k check
+}
+
+package() {
+	make ${_targets} \
+		install INSTALLROOT="$pkgdir" SBINDIR=/usr/bin MANDIR=/usr/share/man AUXDIR=/usr/lib/syslinux
+	rm -r "$pkgdir"/usr/lib/syslinux/{com32,dosutil,syslinux.com}
+	install -d "$pkgdir"/usr/lib/syslinux/bios
+	mv "$pkgdir"/usr/lib/syslinux/{*.bin,*.c32,*.0,memdisk} "$pkgdir"/usr/lib/syslinux/bios 
+}
+

@@ -1,0 +1,112 @@
+--- a/Makefile	2022-10-19 17:49:03.000000000 -0500
++++ b/Makefile	2023-05-06 13:57:19.343631100 -0500
+@@ -104,19 +104,6 @@
+ 
+ # library names
+ LIBRARY = $(BUILD)/libminiupnpc.a
+-ifneq (, $(findstring darwin, $(OS)))
+-  SHAREDLIBRARY = $(BUILD)/libminiupnpc.dylib
+-  SONAME = $(notdir $(basename $(SHAREDLIBRARY))).$(APIVERSION).dylib
+-  CPPFLAGS += -D_DARWIN_C_SOURCE
+-else
+-ifeq ($(JARSUFFIX), win32)
+-  SHAREDLIBRARY = $(BUILD)/miniupnpc.dll
+-else
+-  # Linux/BSD/etc.
+-  SHAREDLIBRARY = $(BUILD)/libminiupnpc.so
+-  SONAME = $(notdir $(SHAREDLIBRARY)).$(APIVERSION)
+-endif
+-endif
+ 
+ EXECUTABLES = $(addprefix $(BUILD)/, upnpc-static listdevices)
+ EXECUTABLES_ADDTESTS = $(addprefix $(BUILD)/, testminixml minixmlvalid \
+@@ -141,7 +128,6 @@
+ ifeq (, $(findstring mingw, $(OS))$(findstring cygwin, $(OS))$(findstring msys, $(OS)))
+ CFLAGS += -fPIC
+ endif
+-EXECUTABLES += $(BUILD)/upnpc-shared
+ TESTMINIWGETOBJS += $(BUILD)/minissdpc.o
+ TESTIGDDESCPARSE += $(BUILD)/minissdpc.o
+ LIBOBJS += $(BUILD)/minissdpc.o
+@@ -160,11 +146,7 @@
+ INSTALLDIRMAN = $(INSTALLPREFIX)/share/man
+ PKGCONFIGDIR = $(INSTALLDIRLIB)/pkgconfig
+ 
+-FILESTOINSTALL = $(LIBRARY) $(EXECUTABLES)
+-ifeq (, $(findstring amiga, $(OS)))
+-FILESTOINSTALL += $(SHAREDLIBRARY) $(BUILD)/miniupnpc.pc
+-endif
+-
++FILESTOINSTALL = $(LIBRARY) $(EXECUTABLES) $(BUILD)/miniupnpc.pc
+ 
+ .PHONY:	install clean depend all check test everything \
+ 	installpythonmodule updateversion
+@@ -224,7 +206,7 @@
+ 	touch $@
+ 
+ clean:
+-	$(RM) $(LIBRARY) $(SHAREDLIBRARY) $(EXECUTABLES) $(OBJS) $(BUILDINCLUDES)
++	$(RM) $(LIBRARY) $(EXECUTABLES) $(OBJS) $(BUILDINCLUDES)
+ 	$(RM) $(EXECUTABLES_ADDTESTS)
+ 	# clean python stuff
+ 	$(RM) pythonmodule pythonmodule3
+@@ -249,26 +231,11 @@
+ 	$(INSTALL) -m 644 $(HEADERS) $(DESTDIR)$(INSTALLDIRINC)
+ 	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRLIB)
+ 	$(INSTALL) -m 644 $(LIBRARY) $(DESTDIR)$(INSTALLDIRLIB)
+-ifeq (, $(findstring amiga, $(OS)))
+-	$(INSTALL) -m 644 $(SHAREDLIBRARY) $(DESTDIR)$(INSTALLDIRLIB)/$(SONAME)
+-	ln -fs $(SONAME) $(DESTDIR)$(INSTALLDIRLIB)/$(notdir $(SHAREDLIBRARY))
+ 	$(INSTALL) -d $(DESTDIR)$(PKGCONFIGDIR)
+ 	$(INSTALL) -m 644 $(BUILD)/miniupnpc.pc $(DESTDIR)$(PKGCONFIGDIR)
+-endif
+ 	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRBIN)
+-ifneq (, $(findstring amiga, $(OS)))
+ 	$(INSTALL) -m 755 $(BUILD)/upnpc-static $(DESTDIR)$(INSTALLDIRBIN)/upnpc
+-else
+-	$(INSTALL) -m 755 $(BUILD)/upnpc-shared $(DESTDIR)$(INSTALLDIRBIN)/upnpc
+-endif
+ 	$(INSTALL) -m 755 external-ip.sh $(DESTDIR)$(INSTALLDIRBIN)/external-ip
+-ifeq (, $(findstring amiga, $(OS)))
+-	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRMAN)/man3
+-	$(INSTALL) -m 644 man3/miniupnpc.3 $(DESTDIR)$(INSTALLDIRMAN)/man3/miniupnpc.3
+-ifneq (, $(findstring linux, $(OS)))
+-	gzip -f $(DESTDIR)$(INSTALLDIRMAN)/man3/miniupnpc.3
+-endif
+-endif
+ 
+ install-static:	updateversion $(FILESTOINSTALL)
+ 	$(INSTALL) -d $(DESTDIR)$(INSTALLDIRINC)
+@@ -281,7 +248,6 @@
+ cleaninstall:
+ 	$(RM) -r $(DESTDIR)$(INSTALLDIRINC)
+ 	$(RM) $(DESTDIR)$(INSTALLDIRLIB)/$(LIBRARY)
+-	$(RM) $(DESTDIR)$(INSTALLDIRLIB)/$(SHAREDLIBRARY)
+ 
+ $(BUILD)/miniupnpc.pc:	VERSION
+ 	@$(MKDIR) $(@D)
+@@ -307,14 +273,6 @@
+ 	$(AR) crs $@ $?
+ endif
+ 
+-$(SHAREDLIBRARY):	$(LIBOBJS)
+-ifneq (, $(findstring darwin, $(OS)))
+-#	$(CC) -dynamiclib $(LDFLAGS) -Wl,-install_name,$(SONAME) -o $@ $^
+-	$(CC) -dynamiclib $(LDFLAGS) -Wl,-install_name,$(INSTALLDIRLIB)/$(SONAME) -o $@ $^
+-else
+-	$(CC) -shared $(LDFLAGS) -Wl,-soname,$(SONAME) -o $@ $^
+-endif
+-
+ $(BUILD)/%.o:	$(SRCDIR)/%.c $(BUILD)/%.d
+ 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+ 
+@@ -327,9 +285,6 @@
+ $(BUILD)/upnpc-static:	$(BUILD)/upnpc.o $(LIBRARY)
+ 	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+ 
+-$(BUILD)/upnpc-shared:	$(BUILD)/upnpc.o $(SHAREDLIBRARY)
+-	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+-
+ $(BUILD)/listdevices:	$(BUILD)/listdevices.o $(LIBRARY)
+ 
+ $(BUILD)/testminixml:	$(TESTMINIXMLOBJS)

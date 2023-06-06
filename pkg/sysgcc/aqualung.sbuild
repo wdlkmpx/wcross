@@ -1,0 +1,36 @@
+#!/bin/sh
+# https://github.com/jeremyevans/aqualung/releases
+
+pkgname=aqualung
+pkgver=1.1
+pkgrel=0
+if [ "$BUILD_PACKAGE" = "aqualung-portable" ] ; then
+    # compile many static libs
+    pkgdeps=''
+else
+    pkgdeps=''
+fi
+pkgdesc=" Advanced music player (GTK) "
+source="https://github.com/jeremyevans/aqualung/releases/download/${pkgver}/aqualung-${pkgver}.tar.gz"
+PKGDIR_FILE='usr/bin/aqualung'
+DL_SUBDIR='gui'
+
+
+standard_autotools
+
+# don't trigger --enable-static --disable-shared (use defaults)
+IGNORE_LIBTOOL=1
+
+#export lavc_LIBS=$(pkg-config --libs libavcodec)
+opts="
+--without-sndio
+--without-oss
+--without-jack
+--without-pulse
+--without-winmm
+--without-speex
+--without-mac
+--without-mod
+--disable-nls
+"
+

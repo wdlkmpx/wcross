@@ -1,0 +1,23 @@
+#!/bin/sh
+# http://downloads.xiph.org/releases/vorbis
+
+pkgname=libvorbis
+pkgver=1.3.7  #2020-07-04
+pkgrel=0
+pkgdeps='libogg'
+pkgdesc=
+source=http://downloads.xiph.org/releases/vorbis/libvorbis-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libvorbis.a'
+ALPINE_PKGS='libvorbis-dev libvorbis-static'
+
+
+standard_autotools
+
+prepare() {
+	if [ "$WCROSS_MAKE_CHECK" != "yes" ] ; then
+		opts=" --disable-oggtest"
+	fi
+	opts="--disable-docs --disable-examples"
+
+}

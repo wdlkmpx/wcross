@@ -1,0 +1,42 @@
+#!/bin/sh
+# https://github.com/libunwind/libunwind/releases
+# https://git.alpinelinux.org/aports/tree/main/libunwind/APKBUILD
+# https://github.com/archlinux/svntogit-packages/blob/packages/libunwind/trunk/PKGBUILD
+
+pkgname=libunwind
+pkgver=1.7.0
+pkgrel=0
+pkgdeps="xz zlib"
+if [ "$MUSL_TOOLCHAIN" ] ; then
+	pkgdeps="$pkgdeps libucontext"
+fi
+pkgdesc="Portable and efficient C programming interface (API) to determine the call-chain of a program"
+#source=https://download.savannah.gnu.org/releases/libunwind/libunwind-${pkgver}.tar.gz
+source="libunwind-${pkgver}.tar.gz::https://github.com/libunwind/libunwind/archive/refs/tags/v${pkgver}.tar.gz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libunwind.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libunwind-dev libunwind-static'
+
+
+# cmake also available.. but unsuitable?
+# runs autoreconf... tarballs don't come with configure
+standard_autotools
+
+prepare() {
+	sed -i 's%-lgcc_s%-static-libgcc%' configure.ac configure
+	if [ "$MUSL_TOOLCHAIN" ] ; then
+		EXTRA_LDFLAGS="-lucontext"
+		EXTRA_CFLAGS="-fno-stack-protector"
+	fi
+}
+
+opts="
+--enable-cxx-exceptions
+--disable-documentation
+--enable-coredump
+--enable-ptrace
+--enable-setjmp
+--enable-minidebuginfo
+--enable-zlibdebuginfo
+"

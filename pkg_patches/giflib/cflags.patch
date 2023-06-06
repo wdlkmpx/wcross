@@ -1,0 +1,18 @@
+--- a/Makefile	2019-06-25 00:08:57.000000000 +0800
++++ b/Makefile	2023-02-21 18:11:21.000000000 +0800
+@@ -8,13 +8,13 @@
+ #
+ OFLAGS = -O0 -g
+ OFLAGS  = -O2
+-CFLAGS  = -std=gnu99 -fPIC -Wall -Wno-format-truncation $(OFLAGS)
++CFLAGS  += -std=gnu99 -fPIC -Wall -Wno-format-truncation $(OFLAGS)
+ 
+ SHELL = /bin/sh
+ TAR = tar
+ INSTALL = install
+ 
+-PREFIX = /usr/local
++PREFIX = /usr
+ BINDIR = $(PREFIX)/bin
+ INCDIR = $(PREFIX)/include
+ LIBDIR = $(PREFIX)/lib

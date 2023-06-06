@@ -1,0 +1,49 @@
+#!/bin/sh
+# https://sourceforge.net/projects/dict/files/dictd
+
+pkgname=dictd
+pkgver=1.13.1
+pkgrel=0
+pkgdeps='zlib libmaa'
+pkgdesc=""
+source=https://sourceforge.net/projects/dict/files/dictd/dictd-${pkgver}/dictd-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/dict'
+
+# ====================================================
+
+build()
+{
+	_configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --disable-plugin
+	# $(LIBTOOL) is empty
+	sed -i -e 's%--mode=install%%' -e 's%--mode=compile%%' -e 's%--mode=link%%' \
+			-e 's%--tag=CC%%' -e 's%--tag=CXX%%' -e 's%--mode=uninstall%%' Makefile
+	_make
+}
+
+
+check()
+{
+	_make check
+}
+
+
+post_install()
+{
+	mkdir -p ${pkgdir}/etc
+	echo '#servers
+server localhost 
+server dict.org
+server dict0.us.dict.org
+server alt0.dict.org
+' > ${pkgdir}/etc/dict.conf
+
+	echo 'access {
+allow localhost
+allow 127.0.0.1
+# this allows access only from local host
+}
+# Database section here:
+include /etc/dictd/db.list
+' > ${pkgdir}/etc/dictd.conf
+}

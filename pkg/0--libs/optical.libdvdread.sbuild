@@ -1,0 +1,19 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libdvdread/APKBUILD
+# https://download.videolan.org/pub/videolan/libdvdread
+
+pkgname=libdvdread
+pkgver=6.1.3
+pkgrel=0
+pkgdeps="libdvdcss"
+pkgdesc="Simple foundation for reading DVD video disks"
+source="https://download.videolan.org/pub/videolan/libdvdread/$pkgver/libdvdread-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libdvdread.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='libdvdread-dev libdvdread-static'  #(alpine 3.18)
+
+
+standard_autotools
+
+opts='--disable-apidoc --with-libdvdcss'

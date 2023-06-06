@@ -1,0 +1,23 @@
+#!/bin/sh
+# https://www.remlab.net/files/libident/
+
+pkgname=libident
+pkgver=0.32
+pkgrel=0
+pkgdeps=
+pkgdesc="simple RFC1413 client library"
+source="https://www.remlab.net/files/libident/libident-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libident.a'
+INSTALL_TO_TOOLCHAIN=1
+ALPINE_PKGS='libident-dev'
+
+
+standard_autotools
+
+prepare() {
+	# checking host system type... Invalid configuration `i686-linux-musl': system `musl' not recognized
+	update_config_sub
+}
+
+#opts='--enable-testers'

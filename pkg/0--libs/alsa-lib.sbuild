@@ -1,0 +1,19 @@
+#!/bin/sh
+# http://www.alsa-project.org/files/pub/lib/
+
+pkgname=alsa-lib
+pkgver=1.2.6.1
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=http://www.alsa-project.org/files/pub/lib/alsa-lib-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libasound.a'
+TOOLCHAIN_ONLY=1
+LINUX_ONLY=1
+#ALPINE_PKGS='alsa-lib-dev' #no a. lib... would it be portable?
+
+
+standard_autotools
+
+opts='--without-libdl'

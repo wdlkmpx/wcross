@@ -1,0 +1,29 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/plain/main/pkgconf
+
+pkgname=pkgconf
+pkgver=1.9.5
+pkgrel=0
+pkgdeps=''
+pkgdesc="development framework configuration tools"
+#checkdepends="kyua atf"
+source="https://distfiles.dereferenced.org/pkgconf/pkgconf-$pkgver.tar.xz"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libpkgconf.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='pkgconf-dev'
+
+
+USE_MESON=1
+
+if [ "$USE_MESON" ] ; then
+	standard_meson
+	opts="-Ddefault_library=static" #-Dtests=disabled
+else
+	standard_autotools
+fi
+
+post_install() {
+	check_static_exe builddir/pkgconf
+	ln -s pkgconf "$pkgdir"/usr/bin/pkg-config
+}

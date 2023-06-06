@@ -1,0 +1,27 @@
+#!/bin/sh
+# https://git.alpinelinux.org/aports/tree/community/libcddb/APKBUILD
+# https://sourceforge.net/projects/libcddb/
+
+pkgname=libcddb
+pkgver=1.3.2
+pkgrel=0
+pkgdeps=
+pkgdesc="Library that implements the different protocols (CDDBP, HTTP, SMTP) to access data on a CDDB server (e.g. http://freedb.org)."
+source="https://downloads.sourceforge.net/libcddb/libcddb-$pkgver.tar.bz2"
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libcddb.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libcddb-dev' # includes static libs
+
+
+standard_autotools
+
+prepare() {
+	sed -i 's%examples tests%%' Makefile.in
+	opts='--without-cdio' #--without-iconv
+	# tarball is too old, doesn't recognize linux-musl	
+	update_config_sub
+	# Tests are known broken since 2009: https://sourceforge.net/p/libcddb/bugs/7/
+	WCROSS_MAKE_CHECK=no
+}
+

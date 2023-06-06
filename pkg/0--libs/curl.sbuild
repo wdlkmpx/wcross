@@ -1,0 +1,68 @@
+#!/bin/sh
+# https://curl.se/docs/install.html
+# https://git.alpinelinux.org/aports/tree/main/curl/APKBUILD
+#
+# TODO: need to add deps/libs to enable the PKGDIR bin/curl
+#       currently only libcurl.a
+
+pkgname=curl
+pkgver=8.0.1
+pkgrel=0
+pkgdeps='zlib openssl'
+pkgdesc="URL retrival utility and library"
+source=https://curl.se/download/curl-${pkgver}.tar.xz
+DL_SUBDIR=''
+ALPINE_PKGS='curl-dev curl-static'
+#PKGDIR_FILE='usr/bin/curl'
+TOOLCHAIN_FILE='usr/lib/libcurl.a'
+TOOLCHAIN_ONLY=1
+
+
+standard_autotools
+
+curls_opts_desc="
+#--disable-alt-svc    (HTTP Alt-Svc)
+#--disable-ares       (the C-ARES DNS library)
+#--disable-cookies    (HTTP cookies)
+#--disable-crypto-auth (cryptographic authentication)
+#--disable-dateparse  (date parsing for time conditionals)
+#--disable-dnsshuffle (internal server load spreading)
+#--disable-doh (DNS-over-HTTP)
+#--disable-get-easy-options (lookup easy options at runtime)
+#--disable-hsts       (HTTP Strict Transport Security)
+#--disable-http-auth  (all HTTP authentication)
+--enable-ipv6        (IPv6)
+#--disable-libcurl-option (--libcurl C code generation support)
+--disable-manual      (built-in documentation)
+#--disable-netrc      (.netrc file)
+#--disable-ntlm-wb    (NTLM WinBind)
+#--disable-progress-meter (graphical progress meter in library)
+#--disable-proxy      (HTTP and SOCKS proxies)
+#--disable-pthreads   (multi-threading)
+#--disable-socketpair (socketpair for asynchronous name resolving)
+#--disable-threaded-resolver (threaded name resolver)
+#--disable-tls-srp    (Secure Remote Password authentication for TLS)
+#--disable-unix-sockets (UNIX sockets)
+#--disable-verbose    (eliminates debugging strings and error code strings)
+#--disable-versioned-symbols (versioned symbols)
+#--enable-symbol-hiding (eliminates unneeded symbols in the shared library)
+--disable-ldap       libldap
+--without-brotli     (Brotli on-the-fly decompression)
+--without-gssapi      libgssapi-krb5 (kerberos)
+--without-libgsasl    libgsasl support for SCRAM
+--without-libpsl     (Public Suffix List in cookies)
+--without-libssh2
+--without-nghttp2    (HTTP/2 using nghttp2)
+--without-nghttp3
+--without-ngtcp2     (HTTP/2 using ngtcp2)
+--without-zstd       (Zstd on-the-fly decompression)
+--without-libidn2    (internationalized domain names)
+--without-librtmp    (RTMP)
+--with-openssl       (SSL/TLS) --without-ssl
+--with-zlib          (on-the-fly decompression)
+--enable-static
+--disable-shared
+"
+
+opts="$(echo "$curls_opts_desc" | sed -e 's% .*%%' -e '/#.*/d')"
+

@@ -1,0 +1,67 @@
+#!/bin/sh
+# 
+
+pkgname=x264
+#pkgver=master
+_commit=eaa68fad9e5d201d42fde51665f2d137ae96baf0
+_cdate=20230227  #this is the date the commit was acknowledged... it may be old
+pkgrel=0
+pkgdeps=
+pkgdesc="A collection of small apps for the desktop"
+if [ -n "${_commit}" ] ; then
+	# this is a gitlab repo
+	source="https://code.videolan.org/videolan/x264/-/archive/master/x264-${_commit}.tar.bz2"
+	SRC_FILE=x264-${_cdate}-${_commit}.tar.bz2
+	SRC_DIR=x264-master-${_commit}
+	pkgver=${_cdate}
+else
+	source="https://code.videolan.org/videolan/x264/-/archive/master/x264-${pkgver}.tar.bz2"
+fi
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://code.videolan.org/videolan/x264/-/archive/master/x264-${pkgver}.tar.bz2
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libx264.a'
+ALPINE_PKGS='x264-dev'
+
+
+prepare() {
+	if [ "$MUSL_TOOLCHAIN" ] && [ "$CPU_ARCH" = "i686" ] ; then
+		#ld: i686-linux-musl-cross/lib/libx264.a(dct-a-8.o): warning: relocation in read-only section `.text'
+		#ld: read-only segment has dynamic relocations
+		opts="$opts --disable-asm"
+	fi
+	# not autotools, --host and --cross-prefix are used to determine cross compilation details
+	if [ "$WCROSS_PREFIX" ] ; then
+		opts="$opts --host=${XCOMPILER} --cross-prefix=${WCROSS_PREFIX}"
+	fi
+}
+
+build()
+{
+	# doesn't accept --disable-shared (only --enable-shared I think)
+	_configure \
+		--prefix=${TOOLCHAIN_INSTALL_PREFIX} \
+		--enable-static \
+		--disable-cli \
+		--bit-depth=all \
+		--chroma-format=all \
+		--enable-pic \
+		--disable-avs \
+		--disable-swscale \
+		--disable-lavf \
+		--disable-ffms \
+		--disable-gpac \
+		--disable-lsmash
+		# --enable-lto
+	_make V=1
+}
+
+check() {
+	./x264 --version #requires removing --disable-cli
+}
+
+package() {
+	_make install
+}

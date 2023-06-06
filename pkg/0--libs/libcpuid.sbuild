@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://github.com/anrieff/libcpuid/releases
+
+
+pkgname=libcpuid
+pkgver=0.6.3
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://github.com/anrieff/libcpuid/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libcpuid.a'
+#ALPINE_PKGS='libcpuid-dev' # no .a file
+
+
+standard_autotools

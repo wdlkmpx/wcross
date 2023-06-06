@@ -1,0 +1,106 @@
+#!/bin/sh
+# https://github.com/mzpqnxow/cross-compile-openssl
+# https://pkgs.alpinelinux.org/package/edge/community/x86_64/openssl1.1-compat
+#
+# Needs work to support more cross targets... damn
+
+pkgname=openssl
+pkgver=1.1.1t
+pkgrel=0
+pkgdeps=
+pkgdesc='toolkit for transport layer security (TLS) - version 1.1'
+source="https://www.openssl.org/source/openssl-${pkgver}.tar.gz"
+DL_SUBDIR=''
+#PKGDIR_FILE='usr/bin/openssl'
+TOOLCHAIN_FILE='usr/lib/libssl.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='openssl1.1-compat-dev openssl1.1-compat-libs-static'
+
+configure_cross()
+{
+# ./Configure
+#pick os/compiler from:
+#BS2000-OSD BSD-aarch64 BSD-generic32 BSD-generic64 BSD-ia64 BSD-riscv64 
+#BSD-sparc64 BSD-sparcv8 BSD-x86 BSD-x86-elf BSD-x86_64 Cygwin Cygwin-i386 
+#Cygwin-i486 Cygwin-i586 Cygwin-i686 Cygwin-x86 Cygwin-x86_64 DJGPP MPE/iX-gcc 
+#UEFI UWIN VC-CE VC-WIN32 VC-WIN32-ARM VC-WIN32-ONECORE VC-WIN64-ARM VC-WIN64A 
+#VC-WIN64A-ONECORE VC-WIN64A-masm VC-WIN64I aix-cc aix-gcc aix64-cc aix64-gcc 
+#android-arm android-arm64 android-armeabi android-mips android-mips64 
+#android-x86 android-x86_64 android64 android64-aarch64 android64-mips64 
+#android64-x86_64 bsdi-elf-gcc cc darwin-i386-cc darwin-ppc-cc 
+#darwin64-arm64-cc darwin64-ppc-cc darwin64-x86_64-cc gcc haiku-x86 
+#haiku-x86_64 hpux-ia64-cc hpux-ia64-gcc hpux-parisc-cc hpux-parisc-gcc 
+#hpux-parisc1_1-cc hpux-parisc1_1-gcc hpux64-ia64-cc hpux64-ia64-gcc 
+#hpux64-parisc2-cc hpux64-parisc2-gcc hurd-x86 ios-cross ios-xcrun ios64-cross 
+#ios64-xcrun iossimulator-xcrun iphoneos-cross irix-mips3-cc irix-mips3-gcc 
+#irix64-mips4-cc irix64-mips4-gcc linux-aarch64 linux-alpha-gcc linux-aout 
+#linux-arm64ilp32 linux-armv4 linux-c64xplus linux-elf linux-generic32 
+#linux-generic64 linux-ia64 linux-mips32 linux-mips64 linux-ppc linux-ppc64 
+#linux-ppc64le linux-sparcv8 linux-sparcv9 linux-x32 linux-x86 linux-x86-clang 
+#linux-x86_64 linux-x86_64-clang linux32-s390x linux64-loongarch64 
+#linux64-mips64 linux64-riscv64 linux64-s390x linux64-sparcv9 mingw mingw64 
+#nextstep nextstep3.3 sco5-cc sco5-gcc solaris-sparcv7-cc solaris-sparcv7-gcc 
+#solaris-sparcv8-cc solaris-sparcv8-gcc solaris-sparcv9-cc solaris-sparcv9-gcc 
+#solaris-x86-gcc solaris64-sparcv9-cc solaris64-sparcv9-gcc solaris64-x86_64-cc 
+#solaris64-x86_64-gcc tru64-alpha-cc tru64-alpha-gcc uClinux-dist 
+#uClinux-dist64 unixware-2.0 unixware-2.1 unixware-7 unixware-7-gcc vms-alpha 
+#vms-alpha-p32 vms-alpha-p64 vms-ia64 vms-ia64-p32 vms-ia64-p64 vos-gcc 
+#vxworks-mips vxworks-ppc405 vxworks-ppc60x vxworks-ppc750 vxworks-ppc750-debug 
+#vxworks-ppc860 vxworks-ppcgen vxworks-simlinux 
+
+	if [ "$WCROSS_TARGET_OS" = "linux" ] ; then
+		# This value is chosen from the output of ./Configure, it is specific to OpenSSL
+		case ${TARGET_TRIPLET} in
+			i?86-*)   WOA='linux-x86'       ;;
+			*x32*)    WOA='linux-x32'       ;;
+			x86_64-*) WOA='linux-x86_64'    ;;
+			*64)      WOA='linux-generic64' ;;
+			*)        WOA='linux-generic32' ;;
+		esac
+	elif [ "$WCROSS_TARGET_OS" = "windows" ] ; then
+		case ${TARGET_TRIPLET} in
+			*w64*) WOA='mingw64' ;;
+			*)     WOA='mingw'   ;;
+		esac
+	else
+		case ${TARGET_TRIPLET} in
+			64*-*bsd-*) WOA='BSD-generic64' ;;
+			*-*bsd-*)   WOA='BSD-generic32' ;;
+		esac
+	fi
+	#export CROSS_SSL_TARGET="$(gcc -v 2>&1 | grep Target | cut -d ' ' -f 2)"
+	export OPENSSL_ARCH=${WOA}
+	export CROSS_COMPILE=${WCROSS_PREFIX}
+	export_make_wflags
+	cmd_echo \
+	./Configure \
+		--prefix=/usr \
+		--cross-compile-prefix=${WCROSS_PREFIX} \
+		--openssldir=/etc/ssl \
+		no-shared \
+		${OPENSSL_ARCH}
+		# no-asm
+}
+
+
+build()
+{
+	if [ -n "$XCOMPILER" ] ; then
+		configure_cross
+	else
+		./config \
+			--prefix="$TOOLCHAIN_DIR" \
+			--openssldir=/etc/ssl no-shared
+			# no-asm
+	fi
+	sed -i 's%install_ssldirs install_docs%%' Makefile
+	make
+}
+
+
+#check() {
+
+package() {
+	install_to_pkgdir
+	#make install
+}

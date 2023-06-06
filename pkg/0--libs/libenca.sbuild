@@ -1,0 +1,20 @@
+#!/bin/sh
+# basic lib
+# https://github.com/nijel/enca/tags
+
+pkgname=enca
+pkgver=1.19
+pkgrel=0
+pkgdeps=
+pkgdesc="Charset analyser and converter"
+required_by='libass'
+source=enca-${pkgver}.tar.gz::https://github.com/nijel/enca/archive/refs/tags/${pkgver}.tar.gz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libenca.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='enca-dev'
+
+
+standard_autotools
+
+opts='--disable-gtk-doc --disable-external'

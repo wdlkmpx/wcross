@@ -1,0 +1,16 @@
+#!/bin/sh
+# https://invisible-island.net/archives/dialog/
+
+pkgname=dialog
+pkgver=1.3-20220728
+pkgrel=0
+pkgdeps='ncursesw'
+pkgdesc="Displays user-friendly dialog boxes from shell scripts"
+source=https://invisible-island.net/archives/dialog/dialog-${pkgver}.tgz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/dialog'
+
+
+standard_autotools 
+
+opts='--with-ncursesw --enable-widec'

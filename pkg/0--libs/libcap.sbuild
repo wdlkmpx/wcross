@@ -1,0 +1,48 @@
+#!/bin/sh
+# https://git.kernel.org/pub/scm/libs/libcap/libcap.git
+# https://git.alpinelinux.org/aports/tree/main/libcap
+
+pkgname=libcap
+pkgver=1.2.67
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+TOOLCHAIN_FILE='usr/lib/libcap.a'
+TOOLCHAIN_ONLY=1
+ALPINE_PKGS='libcap-dev libcap-static'
+
+SRC_URL=https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+SRC_DIR=libcap-cap
+DL_SUBDIR=''
+
+# ====================================================
+
+build()
+{
+	cd v${pkgver}
+	# progs/Makefile overrides LDFLAGS, have to revert that
+	sed -i -e '/LDFLAGS = /d' -e '/LDFLAGS_SUFFIX = /d' progs/Makefile
+	sed -i -e '/LDFLAGS = /d' tests/Makefile
+	#-
+	mk_opts="prefix=/usr
+lib=lib
+DYNAMIC=no SHARED=no RAISE_SETFCAP=no
+KERNEL_HEADERS=${TOOLCHAIN_INTALL_PREFIX}/include
+GOLANG=no
+BUILD_CC=gcc
+BUILD_LD=gcc
+BUILD_CFLAGS=-I/usr/include
+BUILD_CPPFLAGS=-I/usr/include
+BUILD_LDFLAGS=-L/usr/lib
+"
+	_make ${mk_opts}
+}
+
+check() {
+	_make ${mk_opts} test #-k
+}
+
+package() {
+	_make ${mk_opts} DESTDIR=${pkgdir} install
+}

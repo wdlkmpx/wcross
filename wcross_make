@@ -1,0 +1,191 @@
+#!/bin/sh
+#  Public Domain
+#
+
+symlink='/opt/wbuilds' # assuming we're root
+
+help()
+{
+    echo "  syntax:
+
+ 0) $0 install
+     Install script to /usr/sbin so that it can used anywhere
+
+ 1) $0 <linux|bsd|win|all>
+     Compile app using selected cross compilers, sort of continous integration
+
+ 2) $0 <target> [conf_opts...]
+     This is part of the w static builds, compile C & C++ code
+         using a cross compiler for <target>
+     If conf_opts = help, print configure help [autoconf, cmake, meson, etc]
+
+ 3) $0 <target> make
+	don't run ./configure and similar apps, only make
+"
+}
+
+#===========================================================
+
+check_dir()
+{
+	if [ -z "$1" ] ; then
+		echo ": no directory specified"
+		exit 1
+	fi
+	if [ ! -d "$1" ] ; then
+		echo "$1: is not a valid directory (wbuilds)"
+		exit 1
+	fi
+	if [ -d "$1/pkg" ] && [ -f "$1/build.sh" ] ; then
+		return 0 # ok
+	else
+		echo "-- $1 doesn't look like the wbuilds dir"
+		exit 1 # error
+	fi
+}
+
+if [ "$1" = "set" ] ; then
+	check_dir $2
+	echo "OK"
+	ln -snfv "$2" ${symlink}
+fi
+
+if [ ! -e ${symlink} ] ; then
+	# create symlink if already in the wstatic buildsys
+	if [ -e pkg/7zip.sbuild ] ; then
+		ln -snfv "$(pwd)" ${symlink}
+	else
+		echo
+		echo "* File not found: $symlink"
+        [ -L ${symlink} ] && file ${symlink}
+		echo
+		echo "Type:"
+		echo "  $0 set <dir>"
+		echo "      where <dir> is the w(static) build system root dir"
+		exit 1
+	fi
+fi
+
+check_dir ${symlink}
+WDIR="${symlink}"
+
+#echo $WDIR ; exit #debug
+
+#===========================================================
+# 0) install script
+case $1 in install|-install)
+    appname=$(basename $0)
+    cp -fv $0 /usr/sbin
+    ln -snfv ${appname} /usr/sbin/${appname}_shared
+    exit 0 ;;
+esac
+
+#===========================================================
+# 1) Compile app using selected cross compilers, sort of continous integration
+
+case $(uname -m) in
+  i?86)
+    linux="i686 arm s390x"
+    win="win32 win64"
+    bsd=""
+    ;;
+  x86_64)
+    linux="i686gnu i686musl i686uclibc"
+    win="win32 win64"
+    bsd="freebsd11-x86_64 openbsd64 netbsd64"
+    ;;
+  *)
+    echo "Only x86 cpus are supported"
+    exit 1
+    ;;
+esac
+
+all="${linuxall} ${win} ${bsd}"
+sel_os_arch=''
+ci=''
+
+case $1 in
+    linux) sel_os_arch="$linux" ; ci=1 ;;
+    bsd)   sel_os_arch="$bsd"   ; ci=1 ;;
+    win)   sel_os_arch="$win"   ; ci=1 ;;
+    all)   sel_os_arch="$all"   ; ci=1 ;;
+esac
+
+
+if [ "$ci" ] ; then
+    werr=''
+    rm -rf 00wc
+    echo
+    for arch in ${sel_os_arch}
+    do
+        mkdir -p 00wc
+        make distclean 1>/dev/null 2>&1
+        printf "* ${arch}..."
+        if ${0} ${arch} >00wc/${arch}.log 2>&1 ; then
+            echo " OK"
+        else
+            echo " ERROR"
+            werr=1
+        fi
+    done
+    echo
+    if [ -d 00wc ] ; then
+        echo "** logs are in 00wc/ dir"
+        echo
+    fi
+    if [ -z "$werr" ] ; then
+        echo "ALL OK"
+    fi
+    exit 0
+fi
+
+#===========================================================
+# 2) use specific cross compiler
+
+#WARCH=
+
+export MAKE_SCRIPT=yes
+
+unset WTRIPLET
+unset CC_DIR
+
+if [ -z "$WARCH" ] ; then
+    WARCH=$1
+fi
+
+#-----------------
+shift
+if [ "$1" = "make" ] ; then
+	export WCROSS_ONLY_MAKE=1
+	shift
+fi
+if [ -n "$1" ] ; then
+    export W_OPTS="$@"
+fi
+#-----------------
+
+if [ -n "${WARCH}" ] && [ -e "${WDIR}/targets/${WARCH}" ] ; then
+    OK=1
+elif [ "$WARCH" = "chroot" ] || [ "$WARCH" = "alpine" ] || [ "$WARCH" = "system" ] ; then
+    # chroot or system don't need targets
+    ok=1
+else
+    help
+    echo "     Supported targets:"
+    ls ${WDIR}/targets/
+    echo
+    exit 1
+fi
+
+#===========================================================
+
+export ORIG_DIR="$(pwd)"
+
+cd $WDIR
+
+case $0 in
+    *_shared) wmopt='-shared' ;;
+    #*)  wmopt='-static'       ;;
+esac
+
+exec ./build.sh ${wmopt} -arch ${WARCH} -pkg local

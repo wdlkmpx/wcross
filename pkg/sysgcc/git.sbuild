@@ -1,0 +1,28 @@
+#!/bin/sh
+# 
+
+pkgname=git
+pkgver=2.8.3 #need update, this is an old version
+pkgrel=0
+pkgdeps=
+pkgdesc="git SCM"
+source=git-${pkgver}.tar.gz::https://github.com/git/git/archive/v${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/git'
+
+
+build()
+{
+	mk_opts='NO_TCLTK=YesPlease NO_SVN_TESTS=YesPlease NO_GETTEXT=YesPlease NO_PERL=YesPlease NO_PYTHON=YesPlease'
+	_configure \
+		--prefix=/usr \
+		--with-curl \
+		--with-openssl \
+		--with-gitconfig=/etc/gitconfig \
+		--without-tcltk
+	_make ${mk_opts}
+}
+
+package() {
+	_make ${mk_opts} install
+}

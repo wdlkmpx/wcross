@@ -1,0 +1,37 @@
+#!/bin/sh
+
+pkgname=xvidcore
+pkgver=1.3.7
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://downloads.xvid.com/downloads/xvidcore-${pkgver}.tar.gz
+SRC_DIR=xvidcore
+DL_SUBDIR=''
+TOOLCHAIN_FILE='usr/lib/libxvidcore.a'
+ALPINE_PKGS='xvidcore-dev xvidcore-static'
+
+
+build()
+{
+	cd build/generic
+	if [ "$MUSL_TOOLCHAIN" ] && [ "$CPU_ARCH" = "i686" ] ; then
+		#opts=' --disable-assembly'
+		EXTRA_LDFLAGS='-Wl,-z,notext' # segfaults with this
+	fi
+	EXTRA_CFLAGS='-fPIC'
+	_configure --prefix=${TOOLCHAIN_INSTALL_PREFIX}
+	cd ../..
+	make -C build/generic
+}
+
+check() {
+	# make sure apps can link against static lib
+	make -C examples
+	./examples/xvid_decraw -help
+}
+
+package() {
+	make -C build/generic install
+	#rm -fv ${TOOLCHAIN_ROOT}/lib/libxvidcore.so*
+}

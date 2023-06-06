@@ -1,0 +1,45 @@
+#!/bin/sh
+# https://download-mirror.savannah.gnu.org/releases/lzip/clzip
+
+clzip=1
+
+if [ "$clzip" ] ; then
+	pkgname=clzip
+	pkgver=1.13
+	source=https://download-mirror.savannah.gnu.org/releases/lzip/clzip/clzip-${pkgver}.tar.gz
+else
+	pkgname=lzip
+	pkgver=1.23
+	source=https://download-mirror.savannah.gnu.org/releases/lzip/lzip-${pkgver}.tar.gz
+fi
+pkgrel=0
+pkgdeps=
+pkgdesc="Lzip is a lossless data compressor"
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/lzip'
+DIST_BINARY='lzip'
+
+
+build()
+{
+	woptimize_flag -O2
+	# configure doesn't recognize *FLAGS env variables or --host
+	# but everything can specified through configure params
+	_configure \
+		--prefix=/usr \
+		${CROSS_MK_PARAMS} \
+		CFLAGS="$WMK_CFLAGS" \
+		CXXFLAGS="$WMK_CXXFLAGS" \
+		LDFLAGS="$WMK_LDFLAGS"
+	_make
+}
+
+check() {
+	_make check
+}
+
+package() {
+	[ -f clzip ] && cp -fv clzip lzip
+	[ -f clzip.exe ] && cp -fv clzip.exe lzip.exe
+	install_exe lzip ${pkgdir}/usr/bin
+}

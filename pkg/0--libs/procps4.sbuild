@@ -1,0 +1,31 @@
+#!/bin/sh
+# https://sourceforge.net/projects/procps-ng/files/Production
+# https://git.alpinelinux.org/aports/tree/main/procps-ng/APKBUILD
+# libproc2.pc
+
+pkgname=procps4
+pkgver=4.0.3
+pkgrel=0
+pkgdeps=''
+pkgdesc=
+source=https://sourceforge.net/projects/procps-ng/files/Production/procps-ng-${pkgver}.tar.xz
+DL_SUBDIR=''
+TOOLCHAIN_FILE='lib/libproc2.a'
+TOOLCHAIN_ONLY=1
+#ALPINE_PKGS='' # no .a lib, it wouldn't be portable anyway..
+
+
+standard_autotools
+
+opts='
+--disable-kill
+--disable-pidof
+--disable-dependency-tracking
+--without-libintl-prefix
+--without-libiconv-prefix
+--without-ncurses
+--without-systemd
+--without-elogind
+--disable-examples
+--disable-w-from
+'

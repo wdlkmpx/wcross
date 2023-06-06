@@ -1,0 +1,4 @@
+TARGET=mips64-linux-musln32sf
+
+GCC_CONFIG_FOR_TARGET+=' --with-abi=n32'
+GCC_CONFIG_FOR_TARGET+=' --with-float=soft'

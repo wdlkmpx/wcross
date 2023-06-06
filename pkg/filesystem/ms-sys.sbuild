@@ -1,0 +1,22 @@
+#!/bin/sh
+# http://prdownloads.sourceforge.net/ms-sys/ms-sys
+
+pkgname=ms-sys
+pkgver=2.8.0
+pkgrel=0
+pkgdeps=
+pkgdesc=""
+source=http://prdownloads.sourceforge.net/ms-sys/ms-sys/ms-sys-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/ms-sys'
+
+
+build() {
+	_make PREFIX=/usr
+}
+
+#no test suite
+
+package() {
+	install_exe build/bin/ms-sys ${pkgdir}/usr/bin
+}

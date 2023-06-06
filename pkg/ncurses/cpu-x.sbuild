@@ -1,0 +1,32 @@
+#!/bin/sh
+# https://github.com/X0rg/CPU-X/releases
+
+pkgname=CPU-X
+pkgver=4.5.3
+pkgrel=0
+# requires execinfo.h from musl-compat-headers
+pkgdeps='ncursesw procps3 libpci libcpuid'
+pkgdesc="cpu-x"
+SRC_URL=https://github.com/X0rg/CPU-X/archive/refs/tags/v${pkgver}.tar.gz
+SRC_FILE=${pkgname}-${pkgver}.tar.gz
+DL_SUBDIR=''
+PKGDIR_FILE='usr/bin/cpu-x'
+
+
+standard_cmake
+
+opts="
+-DWITH_GETTEXT=OFF
+-DWITH_GTK=OFF
+-DWITH_LIBGLFW=OFF
+-DWITH_OPENCL=OFF
+-DWITH_VULKAN=OFF
+"
+
+package() {
+	install_to_pkgdir
+	rm -rfv ${pkgdir}/usr/lib \
+			${pkgdir}/usr/libexec \
+			${pkgdir}/usr/share
+}
+

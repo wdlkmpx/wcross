@@ -1,0 +1,68 @@
+#!/bin/sh
+# https://github.com/facebook/zstd/releases
+
+pkgname=zstd
+pkgver=1.5.5
+pkgrel=0
+#pkgdeps='zlib lz4 xz' #only the tool has deps, the lib has 0 deps
+pkgdesc=''
+source=https://github.com/facebook/zstd/releases/download/v${pkgver}/zstd-${pkgver}.tar.gz
+DL_SUBDIR=''
+
+if [ "$BUILD_PACKAGE" = "zstd" ] ; then
+	PKGDIR_FILE='usr/bin/zstd'
+else
+	# compiling as a dependency, the lib may already be there if using distro packages
+	TOOLCHAIN_FILE='usr/lib/libzstd.a'
+fi
+ALPINE_PKGS='zstd-dev zstd-static' # the apps are not static
+
+
+ZSTD_MESON=1
+
+prepare()
+{
+	#woptimize_flag -O2 ## already includes -03 by default
+	if [ "$WCROSS_TARGET_OS" = "linux" ] ; then
+		# have a problem with -lpthread missing for older glibc
+		sed -i 's% -lzstd$% -lzstd -lpthread%' lib/libzstd.pc.in
+	fi
+	#--
+	if [ "$ZSTD_MESON" ] ; then
+		standard_meson
+		cd build/meson
+		ztest=false
+		if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+			ztest=true
+		fi
+		opts="-Dbin_programs=true
+-Dbin_tests=${ztest}
+-Dbin_contrib=false
+-Dmulti_thread=enabled
+-Dzlib=disabled
+-Dlzma=disabled
+-Dlz4=disabled
+-Ddefault_library=static
+"
+	else
+		standard_cmake
+		cd build/cmake
+		ztest=OFF
+		if [ "$WCROSS_MAKE_CHECK" = "yes" ] ; then
+			ztest=ON
+		fi
+		opts="
+-DZSTD_LZ4_SUPPORT=OFF
+-DZSTD_LZMA_SUPPORT=OFF
+-DZSTD_ZLIB_SUPPORT=OFF
+-DZSTD_BUILD_SHARED=OFF
+-DZSTD_BUILD_STATIC=ON
+-DZSTD_BUILD_TESTS=${ztest}
+-DZSTD_BUILD_CONTRIB=OFF
+-DZSTD_LEGACY_SUPPORT=ON
+-DZSTD_PROGRAMS_LINK_SHARED=OFF
+-DBUILD_TESTING=${ztest}
+"
+	fi
+}
+
